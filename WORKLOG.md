@@ -229,3 +229,39 @@ fatal: could not read Password for 'https://12342023@github.com': Device not con
 - 用户在 GitHub 创建 token。
 - 执行 `git push -u origin main`。
 - Git 提示密码时输入 token。
+
+### 19:45 使用 Token 推送失败
+
+操作人：Codex
+
+已执行：
+
+- 创建本地文档提交：
+
+```text
+6b46abc docs: record github credential guidance
+```
+
+- 使用用户提供的 GitHub token 进行一次交互式 push。
+- 未将 token 写入 Git 配置、remote URL、脚本或本文档。
+
+推送结果：
+
+```text
+remote: Permission to 12342023/unity.git denied to 12342023.
+fatal: unable to access 'https://github.com/12342023/unity.git/': The requested URL returned error: 403
+```
+
+结论：
+
+- GitHub 已识别当前账号为 `12342023`。
+- 失败原因不再是旧账号 `hahaaaw`。
+- 当前 token 对 `12342023/unity.git` 没有写权限。
+
+下一步：
+
+- 在 GitHub 里撤销刚才暴露过的 token。
+- 重新生成 fine-grained token。
+- `Repository access` 选择 `Only select repositories`，并选择 `unity` 仓库。
+- `Repository permissions` 中将 `Contents` 设置为 `Read and write`。
+- 重新执行 `git push -u origin main`。

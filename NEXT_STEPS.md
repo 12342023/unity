@@ -88,3 +88,12 @@ fatal: could not read Password for 'https://12342023@github.com': Device not con
 这表示旧账号问题已解除，剩余问题是需要给本机配置 `12342023` 的 GitHub HTTPS Token。
 
 不要使用或保存 GitHub 明文密码。下一步需要在 GitHub 创建 Personal Access Token，然后在本机执行 push 时把 token 当作密码输入。
+
+已尝试使用 token 推送，但 GitHub 返回：
+
+```text
+remote: Permission to 12342023/unity.git denied to 12342023.
+fatal: unable to access 'https://github.com/12342023/unity.git/': The requested URL returned error: 403
+```
+
+这说明账号已正确识别为 `12342023`，但 token 没有该仓库写权限。需要重新生成 token，并确保 `unity` 仓库的 `Contents` 权限是 `Read and write`。

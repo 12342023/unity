@@ -34,6 +34,8 @@ origin https://github.com/12342023/unity.git
 
 注意：不应使用、保存或记录 GitHub 明文密码。需要改用 Personal Access Token。
 
+已使用 token 尝试推送，GitHub 识别账号为 `12342023`，但返回 403。当前 token 缺少 `12342023/unity.git` 写权限，需要重新生成带 `Contents: Read and write` 的 fine-grained token，且 repository access 必须包含 `unity`。
+
 ### P1：Unity 生成目录需要版本控制策略
 
 当前项目包含 `Library/`、`Logs/`、`UserSettings/` 等 Unity 生成或本机状态目录。后续如果进入 Unity 开发，需要先确认 `.gitignore` 策略，避免提交大量机器生成文件。
