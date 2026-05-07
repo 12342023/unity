@@ -1,0 +1,37 @@
+# macOS
+.DS_Store
+
+# Unity generated folders
+/kingbattle/Library/
+/kingbattle/Temp/
+/kingbattle/Obj/
+/kingbattle/Build/
+/kingbattle/Builds/
+/kingbattle/Logs/
+/kingbattle/UserSettings/
+/kingbattle/MemoryCaptures/
+
+# Unity generated project files
+/kingbattle/*.csproj
+/kingbattle/*.sln
+/kingbattle/*.suo
+/kingbattle/*.user
+/kingbattle/*.userprefs
+/kingbattle/*.pidb
+/kingbattle/*.booproj
+/kingbattle/*.svd
+/kingbattle/*.pdb
+/kingbattle/*.mdb
+/kingbattle/*.opendb
+/kingbattle/*.VC.db
+
+# IDE
+/kingbattle/.vscode/
+/.vscode/
+
+# Build artifacts
+sysinfo.txt
+*.stackdump
+*.apk
+*.aab
+*.unitypackage
