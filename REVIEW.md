@@ -6,11 +6,11 @@
 
 ## 基线 Review 结论
 
-### P0：项目说明与实际结构不一致
+### 已处理：项目说明与实际结构不一致
 
-`AGENTS.md` 声明这是微信小程序项目，但当前目录 `kingbattle/` 是 Unity 工程结构，且未发现 `app.json`、`project.config.json`、`pages/` 等小程序入口。
+`AGENTS.md` 原先声明这是微信小程序项目，但当前目录 `kingbattle/` 是 Unity 工程结构。
 
-在确认项目类型前，不应开始功能开发。
+用户已确认：当前项目是 Unity 小游戏，后续规划微信小程序、macOS、Android 移植。`AGENTS.md` 已更新。
 
 ### 已处理：Git 仓库边界疑似错误
 
@@ -30,22 +30,25 @@
 origin https://github.com/12342023/unity.git
 ```
 
-已完成本地首次提交。本地仓库 Git 作者与 remote 已切到 `12342023`，推送不再使用 `hahaaaw`。当前剩余阻塞是本机缺少 `12342023` 的 GitHub HTTPS Token，导致无法读取密码完成 push。
+已完成本地首次提交。本地仓库 Git 作者与 remote 已切到 `12342023`，推送不再使用 `hahaaaw`。
 
 注意：不应使用、保存或记录 GitHub 明文密码。需要改用 Personal Access Token。
 
-已使用 token 尝试推送，GitHub 识别账号为 `12342023`，但返回 403。当前 token 缺少 `12342023/unity.git` 写权限，需要重新生成带 `Contents: Read and write` 的 fine-grained token，且 repository access 必须包含 `unity`。
-
-后续权限处理完成后，当前项目基线已成功推送到 `https://github.com/12342023/unity.git`。仍建议撤销聊天中暴露过的 token。
+当前项目基线已成功推送到 `https://github.com/12342023/unity.git`。仍建议撤销聊天中暴露过的 token。
 
 ### P1：Unity 生成目录需要版本控制策略
 
 当前项目包含 `Library/`、`Logs/`、`UserSettings/` 等 Unity 生成或本机状态目录。后续如果进入 Unity 开发，需要先确认 `.gitignore` 策略，避免提交大量机器生成文件。
 
+### P1：多平台移植边界需要提前设计
+
+项目后续计划移植到微信小程序、macOS、Android。核心玩法和数据逻辑应尽量保持平台无关；输入、存储、登录、支付、分享、构建发布等平台能力需要通过清晰接口隔离。
+
 ## Claude 输出后的 Review 检查项
 
 - 是否明确区分“事实”和“假设”
-- 是否确认项目类型后再规划开发
+- 是否基于 Unity 小游戏主工程规划开发
+- 是否为微信小程序、macOS、Android 移植保留边界
 - 是否避免改动业务代码
 - 是否没有随意修改 `ProjectSettings`
 - 是否给出最小可执行的下一步
@@ -54,4 +57,4 @@ origin https://github.com/12342023/unity.git
 
 ## 当前结论
 
-暂不批准进入功能开发。当前基线已本地提交，但 GitHub 上传被认证权限阻塞；修复认证后再推送。
+暂不批准进入业务功能开发。当前项目说明、仓库边界和 GitHub 上传流程已明确；下一步请 Claude 先完成 Unity 项目基线确认和多平台边界建议。

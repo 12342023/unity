@@ -302,3 +302,27 @@ branch 'main' set up to track 'origin/main'.
 
 - 之前在聊天中暴露过的 token 应尽快在 GitHub 中撤销。
 - 后续如需继续由 Codex 推送，建议使用短期 token 或 GitHub 官方授权方式。
+
+### 20:15 项目说明修正
+
+操作人：Codex
+
+用户确认：
+
+- 当前项目是 Unity 小游戏。
+- 后续规划微信小程序移植。
+- 后续规划 macOS 移植。
+- 后续规划 Android 移植。
+
+已完成：
+
+- 更新 `AGENTS.md`，将项目说明从微信小程序改为 Unity 小游戏。
+- 更新技术要求，强调 Unity 工程结构、生成目录排除、多平台边界。
+- 更新 `TASK.md`，把 Claude 的后续任务改为 Unity 基线确认和多平台移植边界建议。
+- 更新 `REVIEW.md`，关闭“项目说明与实际结构不一致”阻塞项。
+- 更新 `NEXT_STEPS.md`，清理已过期的 GitHub 认证阻塞状态。
+- 更新 `GITHUB_WORKFLOW.md`，将 token 阻塞改为已处理状态。
+
+GitHub 上传状态：
+
+- 待提交并推送本次文档修改。

@@ -21,15 +21,22 @@
 
 项目说明：
 
-这是一个微信小程序项目。
+这是一个 Unity 小游戏项目，当前主工程位于 `kingbattle/`。
+
+后续规划：
+
+1. 微信小程序移植
+2. macOS 移植
+3. Android 移植
 
 技术要求：
 
-- 优先使用微信原生 API
-- 避免频繁 setData
-- 页面结构保持清晰
-- 不随意修改 app.json
-- 不随意新增全局状态
+- 当前阶段优先保持 Unity 工程结构清晰
+- 不随意修改 `ProjectSettings`
+- 不提交 Unity 生成目录，例如 `Library/`、`Logs/`、`UserSettings/`
+- 不随意新增全局状态或跨平台耦合
+- 为未来微信小程序、macOS、Android 移植预留清晰边界
+- 涉及平台能力时优先封装接口，不把平台差异散落在业务逻辑中
 
 Claude 是主要开发者。
 你负责领导和监督 Claude。

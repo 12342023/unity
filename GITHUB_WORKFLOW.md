@@ -26,7 +26,7 @@ origin https://git@github.com:hahaaaw/-.git
 origin https://github.com/12342023/unity.git
 ```
 
-## 当前阻塞项
+## 当前状态
 
 ### 已处理：目标 GitHub 仓库已提供
 
@@ -34,7 +34,7 @@ origin https://github.com/12342023/unity.git
 
 用户已提供新 GitHub 仓库地址，并已设置为当前项目仓库 `origin`。
 
-在该问题确认前：
+后续仍需遵守：
 
 ```diff
 - 不允许 git add .
@@ -55,9 +55,9 @@ origin https://github.com/12342023/unity.git
 origin https://github.com/12342023/unity.git
 ```
 
-### P0：缺少 GitHub Personal Access Token
+### 已处理：GitHub Personal Access Token
 
-当前仓库已切换到 `12342023`，但 GitHub HTTPS 推送需要 token。不要把账号密码写入 remote URL、Git 配置、脚本或工作文档。
+当前仓库已成功推送到 GitHub。后续仍需遵守：不要把账号密码或 token 写入 remote URL、Git 配置、脚本或工作文档。
 
 安全做法：
 
