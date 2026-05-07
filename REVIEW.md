@@ -30,7 +30,9 @@
 origin https://github.com/12342023/unity.git
 ```
 
-后续可以按明确文件列表提交并推送；如果 push 因认证或网络失败，需要记录失败原因并等待用户完成 GitHub 认证。
+已完成本地首次提交。本地仓库 Git 作者与 remote 已切到 `12342023`，推送不再使用 `hahaaaw`。当前剩余阻塞是本机缺少 `12342023` 的 GitHub HTTPS Token，导致无法读取密码完成 push。
+
+注意：不应使用、保存或记录 GitHub 明文密码。需要改用 Personal Access Token。
 
 ### P1：Unity 生成目录需要版本控制策略
 
@@ -48,4 +50,4 @@ origin https://github.com/12342023/unity.git
 
 ## 当前结论
 
-暂不批准进入功能开发。允许提交并上传当前项目基线；上传完成后再进入 Claude 基线确认任务。
+暂不批准进入功能开发。当前基线已本地提交，但 GitHub 上传被认证权限阻塞；修复认证后再推送。

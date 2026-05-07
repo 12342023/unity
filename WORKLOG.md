@@ -135,3 +135,97 @@ https://github.com/12342023/unity.git
 
 - 准备 stage 当前项目基线。
 - 推送前需要确认 staged 文件不包含 Unity 生成目录和 IDE 本机文件。
+
+### 19:30 首次本地提交与推送失败
+
+操作人：Codex
+
+已完成：
+
+- 按明确文件列表 stage 项目基线。
+- 已确认 staged 文件不包含：
+  - `kingbattle/Library/`
+  - `kingbattle/Logs/`
+  - `kingbattle/UserSettings/`
+  - `kingbattle/.vscode/`
+  - `kingbattle/kingbattle.sln`
+- 创建首次本地提交。
+- 将本地分支重命名为 `main`。
+
+本地提交：
+
+```text
+96e6f7a chore: initialize unity project baseline
+```
+
+推送结果：
+
+```text
+remote: Permission to 12342023/unity.git denied to hahaaaw.
+fatal: unable to access 'https://github.com/12342023/unity.git/': The requested URL returned error: 403
+```
+
+结论：
+
+- GitHub 仓库地址已正确设置为 `https://github.com/12342023/unity.git`。
+- 当前本机 GitHub 凭据仍是 `hahaaaw`，没有 `12342023/unity.git` 的写权限。
+- 暂未完成上传。
+
+下一步：
+
+- 用户切换本机 GitHub 凭据到 `12342023`。
+- 或者在 `12342023/unity` 仓库中把 `hahaaaw` 添加为 collaborator 并授予写权限。
+- 权限修复后，重新执行 `git push -u origin main`。
+
+### 19:35 本地 Git 账号配置切换
+
+操作人：Codex
+
+用户要求：
+
+- 直接帮忙修改本机 Git 配置。
+
+已完成：
+
+- 将 `/Users/jianghao/unity` 仓库本地作者名设置为 `12342023`。
+- 将 `/Users/jianghao/unity` 仓库本地作者邮箱设置为 `12342023@users.noreply.github.com`。
+- 将 `origin` 改为显式账号地址：
+
+```text
+https://12342023@github.com/12342023/unity.git
+```
+
+再次推送结果：
+
+```text
+fatal: could not read Password for 'https://12342023@github.com': Device not configured
+```
+
+结论：
+
+- 当前仓库 Git 配置已切换到 `12342023`。
+- 推送不再使用 `hahaaaw`，但缺少 `12342023` 的 GitHub HTTPS 凭据。
+- 需要为 `12342023` 配置 GitHub Token / 凭据后才能完成上传。
+
+### 19:40 GitHub 凭据安全处理
+
+操作人：Codex
+
+用户提供了 `12342023` 账号的登录密码，但该明文密码不会写入 Git 配置、remote URL、脚本或本文档。
+
+处理原则：
+
+- 不使用 GitHub 账号密码进行 HTTPS 推送。
+- 不记录明文密码。
+- 不把密码放入命令行参数，避免出现在 shell 历史或进程列表。
+- 改用 GitHub Personal Access Token。
+
+当前阻塞：
+
+- 缺少 `12342023` 的 GitHub Personal Access Token。
+
+下一步：
+
+- 用户在 GitHub 创建 token。
+- 执行 `git push -u origin main`。
+- Git 提示密码时输入 token。

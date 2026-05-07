@@ -49,10 +49,19 @@ Claude 输出后，Codex 更新 `REVIEW.md`：
 + 在 WORKLOG.md 记录提交和推送结果
 ```
 
-当前可以执行首次提交和推送；推送前仍需确认：
+首次提交已完成；推送失败，原因是当前本机 GitHub 凭据没有目标仓库权限：
 
-- staged 文件不包含 `Library/`、`Logs/`、`UserSettings/`、`.vscode/`、`.sln`
-- 如遇认证失败，需要用户在 GitHub 或系统 Git 凭据中完成授权
+```text
+remote: Permission to 12342023/unity.git denied to hahaaaw.
+fatal: unable to access 'https://github.com/12342023/unity.git/': The requested URL returned error: 403
+```
+
+需要二选一处理：
+
+```diff
++ 切换本机 GitHub 凭据到 12342023
++ 或在 GitHub 仓库中把 hahaaaw 添加为 collaborator 并授予写权限
+```
 
 ### 5. 进入功能开发前的门禁
 
@@ -68,4 +77,14 @@ Claude 输出后，Codex 更新 `REVIEW.md`：
 
 ## 当前状态
 
-下一步：提交并推送当前文档和项目基线到 `https://github.com/12342023/unity.git`。
+下一步：修复 GitHub 认证权限后，重新执行 `git push -u origin main`。
+
+当前本地 Git 配置已切到 `12342023`，再次 push 的错误已变为：
+
+```text
+fatal: could not read Password for 'https://12342023@github.com': Device not configured
+```
+
+这表示旧账号问题已解除，剩余问题是需要给本机配置 `12342023` 的 GitHub HTTPS Token。
+
+不要使用或保存 GitHub 明文密码。下一步需要在 GitHub 创建 Personal Access Token，然后在本机执行 push 时把 token 当作密码输入。

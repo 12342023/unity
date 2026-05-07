@@ -10,6 +10,7 @@
 
 - GitHub 插件：已安装并完成连接流程。
 - `gh` CLI：当前不可用，`gh auth status` 返回 `command not found`。
+- GitHub HTTPS 推送需要 Personal Access Token，不使用、不保存、不记录账号明文密码。
 - Git 顶层目录：`/Users/jianghao/unity`
 - 当前工作目录：`/Users/jianghao/unity`
 - 当前项目目录：`/Users/jianghao/unity/kingbattle`
@@ -52,6 +53,21 @@ origin https://github.com/12342023/unity.git
 
 ```text
 origin https://github.com/12342023/unity.git
+```
+
+### P0：缺少 GitHub Personal Access Token
+
+当前仓库已切换到 `12342023`，但 GitHub HTTPS 推送需要 token。不要把账号密码写入 remote URL、Git 配置、脚本或工作文档。
+
+安全做法：
+
+```diff
+- 不使用 GitHub 账号密码推送
+- 不把密码写进命令行
+- 不把密码写进 WORKLOG.md
++ 使用 GitHub Personal Access Token
++ token 只在 Git 凭据提示中输入
++ 如果 token 已泄露或误发，立即在 GitHub 中撤销并重新生成
 ```
 
 ## 每次修改后的标准流程
