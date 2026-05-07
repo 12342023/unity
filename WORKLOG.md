@@ -325,4 +325,21 @@ branch 'main' set up to track 'origin/main'.
 
 GitHub 上传状态：
 
-- 待提交并推送本次文档修改。
+- 已完成本地提交：
+
+```text
+14f7789 docs: update project platform roadmap
+```
+
+- 推送失败：
+
+```text
+remote: Invalid username or token. Password authentication is not supported for Git operations.
+fatal: Authentication failed for 'https://github.com/12342023/unity.git/'
+```
+
+结论：
+
+- 本地文档修改已提交。
+- GitHub 凭据在修改密码或撤销 token 后失效。
+- 需要重新配置 GitHub Personal Access Token 或官方授权后再推送。

@@ -68,8 +68,15 @@ GitHub 上传已验证成功，当前远端为 `https://github.com/12342023/unit
 下一步：
 
 ```diff
-+ 撤销聊天中暴露过的旧 token
++ 重新配置 GitHub Personal Access Token 或官方授权
++ 推送本地未上传提交
 + 让 Claude 按 TASK.md 做项目基线确认
 + Codex 根据 Claude 输出更新 REVIEW.md
 + 后续每次修改后继续 commit / push / 记录 WORKLOG.md
+```
+
+当前未上传提交：
+
+```text
+14f7789 docs: update project platform roadmap
 ```

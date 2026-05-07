@@ -58,3 +58,5 @@ origin https://github.com/12342023/unity.git
 ## 当前结论
 
 暂不批准进入业务功能开发。当前项目说明、仓库边界和 GitHub 上传流程已明确；下一步请 Claude 先完成 Unity 项目基线确认和多平台边界建议。
+
+注意：本次项目说明更新已本地提交，但 push 因 GitHub 凭据失效失败。需要重新配置 token 后再上传。
