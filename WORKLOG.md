@@ -265,3 +265,40 @@ fatal: unable to access 'https://github.com/12342023/unity.git/': The requested 
 - `Repository access` 选择 `Only select repositories`，并选择 `unity` 仓库。
 - `Repository permissions` 中将 `Contents` 设置为 `Read and write`。
 - 重新执行 `git push -u origin main`。
+
+### 20:05 GitHub 推送成功
+
+操作人：Codex
+
+已完成：
+
+- 创建补充文档提交：
+
+```text
+33d0799 docs: record token push attempt
+```
+
+- 成功推送到 GitHub：
+
+```text
+https://github.com/12342023/unity.git
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   6b46abc..33d0799  main -> main
+branch 'main' set up to track 'origin/main'.
+```
+
+当前状态：
+
+- 本地分支：`main`
+- 远端分支：`origin/main`
+- 当前仓库已完成首次上传。
+
+安全提醒：
+
+- 之前在聊天中暴露过的 token 应尽快在 GitHub 中撤销。
+- 后续如需继续由 Codex 推送，建议使用短期 token 或 GitHub 官方授权方式。

@@ -96,4 +96,13 @@ remote: Permission to 12342023/unity.git denied to 12342023.
 fatal: unable to access 'https://github.com/12342023/unity.git/': The requested URL returned error: 403
 ```
 
-这说明账号已正确识别为 `12342023`，但 token 没有该仓库写权限。需要重新生成 token，并确保 `unity` 仓库的 `Contents` 权限是 `Read and write`。
+这说明账号已正确识别为 `12342023`，但 token 没有该仓库写权限。用户随后完成权限处理后，当前仓库已成功推送到 `https://github.com/12342023/unity.git`。
+
+下一步：
+
+```diff
++ 撤销聊天中暴露过的旧 token
++ 让 Claude 按 TASK.md 做项目基线确认
++ Codex 根据 Claude 输出更新 REVIEW.md
++ 后续每次修改后继续 commit / push / 记录 WORKLOG.md
+```
