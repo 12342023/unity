@@ -343,3 +343,27 @@ fatal: Authentication failed for 'https://github.com/12342023/unity.git/'
 - 本地文档修改已提交。
 - GitHub 凭据在修改密码或撤销 token 后失效。
 - 需要重新配置 GitHub Personal Access Token 或官方授权后再推送。
+
+## 2026-05-08
+
+### 12:44 根据 goal.md 生成下一步要求
+
+操作人：Codex
+
+用户要求：
+
+- 根据 `goal.md` 生成下一步要求。
+
+已完成：
+
+- 阅读 `goal.md`、`TASK.md`、`REVIEW.md`、`NEXT_STEPS.md`、`WORKLOG.md` 和 `要求.md`。
+- 将下一步开发要求收敛为 MVP-01：固定地图、地块、道路、单位沿道路移动。
+- 更新 `NEXT_STEPS.md`，写明 Claude 下一轮可执行任务、禁止事项、架构边界和验收标准。
+- 更新 `TASK.md`，同步当前任务和 Claude 下一轮开发范围。
+- 更新 `REVIEW.md`，明确允许进入 MVP-01，但不允许提前开发战斗、AI、占领、建筑、资源、英雄等系统。
+
+当前待处理：
+
+- 检查本次文档 diff。
+- 按项目规则提交并推送本次文档更新。
+- 如需把 `goal.md` 和 `要求.md` 纳入版本管理，本次也应一并确认后提交。

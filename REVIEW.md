@@ -2,61 +2,87 @@
 
 ## Review 状态
 
-当前尚未收到 Claude 的实现或分析输出，因此本文件先记录基线 Review 结论和后续审查标准。
+当前尚未收到 Claude 的 MVP-01 实现输出。本文件记录 Codex 基于 `goal.md` 给出的阶段门禁和后续审查标准。
 
-## 基线 Review 结论
+## 当前 Review 结论
 
-### 已处理：项目说明与实际结构不一致
+### 已批准：进入 MVP-01 原型开发
 
-`AGENTS.md` 原先声明这是微信小程序项目，但当前目录 `kingbattle/` 是 Unity 工程结构。
-
-用户已确认：当前项目是 Unity 小游戏，后续规划微信小程序、macOS、Android 移植。`AGENTS.md` 已更新。
-
-### 已处理：Git 仓库边界疑似错误
-
-`git rev-parse --show-toplevel` 返回 `/Users/jianghao`。这说明当前 Git 仓库可能覆盖整个用户目录，导致 `git status` 出现大量无关文件。
-
-用户已确认项目根目录使用 `/Users/jianghao/unity`，并已初始化独立 Git 仓库。后续 Git 操作应在 `/Users/jianghao/unity` 内执行。
-
-仍不建议执行 `git add .`，应只 stage 本次任务相关文件。
-
-### 已处理：GitHub 上传目标已设置
-
-用户要求后续每一次修改都上传 GitHub。当前已完成 GitHub 插件安装/连接流程，但本机未发现 `gh` CLI。
-
-当前项目 Git remote 已设置为：
+`goal.md` 已明确第一阶段优先级：
 
 ```text
-origin https://github.com/12342023/unity.git
+地图
+地块
+道路
+单位移动
 ```
 
-已完成本地首次提交。本地仓库 Git 作者与 remote 已切到 `12342023`，推送不再使用 `hahaaaw`。
+因此允许 Claude 开始最小业务原型开发，但只批准 `NEXT_STEPS.md` 中定义的固定地图与道路移动范围。
 
-注意：不应使用、保存或记录 GitHub 明文密码。需要改用 Personal Access Token。
+### 不批准：提前开发完整玩法系统
 
-当前项目基线已成功推送到 `https://github.com/12342023/unity.git`。仍建议撤销聊天中暴露过的 token。
+以下内容仍不允许在 MVP-01 中实现：
 
-### P1：Unity 生成目录需要版本控制策略
+- 战斗
+- AI
+- 占领进度
+- 建筑建造 / 重建 / 拆除
+- 粮食资源
+- 英雄
+- 联机
+- 随机地图
+- 复杂 UI
 
-当前项目包含 `Library/`、`Logs/`、`UserSettings/` 等 Unity 生成或本机状态目录。后续如果进入 Unity 开发，需要先确认 `.gitignore` 策略，避免提交大量机器生成文件。
+原因：这些内容依赖地图、道路和单位移动是否成立。先把路线移动原型打通，后续再分阶段叠加系统。
 
-### P1：多平台移植边界需要提前设计
+### 仍需保持：Unity 工程与仓库边界
 
-项目后续计划移植到微信小程序、macOS、Android。核心玩法和数据逻辑应尽量保持平台无关；输入、存储、登录、支付、分享、构建发布等平台能力需要通过清晰接口隔离。
+当前项目根目录已确认为 `/Users/jianghao/unity`，Unity 主工程位于 `kingbattle/`。
+
+后续仍不允许提交：
+
+```diff
+- kingbattle/Library/
+- kingbattle/Logs/
+- kingbattle/UserSettings/
+- kingbattle/Temp/
+- kingbattle/Obj/
+- kingbattle/Build/
+- kingbattle/Builds/
+```
+
+仍不建议使用 `git add .`，应只 stage 本次任务相关文件。
+
+### 仍需保持：多平台移植边界
+
+微信小程序、macOS、Android 是后续移植目标，不是 MVP-01 的实现目标。
+
+Claude 如果遇到输入、存储、分享、支付、构建发布等平台能力，应先提出接口边界，不要把平台判断写进玩法逻辑。
 
 ## Claude 输出后的 Review 检查项
 
-- 是否明确区分“事实”和“假设”
-- 是否基于 Unity 小游戏主工程规划开发
-- 是否为微信小程序、macOS、Android 移植保留边界
-- 是否避免改动业务代码
-- 是否没有随意修改 `ProjectSettings`
-- 是否给出最小可执行的下一步
-- 是否用 diff 风格表达修改建议
-- 是否遵守“每次修改都有文档、提交、推送记录”的流程
+- 是否符合 `goal.md` 第一阶段范围
+- 是否只实现固定地图、地块、道路、单位移动
+- 是否没有提前实现战斗、AI、占领、建筑、资源、英雄
+- 是否创建了清晰的 `Scripts/Core`、`Scripts/Map`、`Scripts/Units` 边界
+- 是否避免超大 `GameManager`
+- 道路和地块关系是否清晰
+- 单位移动是否被限制在道路上
+- 三个兵种是否只有必要的移动配置差异
+- 是否未修改 `ProjectSettings`，或已提前说明理由
+- 是否没有提交 Unity 生成目录
+- 是否更新工作文档
+- 是否完成 commit / push 并记录结果
 
-## 当前结论
+## Codex 当前判断
 
-暂不批准进入业务功能开发。当前项目说明、仓库边界和 GitHub 上传流程已明确；下一步请 Claude 先完成 Unity 项目基线确认和多平台边界建议。
+可以进入 MVP-01，但不能越界到完整游戏系统。
 
-注意：本次项目说明更新已本地提交，但 push 因 GitHub 凭据失效失败。需要重新配置 token 后再上传。
+下一次 Review 的重点不是“功能多不多”，而是：
+
+```text
+地图结构是否清楚
+道路移动是否成立
+架构边界是否干净
+后续系统是否容易接上
+```
