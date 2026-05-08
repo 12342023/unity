@@ -890,6 +890,41 @@ git commit -m "feat: implement mvp-02.1 patrol, aggro, deaggro, rally points and
 git push origin main
 ```
 
+### MVP-02.1 巡逻定义澄清
+
+操作人：Codex
+
+用户澄清：
+
+```text
+我要的巡逻是他在一个建筑那边转圈
+```
+
+Codex 判断：
+
+- Claude 当前说明中的巡逻是“到达集结点后在邻居地块之间巡逻”，例如 `Village ↔ Crossroads / PlayerBase`。
+- 这不符合用户想要的建筑周边转圈巡逻。
+- 需要发布修正要求，让 Claude 把巡逻改为建筑/集结点附近小半径环绕。
+
+新要求：
+
+- Barracks 生成单位后，单位围绕所属建筑转圈巡逻。
+- 如果有集结点，单位到达后围绕集结点或指定建筑转圈。
+- 多个单位应错开起始角度，避免完全重叠。
+- 巡逻半径可先用 0.6 到 1.2 Unity 单位。
+- 巡逻状态遇敌后切换接敌。
+- 脱战后回到建筑周边继续转圈。
+
+仓库注意：
+
+- 当前发现 `kingbattle/Assets/Scripts/Units/UnitPatrol.cs.meta` 未跟踪。
+- Claude 后续提交 `UnitPatrol.cs` 时必须同时提交 `.meta` 文件。
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍不提交。
+
+GitHub 上传状态：
+
+- 待提交并推送本次需求澄清文档。
+
 提交记录：
 
 ```text

@@ -124,13 +124,13 @@ Claude 下一阶段正式进入 MVP-02.1。
 
 ## 当前状态
 
-### MVP-02.1 脚本实现完成，待 Codex Review
+### MVP-02.1 脚本实现需按巡逻定义调整
 
-Claude 已完成 MVP-02.1 全部脚本：
+Claude 已提交 MVP-02.1 脚本说明，但用户进一步澄清巡逻定义后，当前实现需要调整：
 
 | 组件 | 状态 | 说明 |
 |---|---|---|
-| 巡逻系统 | ✅ | UnitPatrol + UnitCombat idle patrol |
+| 巡逻系统 | 需调整 | 当前说明像地块间巡逻；应改为建筑周边转圈 |
 | 仇恨/锁敌 | ✅ | aggroRange=4, chaseRange=7, 自动 Chase → Attack |
 | 脱战机制 | ✅ | 目标死亡/超 chaseRange 后脱战回 Idle |
 | 集结点 | ✅ | Barracks rallyPlotId, 单位先集合再巡逻 |
@@ -138,8 +138,9 @@ Claude 已完成 MVP-02.1 全部脚本：
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
+- ⏳ Claude 需要先按“建筑旁边转圈”修正巡逻
 - ⏳ Unity Play Mode 验证需用户手动确认
-- ⏳ git commit / push 需用户手动执行
+- ⏳ commit / push 需包含 `UnitPatrol.cs.meta`
 - ⏳ 等待 Codex Review 通过后进入第三阶段
 
 主题：
@@ -147,6 +148,14 @@ Claude 已完成 MVP-02.1 全部脚本：
 ```text
 巡逻 + 仇恨范围 + 脱战 + 集结点 + 小波次推进
 ```
+
+用户对“巡逻”的最新定义：
+
+```text
+单位在一个建筑旁边转圈巡逻
+```
+
+因此 Claude 需要把巡逻理解为建筑周边小半径环绕，而不是在多个地块之间来回走。
 
 目标：
 
@@ -207,6 +216,7 @@ Claude 完成当前修复或 MVP-02.1 后必须说明：
 
 - 新增或修改了哪些文件
 - 如何在 Unity 中运行验证
+- 如何观察单位围绕建筑转圈巡逻
 - 哪些逻辑是临时测试入口
 - 哪些 `goal.md` 内容仍未实现
 - 是否修改了场景文件
