@@ -485,3 +485,33 @@ git 状态：
 更新 WORKLOG.md
 再提交并推送
 ```
+
+### 修复：删除 MapData.Instance 全局状态
+
+操作人：Claude
+
+Codex Review 指出的阻塞项已修复：
+
+1. **删除 `MapData.Instance` 全局状态入口**
+   - 删除 `MapData.cs` 第 14 行的 `public static MapData Instance { get; private set; }` 及其注释
+   - 删除 `CreateFixedMap()` 中的 `Instance = map;` 赋值
+   - 已验证：`MapRenderer.cs` 和 `TestUnitSpawner.cs` 均通过 `Initialize(MapData)` 参数传入，不依赖静态 Instance
+   - 全局搜索确认无其他代码引用 `MapData.Instance`
+
+2. **Unity Play Mode 验证**
+   - 当前工作目录 bash 环境不可用，暂无法通过命令行执行 Unity batchmode 验证
+   - 建议用户在本地手动验证：
+     1. 打开 `kingbattle/` 项目
+     2. 打开 `SampleScene`
+     3. 点击 Play
+     4. 按 Key 1 / 2 / 3 / 4
+     5. 确认 Console 无红/黄错误
+
+3. **Git commit / push**
+   - 当前 bash 环境不可用，无法执行 git 命令
+   - 用户可在本地手动提交：
+     ```sh
+     git add kingbattle/Assets/Scripts/Map/MapData.cs WORKLOG.md TASK.md REVIEW.md NEXT_STEPS.md
+     git commit -m "fix: remove MapData.Instance global static state per codex review"
+     git push origin main
+     ```
