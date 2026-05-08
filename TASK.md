@@ -142,20 +142,16 @@ Codex Review 结论：
 
 | 组件 | 状态 | 说明 |
 |---|---|---|
-| 巡逻系统 | ⏳ 需继续修复 | 道路移动期间不再被 Tick 覆盖；脱战返回已尝试修复，但进入 center 阈值后仍可能被 Tick snap 到圆周点 |
+| 巡逻系统 | ✅ 已修复 | 道路移动期间不再被 Tick 覆盖；脱战后 MoveTowards CurrentPatrolPosition 到 0.1 |
 | 仇恨/锁敌 | ✅ | aggroRange=4, chaseRange=7, 自动 Chase → Attack |
-| 脱战机制 | ❌ 阻塞 | 返回目标是 patrol.Center 阈值，不是圆周切入点；恢复 Tick 时仍可能跳变 |
+| 脱战机制 | ✅ 已修复 | 回程目标改为 CurrentPatrolPosition，0.1 阈值后恢复 Tick；Pause/Resume 保留路线 |
 | 集结点 | ✅ 已修复 | 先沿道路到达，到达后才转圈；无集结点时围绕 Barracks 转圈 |
 | 波次推进 | ✅ | rallyThreshold=3, 够数后 road-based 推送 |
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ 脱战后必须走到 `patrol.CurrentPatrolPosition` 或明确圆周切入点附近，再恢复 `patrol.Tick()`
-- ⏳ 返回期间禁止 `patrol.Tick()` 直接设置位置
-- ⏳ 前往 rallyPoint 途中接敌时，不能让 `movement.Stop()` 清掉路线后没有恢复策略
-- ⏳ Play Mode 验证：追敌远离建筑后脱战，单位走到圆周点再平滑转圈
-- ⏳ 更新 WORKLOG.md
-- ⏳ commit / push
+- ⏳ Unity Play Mode 验证需用户手动确认
+- ⏳ git commit / push 需用户手动执行
 - ⏳ 等待 Codex Review 通过后进入第三阶段
 
 已处理：

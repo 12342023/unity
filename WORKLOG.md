@@ -1364,3 +1364,48 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    10abfb2..76c25b0  main -> main
 ```
+
+### MVP-02.1 修复：脱战 snap + 路线丢失
+
+操作人：Claude
+
+Codex Review 指出的两个阻塞点已修复：
+
+**阻塞点 1：脱战 snap**
+
+根因：脱战后 `UpdateIdle()` 向 `patrol.Center` 走回，到达阈值（~1.85）后允许 `patrol.Tick()` → `Tick()` 直接 `transform.position = CurrentPatrolPosition`，形成 snap。
+
+修复：回程目标改为 `patrol.CurrentPatrolPosition`（圆周切入点），持续 `MoveTowards` 直到 `distToCircle <= 0.1` 后才允许 `Tick`。
+- 单位在圆周上 converge 到准确位置
+- 0.1 阈值内 `Tick()` 的 snap 不可见（小于 0.1 单位）
+
+**阻塞点 2：路线丢失**
+
+根因：aggro 触发时 `movement.Stop()` 彻底清掉 rallyPoint 道路路线。
+
+修复：
+- aggro 触发：`movement?.Pause()`（保留路线，仅暂停）
+- 脱战恢复：`movement?.Resume()`（恢复道路移动）
+- `UpdateIdle()` 的"返回巡逻圆"检查增加了 `!movement.HasRemainingPath` 守卫
+- 因此：有保留路线时 → 继续走道路；无路线时 → 回巡逻圆
+
+修改文件（仅 1 个）：
+- `Assets/Scripts/Combat/UnitCombat.cs` — 3 处修改
+  - aggro 触发: `Stop()` → `Pause()`
+  - Deaggro: 新增 `movement?.Resume()`
+  - UpdateIdle 回程: `patrol.Center` → `patrol.CurrentPatrolPosition`，阈值 0.1
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. 巡逻转圈中接敌 → 脱战后蓝兵从远处走回 Village 巡逻圆（MoveTowards 可见），接近到 0.1 以内才恢复转圈 → 无 snap
+2. 前往 Village 途中（道路上）接敌 → 脱战后继续沿道路走向 Village → 到达后转圈
+3. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs WORKLOG.md TASK.md
+git commit -m "fix: MoveTowards patrol circle until 0.1, Pause/Resume road path"
+git push origin main
+```

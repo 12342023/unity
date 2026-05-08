@@ -115,7 +115,7 @@ namespace Combat
             {
                 chaseTarget = enemy;
                 state = CState.Chase;
-                movement?.Stop(); // stop patrol movement
+                movement?.Pause(); // pause road path (keep it for resume later)
                 return;
             }
 
@@ -142,21 +142,22 @@ namespace Combat
                 return;
             }
 
-            // 3. Return to patrol center if too far away (deaggro recovery)
-            if (patrol != null)
+            // 3. Return to patrol circle after deaggro (only when no road path remains)
+            if (patrol != null && pushPath == null && (movement == null || !movement.HasRemainingPath))
             {
-                float distToCenter = Vector3.Distance(transform.position, patrol.Center);
-                float returnThreshold = patrol.Radius * 1.5f + 0.5f;
-                if (distToCenter > returnThreshold)
+                float distToCircle = Vector3.Distance(transform.position, patrol.CurrentPatrolPosition);
+                if (distToCircle > 0.1f)
                 {
+                    // Walk toward the exact patrol circle position — not center,
+                    // so the unit arrives on the circle, not inside it.
                     var step = movement.speed * Time.deltaTime;
                     transform.position = Vector3.MoveTowards(
-                        transform.position, patrol.Center, step);
+                        transform.position, patrol.CurrentPatrolPosition, step);
                     return;
                 }
             }
 
-            // 4. Circular patrol (only when NOT moving along road path AND no push path)
+            // 4. Already on the circle (within 0.1 units) — safe to Tick
             if (patrol != null && pushPath == null && movement != null && !movement.HasRemainingPath)
             {
                 patrol.Tick(Time.deltaTime);
@@ -235,7 +236,11 @@ namespace Combat
             chaseTarget = null;
             state = CState.Idle;
 
-            // Resume patrol — UpdateIdle will handle walking back to center if needed
+            // Resume paused road path (if any) so unit continues toward rally point
+            movement?.Resume();
+
+            // Resume patrol — UpdateIdle will handle walking back to the circle
+            // but only if there's no pending road path (HasRemainingPath == false).
             patrol?.Resume();
         }
 
