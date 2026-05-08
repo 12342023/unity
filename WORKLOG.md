@@ -1233,4 +1233,17 @@ Codex 阶段判断：
 
 GitHub 上传状态：
 
-- 本条需求记录待提交并推送。
+- 已提交并推送本条需求记录。
+
+提交记录：
+
+```text
+0ad6f6f docs: record ruins patrol requirement
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   3ca7ea7..0ad6f6f  main -> main
+```
