@@ -53,15 +53,11 @@ namespace Combat
         // ── Public API ──────────────────────────────────────────────────
 
         /// <summary>Set the home position to return to after deaggro.
-        /// Also used as the center of circular patrol.</summary>
+        /// Patrol should already be set up with proper stagger angle by the spawner.</summary>
         public void SetHomePosition(Vector3 pos)
         {
             homePosition = pos;
             hasHome = true;
-
-            // If we have a patrol component, wire it to circle around home
-            if (patrol != null)
-                patrol.Setup(pos, 0.9f, Random.Range(0f, 360f));
         }
 
         /// <summary>Assign a push path: unit will traverse this path toward the enemy,
@@ -146,8 +142,8 @@ namespace Combat
                 return;
             }
 
-            // 3. Circular patrol (circle around home / rally building)
-            if (patrol != null)
+            // 3. Circular patrol (only when NOT moving along road path AND no push path)
+            if (patrol != null && pushPath == null && movement != null && !movement.HasRemainingPath)
             {
                 patrol.Tick(Time.deltaTime);
             }

@@ -140,10 +140,10 @@ Codex Review 结论：
 
 | 组件 | 状态 | 说明 |
 |---|---|---|
-| 巡逻系统 | 需修复 | 当前 patrol.Tick 可能覆盖道路移动，导致瞬移到巡逻圆 |
+| 巡逻系统 | ✅ 已修复 | 仅当 HasRemainingPath=false 时 patrol.Tick；Setup 不 snap 位置 |
 | 仇恨/锁敌 | ✅ | aggroRange=4, chaseRange=7, 自动 Chase → Attack |
 | 脱战机制 | ✅ | 目标死亡/超 chaseRange 后脱战回 Idle |
-| 集结点 | 需修复 | 必须先沿道路到达集结点，再开始转圈 |
+| 集结点 | ✅ 已修复 | 先沿道路到达，到达后才转圈；无集结点时围绕 Barracks 转圈 |
 | 波次推进 | ✅ | rallyThreshold=3, 够数后 road-based 推送 |
 | Tower 仍只攻击单位 | ✅ | 不变 |
 

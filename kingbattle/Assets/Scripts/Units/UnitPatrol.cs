@@ -32,8 +32,8 @@ namespace Units
             patrolSpeed = speed;
             isActive = true;
 
-            // Snap to initial position on the circle
-            ApplyCirclePosition();
+            // Do NOT snap position here — Tick() will apply the circle position
+            // when the unit is ready (i.e. after road movement is complete).
         }
 
         /// <summary>Pause patrolling (e.g. when chasing / fighting).</summary>

@@ -89,21 +89,9 @@ namespace Buildings
 
         private void SpawnUnit()
         {
-            // ── Path to rally point ──
             string destPlotId = string.IsNullOrEmpty(rallyPlotId) ? currentPlotId : rallyPlotId;
-
-            var pathIds = RoadPathFinder.FindPath(mapData, currentPlotId, destPlotId);
-            if (pathIds == null || pathIds.Count < 2) return;
-
-            var waypoints = pathIds
-                .Select(id => mapData.GetPlot(id))
-                .Where(p => p != null)
-                .Select(p =>
-                {
-                    var pos = p.worldPosition;
-                    return new Vector3(pos.x, pos.y, -0.2f);
-                })
-                .ToList();
+            bool needRoadMove = destPlotId != currentPlotId;
+            string logPath = destPlotId;
 
             // ── GameObject ──
             var go = new GameObject($"{faction}_Soldier_{Time.frameCount}");
@@ -129,16 +117,16 @@ namespace Buildings
             col.radius = 0.2f;
             col.isTrigger = true;
 
-            // ── Circular patrol (circles around rally/building) ──
-            var patrol = go.AddComponent<UnitPatrol>();
+            // ── Patrol center ──
             Vector3 patrolCenter = mapData.GetPlot(destPlotId)?.worldPosition ?? transform.position;
-            float patrolRadius = 0.9f;
-            float startAngle = (spawnedUnits.Count % 12) * 30f; // stagger angles so units don't overlap
-            patrol.Setup(
-                new Vector3(patrolCenter.x, patrolCenter.y, -0.2f),
-                patrolRadius, startAngle);
+            Vector3 homePos = new Vector3(patrolCenter.x, patrolCenter.y, -0.2f);
 
-            // ── Combat (self-managed aggro/chase/deaggro) ──
+            // ── Circular patrol ──
+            var patrol = go.AddComponent<UnitPatrol>();
+            float startAngle = (spawnedUnits.Count % 12) * 30f;
+            patrol.Setup(homePos, 0.9f, startAngle);
+
+            // ── Combat ──
             var combat = go.AddComponent<UnitCombat>();
             combat.damage = unitDamage;
             combat.attackRange = unitAttackRange;
@@ -146,16 +134,42 @@ namespace Buildings
             combat.aggroRange = unitAggroRange;
             combat.chaseRange = unitChaseRange;
             combat.faction = faction;
-            combat.SetHomePosition(waypoints[^1]); // home = rally point
+            combat.SetHomePosition(homePos);
 
-            // Start moving to rally point
-            movement.StartMoving(waypoints);
+            // ── Road movement to rally point (if different from current plot) ──
+            if (needRoadMove)
+            {
+                var pathIds = RoadPathFinder.FindPath(mapData, currentPlotId, destPlotId);
+                if (pathIds != null && pathIds.Count >= 2)
+                {
+                    var waypoints = pathIds
+                        .Select(id => mapData.GetPlot(id))
+                        .Where(p => p != null)
+                        .Select(p =>
+                        {
+                            var pos = p.worldPosition;
+                            return new Vector3(pos.x, pos.y, -0.2f);
+                        })
+                        .ToList();
+
+                    movement.StartMoving(waypoints);
+                    logPath = string.Join(" -> ", pathIds);
+                    Debug.Log($"[Barracks] Spawned {faction} Soldier, moving to rally {destPlotId}: {logPath}");
+                }
+                else
+                {
+                    // Rally plot unreachable — patrol at spawn position
+                    Debug.Log($"[Barracks] Spawned {faction} Soldier at {currentPlotId} (rally {destPlotId} unreachable), patrolling locally.");
+                }
+            }
+            else
+            {
+                // No rally point — patrol around Barracks immediately
+                Debug.Log($"[Barracks] Spawned {faction} Soldier at {currentPlotId}, patrolling locally (no rally point).");
+            }
 
             // Track
             spawnedUnits.Add(go);
-
-            var pathStr = string.Join(" -> ", pathIds);
-            Debug.Log($"[Barracks] Spawned {faction} Soldier, rallying at {destPlotId}: {pathStr}");
         }
 
         // ── Wave push ───────────────────────────────────────────────────

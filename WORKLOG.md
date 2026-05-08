@@ -1073,3 +1073,61 @@ ebe2789 docs: review mvp-02.1 patrol timing
 To https://github.com/12342023/unity.git
    583b1e7..ebe2789  main -> main
 ```
+
+### MVP-02.1 Review 修复：巡逻瞬移 + 无集结点不出兵
+
+操作人：Claude
+
+Codex Review 指出的两个问题已修复：
+
+**问题 1：`UnitCombat.UpdateIdle()` 中 `patrol.Tick()` 覆盖道路移动**
+
+根因：`UpdateIdle()` 无条件调用 `patrol.Tick()`，而 `Tick()` 直接设置 `transform.position` 到巡逻圆位置。当单位还在沿道路移动（`HasRemainingPath = true`）时，仍会被拉到巡逻圆上。
+
+修复：
+- `UpdateIdle()` 的 patrol 调用新增三重守卫：
+  ```csharp
+  if (patrol != null && pushPath == null && movement != null && !movement.HasRemainingPath)
+  ```
+- `UnitPatrol.Setup()` 不再调用 `ApplyCirclePosition()`，避免初始化时瞬移
+- `UnitCombat.SetHomePosition()` 不再覆盖 patrol.Setup()，保留 BarracksSpawner 设置的错开角度
+
+**问题 2：`rallyPlotId` 为空时 `SpawnUnit()` 直接 return**
+
+根因：`rallyPlotId` 为空时 `destPlotId = currentPlotId`，`RoadPathFinder.FindPath` 返回单元素数组，`pathIds.Count < 2` 检查失败，直接 return。
+
+修复：
+- `SpawnUnit()` 重构：先创建 GameObject + 所有组件，再判断是否需要沿道路移动
+- `needRoadMove = destPlotId != currentPlotId`
+- 只有需要道路移动时才调用 `RoadPathFinder.FindPath` 和 `movement.StartMoving`
+- 无集结点时：单位直接在 Barracks 位置开始转圈巡逻
+- 集结点不可达时：单位在出生位置本地巡逻（不卡死）
+
+修改文件：
+- `Assets/Scripts/Combat/UnitCombat.cs` — UpdateIdle 守卫 + SetHomePosition 简化
+- `Assets/Scripts/Units/UnitPatrol.cs` — Setup 不再 snap 位置
+- `Assets/Scripts/Buildings/BarracksSpawner.cs` — SpawnUnit 重构，支持无集结点
+
+场景文件和 ProjectSettings：**均未修改**
+
+Play Mode 验证步骤：
+1. 打开 `SampleScene` → Play
+2. 等待 5 秒 → **蓝色 Soldier 先沿道路向 Village 移动**（不瞬移）
+3. 到达 Village 后 → **围绕 Village 转圈巡逻**（半径 0.9，角度错开）
+4. 红色 Soldier → **先沿道路向 EnemyOutpost 移动** → 到达后转圈
+5. 双方 Soldier 相遇 → aggro → Chase → Attack
+6. 脱战后 → 返回 Village / Outpost 继续转圈
+7. Village 聚集 ≥ 3 个蓝兵 → 波次推向 EnemyBase
+8. Console 无明显错误
+9. **测试无集结点情形**：在 `GameEntry.cs` 中注释 `pbSpawner.rallyPlotId = "Village"`，确认单位生成后围绕 PlayerBase 转圈
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
+        kingbattle/Assets/Scripts/Units/UnitPatrol.cs \
+        kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs \
+        WORKLOG.md TASK.md
+git commit -m "fix: prevent patrol overwriting road movement, handle missing rally point"
+git push origin main
+```
