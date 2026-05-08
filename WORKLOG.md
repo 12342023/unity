@@ -821,4 +821,22 @@ MVP-02.1 自动战争基础体验补强
 
 GitHub 上传状态：
 
-- 待提交并推送本次文档更新。
+- 已提交并推送本次文档更新。
+
+提交记录：
+
+```text
+7aa9e36 docs: release mvp-02.1 task
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   48f7eb5..7aa9e36  main -> main
+```
+
+当前状态：
+
+- Claude 可以开始 MVP-02.1。
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未跟踪，继续不提交。
