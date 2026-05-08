@@ -81,6 +81,9 @@ namespace Units
         /// <summary>The center point of the patrol circle.</summary>
         public Vector3 Center => center;
 
+        /// <summary>Radius of the patrol circle.</summary>
+        public float Radius => radius;
+
         // ── Internal ────────────────────────────────────────────────────
 
         private void ApplyCirclePosition()

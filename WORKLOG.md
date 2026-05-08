@@ -1201,6 +1201,54 @@ To https://github.com/12342023/unity.git
    91d2bfb..2a426d8  main -> main
 ```
 
+### MVP-02.1 脱战返回巡逻修复
+
+操作人：Claude
+
+Codex Review 指出的脱战瞬移问题已修复。
+
+**问题：** `Deaggro()` 只向 `patrol.CurrentPatrolPosition` 移动一帧，下一帧进入 Idle 后 `patrol.Tick()` 直接 snap `transform.position` 到巡逻圆，产生瞬移。
+
+**修复（三处修改）：**
+
+1. **`UnitCombat.UpdateIdle()`** — 新增"返回家园"阶段：
+   - 检查距 patrol center 距离，超过 `radius * 1.5 + 0.5 ≈ 1.85` 时每帧走回一格
+   - 进入阈值后才允许 `patrol.Tick()` 启动圆周旋转
+   - 禁用旧的立即 snap
+
+2. **`UnitCombat.Deaggro()`** — 简化：
+   - 删除旧的一帧 direct return 逻辑
+   - 只调用 `patrol.Resume()`，统一由 `UpdateIdle()` 处理回程
+
+3. **`UnitPatrol.cs`** — 新增 `Radius` 只读属性
+
+**脱战→返回完整流程：**
+- 转圈巡逻 → aggro → Chase（追出数格）
+- 目标死亡/出 chaseRange → Deaggro：`patrol.Resume()`
+- Idle 每帧：距离 > 1.85 → 向 center 走一格（可见移动）
+- 进入 1.85 以内 → `patrol.Tick()` 启动 → 继续转圈
+
+修改文件：
+- `Assets/Scripts/Combat/UnitCombat.cs` — UpdateIdle 增加回程阶段；Deaggro 简化
+- `Assets/Scripts/Units/UnitPatrol.cs` — 新增 Radius 属性
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. Play → 蓝兵追上红兵后脱战 → 蓝兵一步步走回 Village
+2. 到 Village 附近 → 恢复转圈（无瞬移）
+3. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
+        kingbattle/Assets/Scripts/Units/UnitPatrol.cs \
+        WORKLOG.md TASK.md
+git commit -m "fix: smooth deaggro return to patrol circle, no teleport"
+git push origin main
+```
+
 ### 新增需求记录：建筑变废墟并支持废墟巡逻
 
 操作人：Codex

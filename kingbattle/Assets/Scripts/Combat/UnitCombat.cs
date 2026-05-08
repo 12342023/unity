@@ -142,7 +142,21 @@ namespace Combat
                 return;
             }
 
-            // 3. Circular patrol (only when NOT moving along road path AND no push path)
+            // 3. Return to patrol center if too far away (deaggro recovery)
+            if (patrol != null)
+            {
+                float distToCenter = Vector3.Distance(transform.position, patrol.Center);
+                float returnThreshold = patrol.Radius * 1.5f + 0.5f;
+                if (distToCenter > returnThreshold)
+                {
+                    var step = movement.speed * Time.deltaTime;
+                    transform.position = Vector3.MoveTowards(
+                        transform.position, patrol.Center, step);
+                    return;
+                }
+            }
+
+            // 4. Circular patrol (only when NOT moving along road path AND no push path)
             if (patrol != null && pushPath == null && movement != null && !movement.HasRemainingPath)
             {
                 patrol.Tick(Time.deltaTime);
@@ -221,22 +235,8 @@ namespace Combat
             chaseTarget = null;
             state = CState.Idle;
 
-            // Resume circular patrol around home
-            if (patrol != null)
-            {
-                patrol.Resume();
-
-                // Direct return toward the patrol circle
-                var targetPos = patrol.CurrentPatrolPosition;
-                var step = movement.speed * Time.deltaTime * 0.8f;
-                transform.position = Vector3.MoveTowards(transform.position, targetPos, step);
-            }
-            else if (hasHome)
-            {
-                var step = movement.speed * Time.deltaTime * 0.8f;
-                transform.position = Vector3.MoveTowards(
-                    transform.position, homePosition, step);
-            }
+            // Resume patrol — UpdateIdle will handle walking back to center if needed
+            patrol?.Resume();
         }
 
         // ── Enemy detection ─────────────────────────────────────────────
