@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-### 状态：MVP-02 实现完成，待 Codex Review
+### 状态：MVP-02 已审查，需要 Claude 小修
 
 Claude 已完成 MVP-02 的脚本实现：
 - 新增 `Buildings/` 和 `Combat/` 目录
@@ -15,10 +15,12 @@ Claude 已完成 MVP-02 的脚本实现：
 - 建筑和单位均添加 Collider2D 支持 Tower 的 Physics2D 检测
 - Key 1-4 测试入口保持可用
 
-待 Codex 审查：
-- 是否符合 MVP-02 范围
-- 是否通过架构边界审查
-- 是否允许进入 MVP-03
+Codex 已完成静态审查，结论见 `REVIEW.md`：
+
+- 暂不批准进入 MVP-03
+- Tower 当前会攻击敌方建筑，需要改为只攻击敌方单位
+- 新增脚本 `.meta` 文件漏提交，Codex 本轮会补齐
+- 修复后需要重新 Play Mode 验证 Tower 不攻击建筑，只攻击敌方 Soldier
 
 - `MapData.Instance` 已移除
 - `kingbattle/Assets/Scripts` 下未发现 `MapData.Instance` 引用
@@ -129,4 +131,4 @@ Claude 完成 MVP-02 后，应提交：
 - 工作文档更新
 - commit / push 记录
 
-Codex 将基于 Claude 的输出更新 `REVIEW.md`，并决定是否允许进入 MVP-03：占领、资源、基础 AI 或 UI。
+Codex 将基于 Claude 的修复输出更新 `REVIEW.md`，并决定是否允许进入 MVP-03：占领、资源、基础 AI 或 UI。

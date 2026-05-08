@@ -2,96 +2,107 @@
 
 ## Review 状态
 
-Codex 已完成 Claude 的 MVP-01 固定地图与道路移动原型复审。
+Codex 已完成 Claude 的 MVP-02 建筑、出兵与基础战斗原型静态审查。
 
-结论：**MVP-01 通过，允许进入 MVP-02。**
+结论：**暂不批准进入 MVP-03**。
+
+原因：MVP-02 主体方向正确，但 Tower 当前会攻击敌方建筑，不只攻击敌方单位；同时新增脚本的 Unity `.meta` 文件漏提交，需要补齐仓库状态。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **FAIL**
 
-## 复审结论
+### [P1] Tower 会攻击敌方建筑，导致开局建筑互打
 
-### 已修复：移除 MapData.Instance
+File: `kingbattle/Assets/Scripts/Buildings/TowerAttack.cs:51`
 
-Claude 已按 Review 要求移除 `MapData.Instance`：
+Problem:
 
-- `kingbattle/Assets/Scripts/Map/MapData.cs` 中不再存在 `public static MapData Instance`
-- `CreateFixedMap()` 中不再存在 `Instance = map`
-- 全局搜索 `kingbattle/Assets/Scripts` 未发现 `MapData.Instance` 引用
-- `MapRenderer` 和 `TestUnitSpawner` 仍通过 `Initialize(MapData)` 显式传入地图数据
+`TowerAttack.FindNearestEnemy()` 通过 `Physics2D.OverlapCircleNonAlloc()` 找到范围内所有带 `HealthComponent` 的敌对对象，但没有区分单位和建筑。`GameEntry` 给建筑也添加了 `BoxCollider2D` 和 `HealthComponent`，并且玩家 Tower 位于 `Crossroads`，敌方 Tower 位于 `EnemyOutpost`，两者距离约 3.2，小于 Tower 的 `attackRange = 3.5`。
 
-该项通过。
+Impact:
 
-### 已验证：Unity Play Mode
+进入 Play Mode 后，Tower 可能先攻击敌方 Tower / Barracks / Granary 等建筑，而不是只攻击进入范围的单位。这违反 MVP-02 要求“Tower 自动攻击范围内敌方单位”，也会干扰 Barracks 出兵与单位战斗链路验证。
 
-根据 `WORKLOG.md` 记录，用户已在 Unity Editor 中手动验证：
+Fix:
 
-- Console 无编译错误、无运行时错误
-- Key 1 生成 Samurai 并移动到 EnemyBase
-- Key 2 生成 Elf Archer 并移动到 EnemyBase
-- Key 3 生成 Soldier 并移动到 EnemyBase
-- Key 4 生成 Samurai 并移动到 Crossroads
-- 地图渲染、道路、建筑槽位标记、主基地边框均可见
+请 Claude 让 Tower 只选择单位目标。最小修法可以在 `FindNearestEnemy()` 中过滤掉没有 `UnitCombat` 的对象：
 
-该项通过。
+```diff
++ var unitCombat = hitBuffer[i].GetComponent<UnitCombat>();
++ if (unitCombat == null)
++     continue;
+```
 
-### 已确认：MVP-01 范围控制
+需要同时添加对应 namespace：
 
-本轮实现仍保持在 MVP-01 范围：
+```diff
++ using Combat;
+```
 
-- 固定地图
-- 地块数据
-- 固定道路
-- BFS 道路寻路
-- 单位沿道路移动
-- 临时键盘测试入口
+`TowerAttack.cs` 已经引用 `Combat`，因此只需要在筛选逻辑里加单位判定即可。修完后重新 Play Mode 验证：Tower 不应攻击建筑，只攻击进入范围的敌方 Soldier。
 
-未提前实现：
+### [P1] 新增脚本的 Unity meta 文件漏提交
 
-- 战斗
-- AI
-- 占领进度
-- 建筑建造 / 重建 / 拆除
-- 粮食资源
-- 英雄
-- 联机
-- 随机地图
-- 复杂 UI
+File: `kingbattle/Assets/Scripts/Buildings.meta`
 
-该项通过。
+Problem:
+
+MVP-02 提交 `fc1a6bc` 已包含新增 C# 脚本，但当前工作树仍有以下未跟踪 `.meta` 文件：
+
+```text
+kingbattle/Assets/Scripts/Buildings.meta
+kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs.meta
+kingbattle/Assets/Scripts/Buildings/TowerAttack.cs.meta
+kingbattle/Assets/Scripts/Combat.meta
+kingbattle/Assets/Scripts/Combat/HealthComponent.cs.meta
+kingbattle/Assets/Scripts/Combat/UnitCombat.cs.meta
+kingbattle/Assets/Scripts/Core/BuildingType.cs.meta
+```
+
+Impact:
+
+Unity 项目应提交源码对应 `.meta` 文件，保持 GUID 稳定。漏提交会让其他机器重新生成 meta，后续引用、Prefab、Scene 或 Inspector 绑定可能出现 GUID 漂移。
+
+Fix:
+
+Codex 本轮会把这些 `.meta` 文件作为仓库卫生补提交。Claude 后续提交 Unity 新脚本时必须同时提交对应 `.meta` 文件。
+
+## 通过项
+
+- MVP-02 范围基本受控，没有提前实现 AI、占领、粮食资源、建造 UI、英雄、随机地图或联机。
+- 已新增 `Buildings/` 与 `Combat/` 边界，未出现大型 `GameManager`。
+- Barracks 出兵逻辑独立在 `BarracksSpawner`，没有堆进 `GameEntry`。
+- UnitMovement 增加 Pause / Resume 支持，单位进入战斗时暂停移动的方向合理。
+- HealthComponent 统一处理 health、damage、death，满足 MVP-02 最小战斗需求。
+- `ProjectSettings` 未纳入本次业务提交。
 
 ## 残留注意事项
 
-### ProjectSettings 新增文件未纳入本次提交
+### ProjectSettings 新增文件仍未处理
 
-当前工作树出现未跟踪文件：
+当前工作树仍有未跟踪文件：
 
 ```text
 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
 
-该文件是 Unity Editor 生成的 ProjectSettings 文件。由于项目规则要求不随意修改 `ProjectSettings`，本次不纳入提交。后续需要单独决定：
+该文件由 Unity Editor 生成。由于项目规则要求不随意修改 `ProjectSettings`，继续保持未提交状态。后续需要单独确认是否提交或忽略。
 
-- 是否确认为 Unity 项目必要设置并提交
-- 或是否作为本机 / 编辑器生成文件忽略
+### Health 颜色反馈会覆盖阵营颜色
 
-在明确前不要把它和业务代码一起提交。
-
-### 注释风格
-
-本次脚本中仍存在部分非 ASCII 注释符号。功能上不阻塞，但后续 Claude 写新脚本时应优先使用普通 ASCII 注释，减少跨编辑器显示差异。
+`HealthComponent` 默认用白色作为满血颜色，受到伤害后会把建筑 / 单位颜色往白色和红色之间插值。功能上不阻塞 MVP-02，但后续如果颜色用于阵营识别，应让 `HealthComponent` 在 `Start()` 记录原始 `SpriteRenderer.color` 作为满血颜色。
 
 ## Codex 当前判断
 
-MVP-01 已满足目标，可以进入 MVP-02。
-
-MVP-02 应继续保持小步推进，只做：
+MVP-02 需要小修后复审：
 
 ```text
-建筑数据
-兵营出兵
-基础战斗
+Tower 只攻击单位，不攻击建筑
+确认新增脚本 meta 文件已提交
+Play Mode 重新验证 Tower 攻击行为
+更新 WORKLOG.md
+再 commit / push
 ```
 
-暂不加入 AI、占领进度、粮食资源、建筑重建 / 拆除、英雄和复杂 UI。
+在上述问题修复前，不批准进入 MVP-03。

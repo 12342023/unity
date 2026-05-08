@@ -620,3 +620,40 @@ git add kingbattle/Assets/Scripts/Core/BuildingType.cs \
 git commit -m "feat: implement mvp-02 buildings, spawning and basic combat"
 git push origin main
 ```
+
+### MVP-02 Codex Review
+
+操作人：Codex
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/`
+- `kingbattle/Assets/Scripts/Combat/`
+- `kingbattle/Assets/Scripts/Core/BuildingType.cs`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `kingbattle/Assets/Scripts/Units/`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+审查结论：
+
+- MVP-02 主体方向正确，但暂不批准进入 MVP-03。
+- 未发现 Claude 提前实现 AI、占领、粮食资源、建造 UI、英雄、随机地图或联机。
+- 已确认 `Buildings/` 与 `Combat/` 边界存在。
+
+阻塞项：
+
+1. `TowerAttack` 当前会攻击所有带 `HealthComponent` 的敌对对象，包括建筑。由于 `GameEntry` 给建筑也添加了 Collider2D 和 HealthComponent，玩家 Tower 与敌方 Tower 距离又在 `attackRange = 3.5` 内，开局可能出现 Tower 互相攻击建筑。Tower 应只攻击敌方单位。
+2. MVP-02 新增脚本对应的 Unity `.meta` 文件漏提交，Codex 本轮补齐仓库卫生提交。
+
+给 Claude 的下一步：
+
+```text
+修改 TowerAttack.FindNearestEnemy()
+只选择带 UnitCombat 的敌方目标
+重新 Play Mode 验证 Tower 不攻击建筑，只攻击敌方 Soldier
+更新 WORKLOG.md
+再 commit / push
+```

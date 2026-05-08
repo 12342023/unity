@@ -191,13 +191,25 @@ Claude 输出后，Codex 重点 Review：
 + MVP-02 脚本实现已完成，待 Codex 审查
 + 新增 Buildings/ 和 Combat/ 目录
 + 三种建筑数据 + Barracks 自动出兵 + Tower 自动攻击 + 单位基础战斗
-- 暂未完成 Unity Play Mode 验证（需用户手动确认）
+- Codex 静态审查发现 Tower 会攻击建筑，需要修复
+- 暂不批准进入 MVP-03
 - 暂不批准 AI、占领、粮食资源、建造 UI、拆除、重建、英雄系统
 ```
 
-## 下一步（Codex Review 完成后）
+## 下一步：MVP-02 修复
 
-如果 Codex 审查通过，下一步（MVP-03）预计包含：
+Claude 下一步先修复 MVP-02 Review 项：
+
+```diff
+- Tower 当前会攻击敌方建筑
++ Tower 只攻击带 UnitCombat 的敌方单位
++ 重新 Play Mode 验证 Tower 不攻击建筑
++ 更新 WORKLOG.md
++ commit / push
+```
+
+修复完成并通过 Codex 复审后，MVP-03 才预计包含：
+
 - 占领系统
 - 粮食资源
 - 基础 AI
