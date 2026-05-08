@@ -2,11 +2,23 @@
 
 ## 当前任务
 
-### 状态：MVP-01 已通过，进入 MVP-02
+### 状态：MVP-02 实现完成，待 Codex Review
 
-Claude 已完成 MVP-01 的脚本实现、Review 修复和 Unity Play Mode 验证。
+Claude 已完成 MVP-02 的脚本实现：
+- 新增 `Buildings/` 和 `Combat/` 目录
+- 三种建筑（Tower / Barracks / Granary）的最小数据和表现
+- Barracks 每 5 秒自动生成 Soldier，沿道路前往敌方目标
+- Tower 自动攻击范围内敌方单位
+- 单位进入范围后攻击敌方建筑
+- 血量归零后对象自动销毁
+- UnitMovement 新增 Pause / Resume
+- 建筑和单位均添加 Collider2D 支持 Tower 的 Physics2D 检测
+- Key 1-4 测试入口保持可用
 
-Codex 复审结论见 `REVIEW.md`：
+待 Codex 审查：
+- 是否符合 MVP-02 范围
+- 是否通过架构边界审查
+- 是否允许进入 MVP-03
 
 - `MapData.Instance` 已移除
 - `kingbattle/Assets/Scripts` 下未发现 `MapData.Instance` 引用

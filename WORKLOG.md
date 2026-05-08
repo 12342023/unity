@@ -555,3 +555,68 @@ Codex 复查结果：
 
 - Codex 将补充提交 MVP-01 其余脚本和本次文档更新。
 - 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+### MVP-02 建筑、出兵与基础战斗
+
+操作人：Claude
+
+已完成目标：
+- 新增 `Buildings/` 和 `Combat/` 目录
+- 三种建筑类型（Tower / Barracks / Granary）的最小数据和表现
+- Barracks 每 5 秒自动生成 Soldier，使用 MVP-01 道路系统移动到敌方目标
+- 单位沿道路移动到目标后，进入攻击范围则停止移动并攻击目标建筑
+- Tower 使用 Physics2D 自动检测并攻击范围内敌方单位
+- 血量归零后对象自动从场景移除（附带颜色渐红视觉反馈）
+- UnitMovement 新增 Pause / Resume 支持（战斗时暂停移动）
+
+本次变更：
+
+新增 5 个脚本文件：
+- `Assets/Scripts/Core/BuildingType.cs` — 建筑类型枚举
+- `Assets/Scripts/Buildings/BarracksSpawner.cs` — 兵营定时出兵逻辑
+- `Assets/Scripts/Buildings/TowerAttack.cs` — 箭塔自动攻击逻辑（Physics2D 扫描）
+- `Assets/Scripts/Combat/HealthComponent.cs` — 血量和伤害系统（含死亡销毁）
+- `Assets/Scripts/Combat/UnitCombat.cs` — 单位攻击行为（进入范围停止并攻击）
+
+修改 3 个文件：
+- `Assets/Scripts/Units/UnitMovement.cs` — 新增 Pause / Resume / Stop 方法
+- `Assets/Scripts/Units/TestUnitSpawner.cs` — 新增 Collider2D 和 HealthComponent
+- `Assets/Scripts/GameEntry.cs` — 新增建筑创建和 Barracks 目标绑定
+
+场景文件：**未修改**
+ProjectSettings：**未修改**
+
+git 状态：
+- bash 环境不可用，需手动执行 git add / commit / push
+
+测试步骤（Play Mode）：
+1. 打开 `SampleScene` → 点击 Play
+2. 等待约 5 秒，Player Barracks（PlayerBase 蓝色方块）自动生成 Soldier
+3. Soldier 沿道路向 EnemyBase 移动
+4. 当 Soldier 经过 Crossroads 时，Player Tower 自动攻击敌方 Soldier（如有）
+5. 敌方 Barracks（EnemyBase 红色方块）也自动生成 Soldier 向 PlayerBase 移动
+6. EnemyOutpost 的敌方 Tower 自动攻击玩家单位
+7. Soldier 到达敌方建筑后停止移动并开始攻击，建筑血量渐红
+8. 血量归零后建筑或单位自动销毁
+9. Key 1-4 仍可用作手动测试生成
+
+本次实现范围：
+- 建筑系统：三种建筑类型完整数据 + Barracks 出兵 + Tower 攻击
+- 战斗系统：固定伤害、自动攻击、血量归零销毁
+- 仍禁止：AI 决策、占领进度、粮食资源、建造 UI、英雄、随机地图、联机
+
+手动 git 推送命令：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Core/BuildingType.cs \
+        kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs \
+        kingbattle/Assets/Scripts/Buildings/TowerAttack.cs \
+        kingbattle/Assets/Scripts/Combat/HealthComponent.cs \
+        kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
+        kingbattle/Assets/Scripts/Units/UnitMovement.cs \
+        kingbattle/Assets/Scripts/Units/TestUnitSpawner.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md REVIEW.md NEXT_STEPS.md
+git commit -m "feat: implement mvp-02 buildings, spawning and basic combat"
+git push origin main
+```

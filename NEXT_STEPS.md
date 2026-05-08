@@ -188,7 +188,17 @@ Claude 输出后，Codex 重点 Review：
 
 ```diff
 + MVP-01 已通过 Codex 复审
-+ 允许进入 MVP-02
-+ 下一步只批准建筑、出兵、基础战斗
++ MVP-02 脚本实现已完成，待 Codex 审查
++ 新增 Buildings/ 和 Combat/ 目录
++ 三种建筑数据 + Barracks 自动出兵 + Tower 自动攻击 + 单位基础战斗
+- 暂未完成 Unity Play Mode 验证（需用户手动确认）
 - 暂不批准 AI、占领、粮食资源、建造 UI、拆除、重建、英雄系统
 ```
+
+## 下一步（Codex Review 完成后）
+
+如果 Codex 审查通过，下一步（MVP-03）预计包含：
+- 占领系统
+- 粮食资源
+- 基础 AI
+- 简单 UI

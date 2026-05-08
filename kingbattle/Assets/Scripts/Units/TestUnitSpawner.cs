@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Combat;
 using Core;
 using Map;
 using UnityEngine;
@@ -111,6 +112,14 @@ namespace Units
             sr.color = UnitConfig.GetColor(type);
             sr.sortingOrder = 3;
             unit.transform.localScale = Vector3.one * 0.5f;
+
+            // Collider (for Tower physics detection)
+            unit.AddComponent<CircleCollider2D>().radius = 0.2f;
+
+            // Health (so towers can kill test units)
+            var health = unit.AddComponent<HealthComponent>();
+            health.maxHealth = 50f;
+            health.faction = Core.Faction.Player;
 
             // Add movement
             var movement = unit.AddComponent<UnitMovement>();

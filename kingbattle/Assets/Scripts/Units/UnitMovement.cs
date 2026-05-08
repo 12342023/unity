@@ -6,6 +6,7 @@ namespace Units
     /// <summary>
     /// Moves a unit along a list of world-space waypoints.
     /// The unit moves toward the next waypoint each frame at its configured speed.
+    /// Supports Pause / Resume so combat can temporarily halt movement.
     /// </summary>
     [RequireComponent(typeof(SpriteRenderer))]
     public class UnitMovement : MonoBehaviour
@@ -15,7 +16,8 @@ namespace Units
 
         private List<Vector3> waypoints;
         private int currentIndex;
-        private bool isMoving;
+        private bool hasPath;     // true while a path still needs traversing
+        private bool isPaused;    // true while combat halts movement
 
         // ── Public API ──────────────────────────────────────────────────
 
@@ -33,20 +35,44 @@ namespace Units
 
             waypoints = waypointPositions;
             currentIndex = 1; // skip the first waypoint (we're already there)
-            isMoving = true;
+            hasPath = true;
+            isPaused = false;
 
             // Snap to first waypoint
             transform.position = waypointPositions[0];
         }
 
-        /// <summary>True while the unit is still travelling.</summary>
-        public bool IsMoving => isMoving;
+        /// <summary>True while the unit is still travelling (not paused, not finished).</summary>
+        public bool IsMoving => hasPath && !isPaused;
+
+        /// <summary>True while the unit still has remaining waypoints (regardless of pause).</summary>
+        public bool HasRemainingPath => hasPath;
+
+        /// <summary>Pause movement (e.g. when attacking).</summary>
+        public void Pause()
+        {
+            isPaused = true;
+        }
+
+        /// <summary>Resume movement after pause.</summary>
+        public void Resume()
+        {
+            isPaused = false;
+        }
+
+        /// <summary>Stop movement entirely and clear path.</summary>
+        public void Stop()
+        {
+            hasPath = false;
+            isPaused = false;
+            waypoints = null;
+        }
 
         // ── MonoBehaviour ───────────────────────────────────────────────
 
         private void Update()
         {
-            if (!isMoving || waypoints == null) return;
+            if (!hasPath || isPaused || waypoints == null) return;
 
             var target = waypoints[currentIndex];
             var step = speed * Time.deltaTime;
@@ -59,7 +85,7 @@ namespace Units
 
                 if (currentIndex >= waypoints.Count)
                 {
-                    isMoving = false;
+                    hasPath = false;
                     Debug.Log($"[UnitMovement] {name} reached destination.");
                 }
             }
