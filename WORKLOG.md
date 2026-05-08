@@ -823,6 +823,73 @@ GitHub 上传状态：
 
 - 已提交并推送本次文档更新。
 
+### MVP-02.1 巡逻、仇恨范围、脱战、集结点、小波次推进
+
+操作人：Claude
+
+已完成目标：
+- 巡逻系统：Barracks 生成的 Soldier 默认前往集结点，到达后在集结点附近沿道路邻居地块巡逻
+- 仇恨范围：UnitCombat 新增 aggroRange (4) / chaseRange (7)，Idle 状态持续扫描敌方
+- 自动锁敌：敌人进入 aggroRange 后自动 Chase → Attack，优先级：敌方单位 > 敌方建筑
+- 脱战机制：目标死亡或超出 chaseRange 后脱战，返回 Idle（继续巡逻或推送路径）
+- 集结点：Barracks 支持 rallyPlotId，新单位先前往集结点再巡逻
+- 小波次推进：每 2 秒检查集结点附近的空闲单位，≥ 3 个时沿道路推送至敌方目标
+
+本次变更：
+
+新增 1 个脚本：
+- `Assets/Scripts/Units/UnitPatrol.cs` — 巡逻路点管理类
+
+修改 4 个文件：
+- `Assets/Scripts/Combat/UnitCombat.cs` — 完全重写：新增 Idle/Chase/Attack 状态机，aggroRange/chaseRange 扫描，脱战与巡逻回退
+- `Assets/Scripts/Buildings/BarracksSpawner.cs` — 重写出兵逻辑：单位前往 rallyPlotId，跟踪单位列表，每 2 秒波次检查
+- `Assets/Scripts/Units/UnitMovement.cs` — 新增 SetNewPath() 支持动态路径切换
+- `Assets/Scripts/GameEntry.cs` — 设置 Barracks 的 rallyPlotId (Player→Village, Enemy→Outpost) 和 pushTargetPlotId
+
+场景文件：**未修改**
+ProjectSettings：**未修改**
+
+git 状态：
+- bash 环境不可用，需手动执行
+
+Play Mode 验证步骤：
+1. 打开 `SampleScene` → Play
+2. 等待 5 秒，Player Barracks 生成蓝色 Soldier → 沿道路移动到 Village（集结点）
+3. Soldier 到达 Village 后，在 Village ↔ Crossroads / PlayerBase 之间巡逻
+4. 同时 Enemy Barracks 生成红色 Soldier → 移动到 EnemyOutpost 巡逻
+5. 当红色 Soldier 巡逻到 Crossroads 附近时，Player Tower 自动攻击（Tower 只攻击单位）
+6. 当蓝色 Soldier 经过 Crossroads 时，遇到红色 Soldier 进入 aggroRange，自动 Chase 并攻击
+7. 目标死亡后脱战，Soldier 返回巡逻
+8. 当 Village 集结点聚集 ≥ 3 个蓝兵 → 波次推进启动，沿道路推向 EnemyBase
+9. Soldier 到达 EnemyBase 后攻击敌方建筑，血量归零后建筑/单位销毁
+10. Console 无明显错误
+
+当前仍未实现（goal.md 第三/四/五阶段）：
+- 摧毁与重建
+- 建筑升级
+- 粮食资源
+- 人口系统
+- 连地系统
+- 区域奖励
+- 中央区域
+- 传送阵
+- AI 决策
+- UI / 美术 / 音效
+- 单元 Patrol 使用直接移动而非道路移动（巡逻使用 road-based 路点，无目标时 direct 移动）
+
+手动 git 推送命令：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
+        kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs \
+        kingbattle/Assets/Scripts/Units/UnitPatrol.cs \
+        kingbattle/Assets/Scripts/Units/UnitMovement.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md REVIEW.md NEXT_STEPS.md
+git commit -m "feat: implement mvp-02.1 patrol, aggro, deaggro, rally points and wave push"
+git push origin main
+```
+
 提交记录：
 
 ```text

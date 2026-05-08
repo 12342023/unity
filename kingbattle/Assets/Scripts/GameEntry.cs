@@ -6,17 +6,16 @@ using Units;
 using UnityEngine;
 
 /// <summary>
-/// Thin scene startup script that bootstraps MVP-01 and MVP-02.
+/// Thin scene startup script that bootstraps MVP-01 through MVP-02.1.
 ///
-/// When entering Play Mode, this script automatically:
-/// 1. Creates the fixed map data (6 plots, 7 roads).
-/// 2. Renders the map visually.
-/// 3. Creates buildings on each plot.
-/// 4. Links Barracks to their enemy targets.
-/// 5. Activates the test spawner (Key 1-4).
+/// Responsibilities:
+/// 1. Creates fixed map data.
+/// 2. Renders map visually.
+/// 3. Creates buildings and links them.
+/// 4. Sets Barracks rally points and push targets.
+/// 5. Activates test spawner (Key 1-4).
 ///
-/// This is deliberately thin – it only "wires things up" instead of
-/// carrying business logic.
+/// Deliberately thin — only wires things up, no business logic.
 /// </summary>
 public class GameEntry : MonoBehaviour
 {
@@ -46,8 +45,7 @@ public class GameEntry : MonoBehaviour
         var spawner = spawnerObj.AddComponent<TestUnitSpawner>();
         spawner.Initialize(mapData);
 
-        Debug.Log("[GameEntry] MVP-02 ready. Barracks auto-spawns Soldiers. Towers auto-attack.");
-        Debug.Log("[GameEntry] Keys 1-4 still work for manual unit spawning.");
+        Debug.Log("[GameEntry] MVP-02.1 ready. Units patrol, aggro, and wave-push.");
     }
 
     // ── Building setup ─────────────────────────────────────────────────
@@ -55,29 +53,39 @@ public class GameEntry : MonoBehaviour
     private void SetupBuildings(MapData mapData)
     {
         // ── Create building GameObjects ──
-        var playerBarracks = CreateBuilding("PlayerBase", mapData, Faction.Player, BuildingType.Barracks);
-        var enemyBarracks  = CreateBuilding("EnemyBase",  mapData, Faction.Enemy,  BuildingType.Barracks);
-        var playerTower    = CreateBuilding("Crossroads", mapData, Faction.Player, BuildingType.Tower);
-        var enemyTower     = CreateBuilding("EnemyOutpost", mapData, Faction.Enemy, BuildingType.Tower);
-        var playerGranary  = CreateBuilding("Village",    mapData, Faction.Player, BuildingType.Granary);
+        var playerBarracks = CreateBuilding("PlayerBase",   mapData, Faction.Player, BuildingType.Barracks);
+        var enemyBarracks  = CreateBuilding("EnemyBase",    mapData, Faction.Enemy,  BuildingType.Barracks);
+        var playerTower    = CreateBuilding("Crossroads",   mapData, Faction.Player, BuildingType.Tower);
+        var enemyTower     = CreateBuilding("EnemyOutpost", mapData, Faction.Enemy,  BuildingType.Tower);
+        var playerGranary  = CreateBuilding("Village",      mapData, Faction.Player, BuildingType.Granary);
         // Farmland intentionally left empty
 
-        // ── Link Barracks to their attack targets ──
+        // ── Link Barracks to enemy targets, set rally points ──
         if (playerBarracks != null && enemyBarracks != null)
         {
             var pbSpawner = playerBarracks.GetComponent<BarracksSpawner>();
             if (pbSpawner != null)
-                pbSpawner.SetTargetBuilding(enemyBarracks.GetComponent<HealthComponent>());
+            {
+                pbSpawner.SetEnemyTarget(enemyBarracks.GetComponent<HealthComponent>());
+                pbSpawner.rallyPlotId = "Village";          // gather at Village
+                pbSpawner.pushTargetPlotId = "EnemyBase";   // push toward enemy base
+                pbSpawner.rallyThreshold = 3;
+            }
         }
 
         if (enemyBarracks != null && playerBarracks != null)
         {
             var ebSpawner = enemyBarracks.GetComponent<BarracksSpawner>();
             if (ebSpawner != null)
-                ebSpawner.SetTargetBuilding(playerBarracks.GetComponent<HealthComponent>());
+            {
+                ebSpawner.SetEnemyTarget(playerBarracks.GetComponent<HealthComponent>());
+                ebSpawner.rallyPlotId = "EnemyOutpost";     // gather at Outpost
+                ebSpawner.pushTargetPlotId = "PlayerBase";  // push toward player base
+                ebSpawner.rallyThreshold = 3;
+            }
         }
 
-        Debug.Log("[GameEntry] Buildings placed and linked.");
+        Debug.Log("[GameEntry] Buildings placed, rally points set, wave threshold = 3.");
     }
 
     // ── Factory helpers ────────────────────────────────────────────────

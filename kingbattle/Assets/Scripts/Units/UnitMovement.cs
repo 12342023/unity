@@ -68,6 +68,24 @@ namespace Units
             waypoints = null;
         }
 
+        /// <summary>
+        /// Replace the current path with a new one (used by push-wave commands).
+        /// Retains the current position as the first waypoint.
+        /// </summary>
+        public void SetNewPath(List<Vector3> newWaypoints)
+        {
+            if (newWaypoints == null || newWaypoints.Count < 2)
+            {
+                Stop();
+                return;
+            }
+
+            waypoints = newWaypoints;
+            currentIndex = 1;
+            hasPath = true;
+            isPaused = false;
+        }
+
         // ── MonoBehaviour ───────────────────────────────────────────────
 
         private void Update()
