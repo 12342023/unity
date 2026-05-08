@@ -2,9 +2,21 @@
 
 ## 当前任务
 
-根据 `goal.md` 生成下一步开发要求，并把 Claude 的下一轮工作范围收敛到 MVP-01：固定地图、地块、道路、单位沿道路移动。
+### 状态：MVP-01 实现已审查，需要 Claude 小修
 
-Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模修改业务代码。Claude 是主要开发者，下一轮可以开始最小业务原型开发，但必须严格按 `NEXT_STEPS.md` 的边界执行。
+Claude 已完成 MVP-01 的脚本实现，新增 12 个 C# 文件，覆盖：
+- 固定地图（6 地块 + 7 道路）
+- 地块大小 / 阵营 / 主基地 / 建筑槽位标记
+- 基于 BFS 的道路寻路
+- 三种单位移动速度差异
+- 键盘触发的测试生成入口（Key 1-4）
+
+Codex 已完成静态审查，结论见 `REVIEW.md`：
+
+- 暂不批准进入 MVP-02
+- 需要移除 `MapData.Instance` 这个未使用的全局状态入口
+- 需要完成 Unity Play Mode / Console Error 验证
+- 验证结果需要写入 `WORKLOG.md`
 
 ## 已确认事实
 

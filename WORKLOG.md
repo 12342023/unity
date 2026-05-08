@@ -389,3 +389,99 @@ To https://github.com/12342023/unity.git
 当前状态：
 
 - `8b6fa73 docs: define mvp movement requirements` 已上传到 GitHub。
+
+## 2026-05-08
+
+### MVP-01 固定地图与道路移动原型实现
+
+操作人：Claude
+
+已完成目标：
+- 在 `Assets/Scripts/` 下建立最小目录结构：`Core/`, `Map/`, `Units/`
+- 实现固定地图原型（6 个地块，7 条双向道路）
+- 实现地块大小（Small / Medium / Large）、阵营（Player / Enemy / Neutral）和主基地标记
+- 每个地块预留建筑槽位（Small=1, Medium=2, Large=3）作为数据标记
+- 实现基于 BFS 的道路寻路系统（单位只能沿道路移动）
+- 实现三种单位的移动速度差异：Samurai 1.5, Elf Archer 2.5, Soldier 3.5
+- 提供键盘测试入口（Key 1-4 生成单位并沿道路移动）
+
+本次变更文件：
+
+新增 12 个脚本文件：
+- `Assets/Scripts/Core/Faction.cs` — 阵营枚举
+- `Assets/Scripts/Core/PlotSize.cs` — 地块大小枚举
+- `Assets/Scripts/Core/UnitType.cs` — 单位类型枚举
+- `Assets/Scripts/Map/PlotData.cs` — 地块数据类
+- `Assets/Scripts/Map/RoadConnection.cs` — 道路连接数据类
+- `Assets/Scripts/Map/MapData.cs` — 固定地图定义 + 邻接表
+- `Assets/Scripts/Map/MapRenderer.cs` — 地图可视化渲染
+- `Assets/Scripts/Map/RoadPathFinder.cs` — BFS 寻路
+- `Assets/Scripts/Units/UnitConfig.cs` — 单位速度/颜色配置
+- `Assets/Scripts/Units/UnitMovement.cs` — 单位沿路点移动
+- `Assets/Scripts/Units/TestUnitSpawner.cs` — 测试生成入口
+- `Assets/Scripts/GameEntry.cs` — 场景启动脚本
+
+场景文件：**未修改**
+ProjectSettings：**未修改**
+
+git 状态：
+- 工作目录 bash 不可用，暂无法执行 `git add` / `git commit` / `git push`
+- 已新增 12 个 .cs 文件至 `Assets/Scripts/` 下
+- 所有新增文件位于 `kingbattle/Assets/Scripts/` 下，符合项目结构
+
+未实现内容（留到后续阶段）：
+- 战斗系统
+- AI
+- 占领进度
+- 建筑建造 / 重建 / 拆除
+- 粮食资源
+- 英雄系统
+- 复杂 UI
+- 随机地图
+- 联机
+- 正式输入系统（当前使用临时键盘触发）
+- Unit Prefab / 美术资源
+
+### MVP-01 Codex Review
+
+操作人：Codex
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Core/`
+- `kingbattle/Assets/Scripts/Map/`
+- `kingbattle/Assets/Scripts/Units/`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+审查结论：
+
+- MVP-01 方向正确，但暂不批准进入 MVP-02。
+- 未发现 Claude 提前实现战斗、AI、占领、建筑、资源、英雄等越界系统。
+- 未发现 `ProjectSettings` 被修改。
+- 当前未发现 Unity 生成目录被 stage。
+
+阻塞项：
+
+1. 缺少 Unity Play Mode / Console Error 验证。
+2. `MapData.Instance` 是未使用的全局状态入口，需要删除。
+
+验证尝试：
+
+- Codex 尝试使用 Unity batchmode 打开项目。
+- 第一次失败于 Unity License Client IPC 超时。
+- 第二次失败于 `kingbattle/Temp/UnityLockfile`，Unity 提示已有实例打开该项目。
+- 因此当前未完成 Unity 编译 / Play Mode 验证。
+
+给 Claude 的下一步：
+
+```text
+删除 MapData.Instance 和对应赋值
+在 Unity Editor 中进入 Play Mode 验证 Key 1-4
+确认 Console 没有明显错误
+更新 WORKLOG.md
+再提交并推送
+```

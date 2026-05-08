@@ -2,87 +2,95 @@
 
 ## Review 状态
 
-当前尚未收到 Claude 的 MVP-01 实现输出。本文件记录 Codex 基于 `goal.md` 给出的阶段门禁和后续审查标准。
+Codex 已完成 Claude 的 MVP-01 固定地图与道路移动原型静态审查。
 
-## 当前 Review 结论
+结论：**暂不批准进入 MVP-02**。
 
-### 已批准：进入 MVP-01 原型开发
+原因不是功能方向错误，而是 MVP-01 还有两个必须收口的问题：
 
-`goal.md` 已明确第一阶段优先级：
+1. 代码中出现了不必要的全局状态入口。
+2. Play Mode / Console Error 验证尚未完成。
 
-```text
-地图
-地块
-道路
-单位移动
-```
+## CODEX PROJECT REVIEW
 
-因此允许 Claude 开始最小业务原型开发，但只批准 `NEXT_STEPS.md` 中定义的固定地图与道路移动范围。
+Gate: **FAIL**
 
-### 不批准：提前开发完整玩法系统
+### [P1] MVP-01 缺少 Play Mode 验证
 
-以下内容仍不允许在 MVP-01 中实现：
+File: `WORKLOG.md`
 
-- 战斗
-- AI
-- 占领进度
-- 建筑建造 / 重建 / 拆除
-- 粮食资源
-- 英雄
-- 联机
-- 随机地图
-- 复杂 UI
+Problem:
 
-原因：这些内容依赖地图、道路和单位移动是否成立。先把路线移动原型打通，后续再分阶段叠加系统。
+`NEXT_STEPS.md` 的 MVP-01 验收标准要求 Play Mode 无明显 Console Error。Claude 的记录说明其未执行 commit / push，但也没有提供 Unity Play Mode 验证结果。Codex 尝试使用 Unity batchmode 验证，第一次被 Unity License Client IPC 超时阻断，第二次被 `kingbattle/Temp/UnityLockfile` 阻断，提示已有 Unity 实例打开项目。
 
-### 仍需保持：Unity 工程与仓库边界
+Impact:
 
-当前项目根目录已确认为 `/Users/jianghao/unity`，Unity 主工程位于 `kingbattle/`。
+当前只能确认脚本结构和代码意图，不能确认 Unity 是否完成脚本导入、编译，以及按键 1-4 是否能在 Play Mode 中正常生成并移动单位。
 
-后续仍不允许提交：
+Fix:
+
+Claude 或用户需要在 Unity Editor 中打开 `kingbattle/`，进入 Play Mode，验证：
+
+- Console 没有编译错误或运行时错误
+- 进入 Play Mode 后自动生成地图
+- Key 1 / 2 / 3 可分别生成 Samurai / Elf Archer / Soldier
+- 单位沿道路移动到 EnemyBase
+- Key 4 可生成 Samurai 并移动到 Crossroads
+
+验证完成后，把结果写入 `WORKLOG.md`。
+
+### [P2] 移除未使用的全局 MapData.Instance
+
+File: `kingbattle/Assets/Scripts/Map/MapData.cs:14`
+
+Problem:
+
+`MapData` 新增了 `public static MapData Instance { get; private set; }`，并在 `CreateFixedMap()` 里赋值。当前代码已经通过 `GameEntry` 显式把 `mapData` 传给 `MapRenderer` 和 `TestUnitSpawner`，这个静态入口没有实际必要。
+
+Impact:
+
+项目要求明确避免随意新增全局状态。现在保留 `MapData.Instance` 会给后续建筑、战斗、AI、平台适配留下隐式依赖入口，容易让系统逐渐绕过清晰的模块边界。
+
+Fix:
+
+请 Claude 删除：
 
 ```diff
-- kingbattle/Library/
-- kingbattle/Logs/
-- kingbattle/UserSettings/
-- kingbattle/Temp/
-- kingbattle/Obj/
-- kingbattle/Build/
-- kingbattle/Builds/
+- public static MapData Instance { get; private set; }
 ```
 
-仍不建议使用 `git add .`，应只 stage 本次任务相关文件。
+以及：
 
-### 仍需保持：多平台移植边界
+```diff
+- Instance = map;
+```
 
-微信小程序、macOS、Android 是后续移植目标，不是 MVP-01 的实现目标。
+继续使用显式依赖传递。
 
-Claude 如果遇到输入、存储、分享、支付、构建发布等平台能力，应先提出接口边界，不要把平台判断写进玩法逻辑。
+## 通过项
 
-## Claude 输出后的 Review 检查项
+- MVP-01 范围控制良好，没有提前实现战斗、AI、占领、建筑、资源或英雄系统。
+- `Scripts/Core`、`Scripts/Map`、`Scripts/Units` 目录边界符合要求。
+- 固定地图包含 6 个地块和 7 条道路，满足 5 到 7 个地块的要求。
+- 地块大小、阵营、主基地标记和建筑槽位数据标记已覆盖。
+- BFS 道路寻路方向合理，单位移动入口使用道路路径生成 waypoint，没有直接穿越空白地图的公开接口。
+- 三个兵种速度差异符合 `goal.md`：Samurai 最慢，Elf Archer 中等，Soldier 最快。
+- 未修改 `ProjectSettings`。
+- 当前未发现 Unity 生成目录被 stage。
 
-- 是否符合 `goal.md` 第一阶段范围
-- 是否只实现固定地图、地块、道路、单位移动
-- 是否没有提前实现战斗、AI、占领、建筑、资源、英雄
-- 是否创建了清晰的 `Scripts/Core`、`Scripts/Map`、`Scripts/Units` 边界
-- 是否避免超大 `GameManager`
-- 道路和地块关系是否清晰
-- 单位移动是否被限制在道路上
-- 三个兵种是否只有必要的移动配置差异
-- 是否未修改 `ProjectSettings`，或已提前说明理由
-- 是否没有提交 Unity 生成目录
-- 是否更新工作文档
-- 是否完成 commit / push 并记录结果
+## 风格建议
+
+本次新增脚本中有较多非 ASCII 注释符号，例如箭头和线框字符。功能上不是阻塞项，但后续建议 Claude 使用普通 ASCII 注释，保持代码文件风格稳定。
 
 ## Codex 当前判断
 
-可以进入 MVP-01，但不能越界到完整游戏系统。
-
-下一次 Review 的重点不是“功能多不多”，而是：
+MVP-01 方向正确，但需要先让 Claude 做一次小修：
 
 ```text
-地图结构是否清楚
-道路移动是否成立
-架构边界是否干净
-后续系统是否容易接上
+移除 MapData.Instance
+完成 Unity Play Mode 验证
+更新 WORKLOG.md
+再提交并推送
 ```
+
+在这两项完成前，不批准进入 MVP-02。

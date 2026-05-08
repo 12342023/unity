@@ -158,7 +158,33 @@ Claude 输出后，Codex 需要重点 Review：
 
 ```diff
 + `goal.md` 已明确 MVP 范围和长期目标
-+ 下一步允许 Claude 进入 MVP-01 原型开发
-+ 本轮只批准固定地图、地块、道路、单位移动
++ MVP-01 脚本实现已完成并提交审查
++ 12 个新增脚本文件覆盖地图、道路、单位移动
++ 固定地图包含 6 个地块、7 条双向道路
++ 三种单位速度差异已配置（Samurai 1.5 / Elf Archer 2.5 / Soldier 3.5）
++ 测试入口为键盘 Key 1-4
+- 场景文件和 ProjectSettings 未修改
+- 暂未执行 git add / commit / push（bash 环境不可用）
 - 暂不批准战斗、AI、占领、建筑、资源、英雄系统开发
 ```
+
+## 下一步（Codex Review 完成后）
+
+Codex 审查结论：MVP-01 暂不批准进入 MVP-02。
+
+Claude 下一步先修复 MVP-01 Review 项：
+
+```diff
+- 移除 MapData.Instance 全局状态入口
+- 完成 Unity Play Mode / Console Error 验证
+- 更新 WORKLOG.md 记录验证结果
+- 再执行 commit / push
+```
+
+修复完成并通过 Codex 复审后，MVP-02 才预计包含：
+
+- 建筑系统（箭塔 / 兵营 / 粮仓）
+- 出兵系统
+- 基础战斗
+
+当前不要开始 MVP-02。
