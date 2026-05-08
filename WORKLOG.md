@@ -923,7 +923,20 @@ Codex 判断：
 
 GitHub 上传状态：
 
-- 待提交并推送本次需求澄清文档。
+- 已提交并推送本次需求澄清文档。
+
+提交记录：
+
+```text
+497fb53 docs: clarify patrol around buildings
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   6948aee..497fb53  main -> main
+```
 
 提交记录：
 
