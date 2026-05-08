@@ -65,6 +65,10 @@ namespace Buildings
                 if (health.faction == faction)
                     continue; // same faction = not enemy
 
+                // Tower only attacks units (objects with UnitCombat), not buildings
+                if (hitBuffer[i].GetComponent<UnitCombat>() == null)
+                    continue;
+
                 float dist = Vector2.Distance(transform.position, health.transform.position);
                 if (dist <= nearestDist)
                 {

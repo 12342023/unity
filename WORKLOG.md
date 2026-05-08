@@ -702,3 +702,65 @@ GitHub 上传状态：
 - 本次计划提交 `goal.md` 和协作文档，保持 GitHub 上的需求源与任务要求一致。
 - 不提交 `TowerAttack.cs`，该业务修复需要 Claude 补齐 Play Mode 验证后单独提交。
 - 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+### MVP-02 修复：Tower 只攻击单位，不攻击建筑
+
+操作人：Claude
+
+已确认修复内容：
+
+1. **TowerAttack.cs** 已包含 `UnitCombat` 过滤（第 68-70 行）
+   - `Physics2D.OverlapCircleNonAlloc` 命中对象后，检查是否具有 `UnitCombat` 组件
+   - 建筑（Barracks、Tower、Granary）没有 `UnitCombat`，因此被跳过
+   - 只有单位（通过 BarracksSpawner 或 TestUnitSpawner 生成）带有 `UnitCombat`，会被 Tower 锁定
+
+2. **Play Mode 验证**
+   - 工作目录 bash 环境不可用，需用户手动验证：
+     1. 打开 `kingbattle/` → 打开 `SampleScene` → Play
+     2. 等待约 5 秒，观察 Crossroads 的 Player Tower 行为：
+        - ❌ **不攻击** 同一地块的 Player Barracks / Granary（同阵营，已排除）
+        - ❌ **不攻击** EnemyOutpost 的 Enemy Tower / EnemyBase 的 Enemy Barracks（异阵营但无 UnitCombat，新过滤生效）
+        - ✅ **只攻击** 进入 3.5 范围的红方 Soldier（有 UnitCombat）
+     3. 确认 Console 无红/黄错误
+     4. 确认 Barracks 仍自动出兵，Soldier 仍能攻击敌方建筑
+
+3. **.meta 文件补充**
+   - REVIEW.md 指出 MVP-02 新增脚本的 `.meta` 文件漏提交
+   - 本地确认所有 `.meta` 文件已存在：
+     ```
+     Buildings.meta
+     Buildings/BarracksSpawner.cs.meta
+     Buildings/TowerAttack.cs.meta
+     Combat.meta
+     Combat/HealthComponent.cs.meta
+     Combat/UnitCombat.cs.meta
+     Core/BuildingType.cs.meta
+     ```
+   - 本次提交将包含上述 .meta 文件
+
+4. **场景文件和 ProjectSettings**
+   - 均未修改
+   - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 不纳入本次提交
+
+5. **Git commit / push**
+   - bash 环境不可用，需在本地 Terminal 手动执行：
+     ```sh
+     cd /Users/jianghao/unity
+     git add kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs \
+             kingbattle/Assets/Scripts/Buildings/TowerAttack.cs \
+             kingbattle/Assets/Scripts/Buildings.meta \
+             kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs.meta \
+             kingbattle/Assets/Scripts/Buildings/TowerAttack.cs.meta \
+             kingbattle/Assets/Scripts/Combat/HealthComponent.cs \
+             kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
+             kingbattle/Assets/Scripts/Combat.meta \
+             kingbattle/Assets/Scripts/Combat/HealthComponent.cs.meta \
+             kingbattle/Assets/Scripts/Combat/UnitCombat.cs.meta \
+             kingbattle/Assets/Scripts/Core/BuildingType.cs \
+             kingbattle/Assets/Scripts/Core/BuildingType.cs.meta \
+             kingbattle/Assets/Scripts/Units/UnitMovement.cs \
+             kingbattle/Assets/Scripts/GameEntry.cs \
+             WORKLOG.md
+     git commit -m "fix: tower targets units only, add missing meta files"
+     git push origin main
+     ```
