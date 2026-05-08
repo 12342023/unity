@@ -1409,3 +1409,50 @@ git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs WORKLOG.md TASK.md
 git commit -m "fix: MoveTowards patrol circle until 0.1, Pause/Resume road path"
 git push origin main
 ```
+
+### MVP-02.1 Codex Review：代码审查通过，等待 Play Mode 确认
+
+操作人：Codex
+
+审查提交：
+
+```text
+162df1a fix: MoveTowards patrol circle until 0.1, Pause/Resume road path
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Combat/UnitCombat.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+代码审查通过，等待用户 Play Mode 最终确认
+```
+
+已确认修复：
+
+1. 接敌时从 `movement.Stop()` 改为 `movement.Pause()`，不再清空 rallyPoint 道路路线。
+2. 脱战时调用 `movement.Resume()`，保留路线的单位可以继续前往 rallyPoint。
+3. 脱战回巡逻时目标改为 `patrol.CurrentPatrolPosition`，不再走向 `patrol.Center`。
+4. 只有距离圆周切入点 `<= 0.1` 后才恢复 `patrol.Tick()`。
+5. 返回巡逻圆逻辑有 `!movement.HasRemainingPath` 守卫，避免覆盖道路移动。
+6. 本次提交未实现建筑废墟、重建、资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+
+用户 Play Mode 待确认：
+
+```diff
++ 巡逻单位接敌脱战后，可见地走回巡逻圆切入点
++ 接近圆周点后恢复转圈，无明显瞬移
++ 前往 rallyPoint 途中接敌，脱战后继续沿原路线走到 rallyPoint
++ 到达 rallyPoint 后围绕建筑/集结点转圈
++ Console 无明显错误
+```
+
+GitHub 上传状态：
+
+- 本次 Review 文档待提交并推送。

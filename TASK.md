@@ -126,18 +126,18 @@ Claude 下一阶段正式进入 MVP-02.1。
 
 ## 当前状态
 
-### MVP-02.1 Codex Review：暂不通过
+### MVP-02.1 Codex Review：代码审查通过，等待 Play Mode 最终确认
 
 Claude 最新提交：
 
 ```text
-10abfb2 fix: smooth deaggro return to patrol circle, no teleport
+162df1a fix: MoveTowards patrol circle until 0.1, Pause/Resume road path
 ```
 
 Codex Review 结论：
 
 ```text
-暂不通过
+代码审查通过，等待用户 Play Mode 最终确认
 ```
 
 | 组件 | 状态 | 说明 |
@@ -151,13 +151,15 @@ Codex Review 结论：
 
 待处理：
 - ⏳ Unity Play Mode 验证需用户手动确认
-- ⏳ git commit / push 需用户手动执行
-- ⏳ 等待 Codex Review 通过后进入第三阶段
+- ⏳ Codex Review 文档更新后 commit / push
+- ⏳ 用户确认 Play Mode 通过后，再进入第三阶段任务拆分
 
 已处理：
 - ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动
 - ✅ 无 rallyPoint 时也能出兵，并围绕所属 Barracks 转圈
 - ✅ 旧版 Deaggro 一帧 MoveTowards 已删除，返回逻辑改为持续执行
+- ✅ 脱战后 MoveTowards 到 `patrol.CurrentPatrolPosition`，0.1 阈值后才恢复 Tick
+- ✅ 接敌时 `movement.Pause()` 保留 road path，脱战时 `movement.Resume()` 恢复路线
 
 主题：
 

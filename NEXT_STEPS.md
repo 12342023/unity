@@ -90,10 +90,10 @@
 Claude 已提交最新修复：
 
 ```text
-10abfb2 fix: smooth deaggro return to patrol circle, no teleport
+162df1a fix: MoveTowards patrol circle until 0.1, Pause/Resume road path
 ```
 
-Codex Review 结论仍是暂不通过。
+Codex Review 结论：代码审查通过，等待用户 Play Mode 最终确认。
 
 已确认修复：
 
@@ -102,20 +102,19 @@ Codex Review 结论仍是暂不通过。
 + UnitPatrol.Setup 不再初始化时直接 snap 到巡逻圆
 + 无 rallyPoint 时也能出兵并围绕所属 Barracks 转圈
 + 旧版 Deaggro 一帧 MoveTowards 已删除，返回逻辑改为持续执行
++ 脱战后走到 patrol.CurrentPatrolPosition，距离 <= 0.1 后才恢复 Tick
++ 前往 rallyPoint 途中接敌时，Pause/Resume 保留并恢复道路路线
 ```
 
-新的阻塞项：
+剩余确认项：
 
 ```diff
-- 当前回程只走向 patrol.Center，并使用 radius * 1.5 + 0.5 的较大阈值
-- 进入阈值后仍会 patrol.Tick
-- UnitPatrol.Tick 仍会 transform.position = CurrentPatrolPosition
-+ 脱战后必须走到 patrol.CurrentPatrolPosition 或明确圆周切入点附近
-+ 距离足够近后才恢复围绕建筑/集结点转圈
-+ 前往 rallyPoint 途中接敌时，仍需要恢复原路线或明确返回 rally/home
++ 用户在 Unity Play Mode 中确认无明显瞬移
++ 用户确认前往 rallyPoint 途中接敌后，脱战能继续原路线
++ Console 无明显错误
 ```
 
-修复前不要继续扩展新系统。
+Play Mode 确认前不要继续扩展新系统。
 
 ### 1. 巡逻系统
 
