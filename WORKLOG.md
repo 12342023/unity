@@ -1059,4 +1059,17 @@ To https://github.com/12342023/unity.git
 
 GitHub 上传状态：
 
-- 待提交并推送本次 Review 文档。
+- 已提交并推送本次 Review 文档。
+
+提交记录：
+
+```text
+ebe2789 docs: review mvp-02.1 patrol timing
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   583b1e7..ebe2789  main -> main
+```
