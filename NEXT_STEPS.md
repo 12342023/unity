@@ -62,15 +62,31 @@
 
 ## 当前 Review 结论
 
-Claude 已提交圆周巡逻实现，但 Codex Review 暂不通过。
+Claude 已提交最新修复：
 
-必须先修复：
+```text
+91d2bfb fix: prevent patrol overwriting road movement, handle missing rally point
+```
+
+Codex Review 结论仍是暂不通过。
+
+已确认修复：
 
 ```diff
-- 巡逻 Tick 覆盖 UnitMovement 道路移动
-+ 单位先沿道路到达 rally/building
-+ 到达后才开始围绕建筑转圈
++ 单位沿道路前往 rally/building 时，patrol.Tick 不再覆盖 UnitMovement
++ UnitPatrol.Setup 不再初始化时直接 snap 到巡逻圆
 + 无 rallyPoint 时也能出兵并围绕所属 Barracks 转圈
+```
+
+新的阻塞项：
+
+```diff
+- 脱战后 Deaggro 只移动一帧
+- 下一帧 Idle 可能直接 patrol.Tick
+- UnitPatrol.Tick 会 transform.position = CurrentPatrolPosition
++ 脱战后必须先可见地走回巡逻圆 / home
++ 回到巡逻圆附近后才恢复围绕建筑/集结点转圈
++ 前往 rallyPoint 途中接敌时，需要恢复原路线或明确返回 rally/home
 ```
 
 修复前不要继续扩展新系统。
@@ -95,7 +111,7 @@ Claude 已提交圆周巡逻实现，但 Codex Review 暂不通过。
 - 巡逻半径先用测试值，例如 0.6 到 1.2 Unity 单位
 - 巡逻只用于建筑周边待命，不等同于道路行军
 - 巡逻状态下如果进入仇恨范围，应能立刻切换到接敌
-- 脱战后回到建筑周边继续转圈巡逻
+- 脱战后可见地走回建筑周边，再继续转圈巡逻，不能瞬移
 - 巡逻逻辑不要写进 `GameEntry`
 - 可以新增 `Units/UnitPatrol.cs` 或同等小脚本
 
@@ -129,7 +145,8 @@ Claude 已提交圆周巡逻实现，但 Codex Review 暂不通过。
 
 - 目标死亡后脱战
 - 目标超出追击距离后脱战
-- 脱战后回到巡逻或集结点
+- 脱战后回到巡逻或集结点，返回过程必须是移动，不是 snap
+- 如果单位在前往 rallyPoint 途中接敌，脱战后应恢复原路线，或明确返回 rally/home 后进入巡逻
 - 不引入全局单例
 
 ### 4. 集结点最小原型
@@ -216,6 +233,8 @@ MVP-02.1 完成后，Claude 必须证明：
 - 无集结点时也能出兵并围绕所属建筑转圈
 - 单位会因仇恨范围自动接敌
 - 单位能在目标死亡或超出追击距离后脱战
+- 单位追敌离开建筑/集结点后，会走回巡逻圆附近再恢复转圈，不会瞬移
+- 单位前往 rallyPoint 途中接敌后，不会丢失后续移动意图
 - 至少一组单位能按人数阈值形成小波次推进
 - 单位仍沿道路 / 路点移动
 - Console 无明显错误

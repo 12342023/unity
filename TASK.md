@@ -126,10 +126,10 @@ Claude 下一阶段正式进入 MVP-02.1。
 
 ### MVP-02.1 Codex Review：暂不通过
 
-Claude 已提交圆周巡逻实现：
+Claude 最新提交：
 
 ```text
-583b1e7 fix: change patrol to circle around building, not walk between plots
+91d2bfb fix: prevent patrol overwriting road movement, handle missing rally point
 ```
 
 Codex Review 结论：
@@ -140,20 +140,24 @@ Codex Review 结论：
 
 | 组件 | 状态 | 说明 |
 |---|---|---|
-| 巡逻系统 | ✅ 已修复 | 仅当 HasRemainingPath=false 时 patrol.Tick；Setup 不 snap 位置 |
+| 巡逻系统 | ⏳ 需继续修复 | 道路移动期间不再被 Tick 覆盖，但脱战后仍可能被 Tick 直接拉回巡逻圆 |
 | 仇恨/锁敌 | ✅ | aggroRange=4, chaseRange=7, 自动 Chase → Attack |
-| 脱战机制 | ✅ | 目标死亡/超 chaseRange 后脱战回 Idle |
+| 脱战机制 | ❌ 阻塞 | Deaggro 只移动一帧，下一帧 Idle patrol.Tick 可能造成瞬移 |
 | 集结点 | ✅ 已修复 | 先沿道路到达，到达后才转圈；无集结点时围绕 Barracks 转圈 |
 | 波次推进 | ✅ | rallyThreshold=3, 够数后 road-based 推送 |
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ UnitMovement.HasRemainingPath 为 true 时，不允许 patrol.Tick 覆盖道路移动
-- ⏳ 无 rallyPoint 时也要能出兵，并围绕所属 Barracks 转圈
-- ⏳ Play Mode 验证无瞬移
+- ⏳ 脱战后必须可见地走回 patrol circle / home，不能下一帧 snap 回巡逻圆
+- ⏳ 前往 rallyPoint 途中接敌时，不能让 `movement.Stop()` 清掉路线后没有恢复策略
+- ⏳ Play Mode 验证：追敌远离建筑后脱战，单位走回去再转圈
 - ⏳ 更新 WORKLOG.md
 - ⏳ commit / push
 - ⏳ 等待 Codex Review 通过后进入第三阶段
+
+已处理：
+- ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动
+- ✅ 无 rallyPoint 时也能出兵，并围绕所属 Barracks 转圈
 
 主题：
 

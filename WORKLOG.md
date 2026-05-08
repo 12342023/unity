@@ -1131,3 +1131,59 @@ git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
 git commit -m "fix: prevent patrol overwriting road movement, handle missing rally point"
 git push origin main
 ```
+
+### MVP-02.1 Codex Review：脱战返回巡逻仍需修复
+
+操作人：Codex
+
+审查提交：
+
+```text
+91d2bfb fix: prevent patrol overwriting road movement, handle missing rally point
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Combat/UnitCombat.cs`
+- `kingbattle/Assets/Scripts/Units/UnitPatrol.cs`
+- `kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+暂不通过
+```
+
+已确认修复：
+
+1. `UnitCombat.UpdateIdle()` 已限制 `UnitMovement.HasRemainingPath == false` 时才允许 `patrol.Tick()`，新兵前往 rallyPoint 的道路移动不再被巡逻覆盖。
+2. `UnitPatrol.Setup()` 不再初始化时直接 snap 到巡逻圆。
+3. `BarracksSpawner.SpawnUnit()` 已支持无 rallyPoint 时直接出兵，并围绕所属 Barracks 巡逻。
+
+剩余阻塞：
+
+1. `UnitCombat.Deaggro()` 只在脱战瞬间向 `patrol.CurrentPatrolPosition` 移动一帧。
+2. 下一帧进入 Idle 后，若没有敌人和剩余路径，会调用 `patrol.Tick()`。
+3. `UnitPatrol.Tick()` 会直接 `transform.position = CurrentPatrolPosition`。
+4. 因此单位追敌离开建筑/集结点后，脱战时仍可能被直接拉回巡逻圆，形成瞬移。
+5. 如果单位在前往 rallyPoint 途中接敌，`movement.Stop()` 会清掉剩余路线，脱战后也没有明确的路线恢复策略。
+
+给 Claude 的继续修复要求：
+
+```diff
++ 脱战后先可见地走回 patrol circle / home
++ 到达巡逻圆附近后才恢复 patrol.Tick()
++ 禁止 UnitPatrol.Tick 在单位离巡逻圆很远时直接 snap
++ 前往 rallyPoint 途中接敌后，要恢复原路线，或明确返回 rally/home 后再巡逻
++ 不开发第三阶段系统
++ 更新 WORKLOG.md
++ commit / push
+```
+
+GitHub 上传状态：
+
+- 本条 Review 文档待提交并推送。
