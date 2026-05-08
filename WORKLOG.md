@@ -657,3 +657,48 @@ git push origin main
 更新 WORKLOG.md
 再 commit / push
 ```
+
+### 根据新版 goal.md 重新发布要求
+
+操作人：Codex
+
+用户要求：
+
+- `goal.md` 已更完善。
+- 根据新的 `goal.md` 发布新的开发要求。
+
+已读取：
+
+- `goal.md`
+- `要求.md`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+- `kingbattle/Assets/Scripts/Buildings/TowerAttack.cs`
+
+关键结论：
+
+- 游戏定位正式收敛为“低操作、高战略、自动战争 RTS”。
+- 玩家不直接微操单个单位，而是做区域调度、兵力调度和路线规划。
+- 新 `goal.md` 的阶段顺序要求先补齐巡逻、仇恨范围、脱战、集结和小波次推进。
+- 摧毁与重建、资源、升级、连地、区域奖励、中央区域、传送阵、AI 都应后置。
+
+当前工作区观察：
+
+- `goal.md` 是用户更新的需求源文件。
+- `TowerAttack.cs` 已出现 Tower 只攻击 `UnitCombat` 的修复改动。
+- `SceneTemplateSettings.json` 仍是未跟踪 Unity Editor 生成文件，继续不纳入本次文档提交。
+
+已完成：
+
+- 重写 `NEXT_STEPS.md`，发布 MVP-02.1 自动战争基础体验补强要求。
+- 重写 `TASK.md`，同步当前任务、阶段顺序、禁止事项和 Claude 输出要求。
+- 更新 `REVIEW.md`，将下一阶段从原 MVP-03 改为 MVP-02.1。
+
+GitHub 上传状态：
+
+- 待提交并推送本次需求与文档修改。
+- 本次计划提交 `goal.md` 和协作文档，保持 GitHub 上的需求源与任务要求一致。
+- 不提交 `TowerAttack.cs`，该业务修复需要 Claude 补齐 Play Mode 验证后单独提交。
+- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。

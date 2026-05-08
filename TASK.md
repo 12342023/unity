@@ -2,103 +2,165 @@
 
 ## 当前任务
 
-### 状态：MVP-02 已审查，需要 Claude 小修
+根据用户更新后的 `goal.md`，重新发布 Claude 的下一步开发要求。
 
-Claude 已完成 MVP-02 的脚本实现：
-- 新增 `Buildings/` 和 `Combat/` 目录
-- 三种建筑（Tower / Barracks / Granary）的最小数据和表现
-- Barracks 每 5 秒自动生成 Soldier，沿道路前往敌方目标
-- Tower 自动攻击范围内敌方单位
-- 单位进入范围后攻击敌方建筑
-- 血量归零后对象自动销毁
-- UnitMovement 新增 Pause / Resume
-- 建筑和单位均添加 Collider2D 支持 Tower 的 Physics2D 检测
-- Key 1-4 测试入口保持可用
+Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接开发业务代码。Claude 是主要开发者。
 
-Codex 已完成静态审查，结论见 `REVIEW.md`：
+## 项目定位
 
-- 暂不批准进入 MVP-03
-- Tower 当前会攻击敌方建筑，需要改为只攻击敌方单位
-- 新增脚本 `.meta` 文件漏提交，Codex 本轮会补齐
-- 修复后需要重新 Play Mode 验证 Tower 不攻击建筑，只攻击敌方 Soldier
-
-- `MapData.Instance` 已移除
-- `kingbattle/Assets/Scripts` 下未发现 `MapData.Instance` 引用
-- Unity Play Mode 手动验证通过
-- MVP-01 范围控制通过
-- 允许进入 MVP-02
-
-## 已确认事实
-
-- 工作目录：`/Users/jianghao/unity`
-- 项目目录：`kingbattle/`
-- 当前项目是 Unity 小游戏项目。
-- Unity 版本：`2022.3.62f1`
-- Git 根目录：`/Users/jianghao/unity`
-- GitHub remote：`https://github.com/12342023/unity.git`
-- 后续规划包括：
-  - 微信小程序移植
-  - macOS 移植
-  - Android 移植
-
-## MVP-01 已完成内容
-
-- 固定地图：6 个地块，7 条双向道路
-- 地块大小：Small / Medium / Large
-- 地块归属：Player / Enemy / Neutral
-- 玩家主基地与敌方主基地
-- 建筑槽位数据标记
-- BFS 道路寻路
-- Samurai / Elf Archer / Soldier 三种单位移动速度差异
-- Key 1-4 临时测试入口
-- 单位沿道路移动验证
-
-## 当前仓库注意事项
-
-Unity Editor 生成了未跟踪文件：
+项目是 Unity 小游戏，当前主工程位于：
 
 ```text
-kingbattle/ProjectSettings/SceneTemplateSettings.json
+kingbattle/
 ```
 
-该文件暂不纳入本次提交。后续需要单独决定是否提交或忽略，不要和业务代码混在一起处理。
-
-## Claude 下一轮任务
-
-Claude 下一轮任务见 `NEXT_STEPS.md`，主题为：
+最新 `goal.md` 将游戏定位为：
 
 ```text
-MVP-02 建筑、出兵与基础战斗
+低操作、高战略、自动战争 RTS
 ```
 
-允许做：
+玩家不直接操作单个单位，而是通过区域、道路、兵力、建筑和推进路线进行战略调度。
 
-- 新增 `Scripts/Buildings/`
-- 新增 `Scripts/Combat/`
-- Tower / Barracks / Granary 的最小数据和表现
-- Barracks 定时生成 Soldier
-- 单位沿道路前往敌方目标
-- 单位基础攻击
-- Tower 自动攻击范围内敌方单位
-- health / damage / attackRange / attackInterval 等最小战斗数据
+## 核心目标
 
-禁止做：
+最终体验应围绕：
 
-- AI 决策
-- 占领进度
+- 自动战争
+- 战线推进
+- 区域争夺
+- 多线调兵
+- 中央大战场
+- 偷袭切后方
+- 前线拉锯战
+- 军团推进感
+- 战略区域控制
+
+## 最新开发优先级
+
+`goal.md` 明确阶段顺序如下：
+
+### 第一阶段
+
+- 地图
+- 道路
+- 单位移动
+- 巡逻
+
+### 第二阶段
+
+- 自动出兵
+- 自动战斗
+- 锁敌
+- 仇恨范围
+- 脱战
+
+### 第三阶段
+
+- 摧毁与重建
+- 建筑
+- 升级
+- 资源
+- 连地系统
+
+### 第四阶段
+
+- 区域奖励
+- 中央区域
+- 传送阵
+- AI
+
+### 第五阶段
+
+- UI
+- 特效
+- 音效
+- 美术优化
+
+## 当前实现状态
+
+已完成 / 已存在：
+
+- 固定地图
+- 固定道路
+- 单位沿道路移动
+- 三种基础单位
+- Tower / Barracks / Granary 原型
+- Barracks 自动出兵
+- Tower 自动攻击
+- 单位基础战斗
+
+当前工作区注意事项：
+
+```text
+goal.md                                            已由用户更新，作为最新需求来源
+kingbattle/Assets/Scripts/Buildings/TowerAttack.cs 已有 Tower 只攻击 UnitCombat 的修复改动
+kingbattle/ProjectSettings/SceneTemplateSettings.json 仍是未跟踪 Unity Editor 生成文件
+```
+
+Codex 不直接修改上述业务脚本。
+
+## 立即要求：MVP-02 修复收尾
+
+Claude 必须先完成当前 Review 阻塞项：
+
+```diff
+- Tower 可能攻击敌方建筑
++ Tower 只攻击带 UnitCombat 的敌方单位
++ Play Mode 验证 Tower 不攻击建筑
++ Play Mode 验证 Tower 会攻击进入范围的 Soldier
++ Console 无明显错误
++ 更新 WORKLOG.md
++ commit / push
+```
+
+如果当前 `TowerAttack.cs` 修改就是 Claude 的修复，Claude 需要补齐验证说明和提交记录。
+
+## 新发布要求：MVP-02.1 自动战争基础体验补强
+
+MVP-02 修复通过后，Claude 下一阶段做 MVP-02.1。
+
+主题：
+
+```text
+巡逻 + 仇恨范围 + 脱战 + 集结点 + 小波次推进
+```
+
+目标：
+
+让已有出兵、移动、战斗系统更接近 `goal.md` 的自动战争体验，而不是继续堆新系统。
+
+具体要求见：
+
+```text
+NEXT_STEPS.md
+```
+
+## 禁止提前开发
+
+MVP-02.1 禁止：
+
+- 摧毁与重建
+- 建筑升级
 - 粮食资源
-- 建造 / 拆除 / 重建 UI
-- 英雄系统
-- 技能树、装备、科技升级
+- 人口系统
+- 连地系统
+- 区域奖励
+- 中央区域奖励
+- 传送阵
+- AI 决策
+- 地形信息 UI
+- 英雄
+- 科技树
+- 装备
 - 随机地图
 - 联机
-- 复杂 UI
 - 平台适配
-- 未说明理由就修改 `ProjectSettings`
+- 大规模重构
 
 ## GitHub 与工作文档规范
 
-后续每次修改必须遵守：
+每次修改必须遵守：
 
 ```diff
 + 更新 TASK.md / REVIEW.md / NEXT_STEPS.md / WORKLOG.md 中相关记录
@@ -117,18 +179,16 @@ MVP-02 建筑、出兵与基础战斗
 - 使用或记录 GitHub 明文密码 / token
 ```
 
-## MVP-02 验收标准
+## Claude 输出要求
 
-Claude 完成 MVP-02 后，应提交：
+Claude 完成当前修复或 MVP-02.1 后必须说明：
 
-- 清晰的 `Buildings/` 和 `Combat/` 目录边界
-- Barracks 自动出兵验证
-- Tower 自动攻击验证
-- 单位攻击建筑或单位验证
-- 血量归零移除对象验证
-- Play Mode / Console Error 验证说明
-- 未实现内容清单
-- 工作文档更新
-- commit / push 记录
+- 新增或修改了哪些文件
+- 如何在 Unity 中运行验证
+- 哪些逻辑是临时测试入口
+- 哪些 `goal.md` 内容仍未实现
+- 是否修改了场景文件
+- 是否修改了 `ProjectSettings`
+- 是否完成 commit / push
 
-Codex 将基于 Claude 的修复输出更新 `REVIEW.md`，并决定是否允许进入 MVP-03：占领、资源、基础 AI 或 UI。
+Codex 将基于 Claude 输出更新 `REVIEW.md`，并决定是否允许进入下一阶段。

@@ -2,17 +2,23 @@
 
 ## Review 状态
 
-Codex 已完成 Claude 的 MVP-02 建筑、出兵与基础战斗原型静态审查。
+用户已更新 `goal.md`，游戏定位进一步明确为：
 
-结论：**暂不批准进入 MVP-03**。
+```text
+低操作、高战略、自动战争 RTS
+```
 
-原因：MVP-02 主体方向正确，但 Tower 当前会攻击敌方建筑，不只攻击敌方单位；同时新增脚本的 Unity `.meta` 文件漏提交，需要补齐仓库状态。
+Codex 已根据新 `goal.md` 重新发布下一步要求。
+
+结论：**暂不批准进入原 MVP-03**。
+
+原因：新 `goal.md` 的阶段顺序显示，当前应先补齐第一 / 第二阶段体验：巡逻、仇恨范围、脱战、集结和小波次推进。摧毁与重建、资源、升级、连地、区域奖励、传送阵、AI 都应后置。
 
 ## CODEX PROJECT REVIEW
 
 Gate: **FAIL**
 
-### [P1] Tower 会攻击敌方建筑，导致开局建筑互打
+### [P1] Tower 攻击建筑问题需要 Play Mode 复验
 
 File: `kingbattle/Assets/Scripts/Buildings/TowerAttack.cs:51`
 
@@ -24,9 +30,9 @@ Impact:
 
 进入 Play Mode 后，Tower 可能先攻击敌方 Tower / Barracks / Granary 等建筑，而不是只攻击进入范围的单位。这违反 MVP-02 要求“Tower 自动攻击范围内敌方单位”，也会干扰 Barracks 出兵与单位战斗链路验证。
 
-Fix:
+Current:
 
-请 Claude 让 Tower 只选择单位目标。最小修法可以在 `FindNearestEnemy()` 中过滤掉没有 `UnitCombat` 的对象：
+当前工作区已看到 `TowerAttack.cs` 中存在以下修复方向：
 
 ```diff
 + var unitCombat = hitBuffer[i].GetComponent<UnitCombat>();
@@ -34,13 +40,11 @@ Fix:
 +     continue;
 ```
 
-需要同时添加对应 namespace：
+仍需 Claude 在 Unity Play Mode 中复验并记录：
 
-```diff
-+ using Combat;
-```
-
-`TowerAttack.cs` 已经引用 `Combat`，因此只需要在筛选逻辑里加单位判定即可。修完后重新 Play Mode 验证：Tower 不应攻击建筑，只攻击进入范围的敌方 Soldier。
+- Tower 不攻击建筑
+- Tower 攻击进入范围的 Soldier
+- Console 无明显错误
 
 ### [P1] 新增脚本的 Unity meta 文件漏提交
 
@@ -93,6 +97,37 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 
 `HealthComponent` 默认用白色作为满血颜色，受到伤害后会把建筑 / 单位颜色往白色和红色之间插值。功能上不阻塞 MVP-02，但后续如果颜色用于阵营识别，应让 `HealthComponent` 在 `Start()` 记录原始 `SpriteRenderer.color` 作为满血颜色。
 
+## 新 goal.md 下的阶段判断
+
+当前不应继续推进“摧毁与重建”或“资源 / 升级 / 连地”。这些属于新 `goal.md` 的第三阶段。
+
+下一轮应发布为：
+
+```text
+MVP-02.1 自动战争基础体验补强
+```
+
+范围：
+
+- 巡逻
+- 仇恨范围
+- 脱战
+- 集结点
+- 小波次推进
+
+禁止：
+
+- 摧毁与重建
+- 建筑升级
+- 粮食资源
+- 人口系统
+- 连地系统
+- 区域奖励
+- 中央区域
+- 传送阵
+- AI
+- UI / 美术 / 音效
+
 ## Codex 当前判断
 
 MVP-02 需要小修后复审：
@@ -105,4 +140,6 @@ Play Mode 重新验证 Tower 攻击行为
 再 commit / push
 ```
 
-在上述问题修复前，不批准进入 MVP-03。
+在 MVP-02 修复验证前，不批准进入 MVP-02.1。
+
+在 MVP-02.1 完成前，不批准进入摧毁与重建、资源、升级、连地、区域奖励、传送阵或 AI。
