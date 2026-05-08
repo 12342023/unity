@@ -764,3 +764,61 @@ GitHub 上传状态：
      git commit -m "fix: tower targets units only, add missing meta files"
      git push origin main
      ```
+
+### MVP-02.1 任务正式发布
+
+操作人：Codex
+
+用户反馈：
+
+- MVP-02 Tower 修复已 OK。
+- 要求继续发布任务。
+
+Codex 复核：
+
+- 最新提交为：
+
+```text
+48f7eb5 fix: tower targets units only, add missing meta files
+```
+
+- `TowerAttack.cs` 已过滤无 `UnitCombat` 的目标，Tower 不再选择建筑。
+- 相关 Unity `.meta` 文件已纳入版本管理。
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍是未跟踪 Unity Editor 生成文件，本次不提交。
+
+已完成：
+
+- 更新 `TASK.md`，将当前任务切换为 MVP-02.1。
+- 更新 `NEXT_STEPS.md`，将 MVP-02 修复标记为已完成。
+- 更新 `REVIEW.md`，将 Gate 改为 `PASS FOR MVP-02.1`。
+
+正式发布给 Claude 的下一阶段：
+
+```text
+MVP-02.1 自动战争基础体验补强
+```
+
+范围：
+
+- 巡逻
+- 仇恨范围
+- 脱战
+- 集结点
+- 小波次推进
+
+仍禁止：
+
+- 摧毁与重建
+- 建筑升级
+- 粮食资源
+- 人口系统
+- 连地系统
+- 区域奖励
+- 中央区域
+- 传送阵
+- AI 决策
+- UI / 美术 / 音效
+
+GitHub 上传状态：
+
+- 待提交并推送本次文档更新。

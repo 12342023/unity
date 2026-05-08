@@ -36,25 +36,27 @@
 
 因此下一步不要直接做“摧毁与重建、资源、升级、连地、AI”。这些属于新 `goal.md` 的第三、第四阶段。
 
-## 立即任务：MVP-02 修复收尾
+## 已完成：MVP-02 修复收尾
 
-Claude 先完成当前 Review 阻塞项，不允许跳过：
+当前 Review 阻塞项已完成：
 
 ```diff
 - Tower 可能攻击敌方建筑
 + Tower 只攻击带 UnitCombat 的敌方单位
-+ Play Mode 验证 Tower 不攻击建筑
-+ Play Mode 验证 Tower 会攻击进入范围的 Soldier
-+ Console 无明显错误
-+ 更新 WORKLOG.md
-+ commit / push
++ 用户确认验证 OK
++ WORKLOG.md 已记录
++ commit / push 已完成
 ```
 
-当前工作区已看到 `TowerAttack.cs` 有对应修复改动，但仍需要 Claude 给出 Unity Play Mode 验证结果。
+对应提交：
 
-## 下一轮正式要求：MVP-02.1 自动战争基础体验补强
+```text
+48f7eb5 fix: tower targets units only, add missing meta files
+```
 
-MVP-02 修复通过后，下一轮进入 MVP-02.1。
+## 当前正式任务：MVP-02.1 自动战争基础体验补强
+
+下一轮进入 MVP-02.1。
 
 目标不是增加更多系统，而是让已有“出兵 + 移动 + 战斗”更接近 `goal.md` 的自动战争体验。
 
@@ -178,7 +180,6 @@ Scripts/Orders/
 
 MVP-02.1 完成后，Claude 必须证明：
 
-- Tower 修复已通过 Play Mode 验证
 - Barracks 生成单位后能巡逻或前往集结点
 - 单位会因仇恨范围自动接敌
 - 单位能在目标死亡或超出追击距离后脱战

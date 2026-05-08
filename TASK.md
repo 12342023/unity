@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-根据用户更新后的 `goal.md`，重新发布 Claude 的下一步开发要求。
+正式发布 MVP-02.1 自动战争基础体验补强任务。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接开发业务代码。Claude 是主要开发者。
 
@@ -100,25 +100,27 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json 仍是未跟踪 Unity Edit
 
 Codex 不直接修改上述业务脚本。
 
-## 立即要求：MVP-02 修复收尾
+## MVP-02 修复收尾状态
 
-Claude 必须先完成当前 Review 阻塞项：
+当前 Review 阻塞项已处理：
 
 ```diff
 - Tower 可能攻击敌方建筑
 + Tower 只攻击带 UnitCombat 的敌方单位
-+ Play Mode 验证 Tower 不攻击建筑
-+ Play Mode 验证 Tower 会攻击进入范围的 Soldier
-+ Console 无明显错误
-+ 更新 WORKLOG.md
-+ commit / push
++ 用户确认 Play Mode 验证 OK
++ WORKLOG.md 已记录修复详情
++ commit / push 已完成
 ```
 
-如果当前 `TowerAttack.cs` 修改就是 Claude 的修复，Claude 需要补齐验证说明和提交记录。
+已确认提交：
+
+```text
+48f7eb5 fix: tower targets units only, add missing meta files
+```
 
 ## 新发布要求：MVP-02.1 自动战争基础体验补强
 
-MVP-02 修复通过后，Claude 下一阶段做 MVP-02.1。
+Claude 下一阶段正式进入 MVP-02.1。
 
 主题：
 
@@ -191,4 +193,4 @@ Claude 完成当前修复或 MVP-02.1 后必须说明：
 - 是否修改了 `ProjectSettings`
 - 是否完成 commit / push
 
-Codex 将基于 Claude 输出更新 `REVIEW.md`，并决定是否允许进入下一阶段。
+Codex 将基于 Claude 输出更新 `REVIEW.md`，并决定是否允许进入后续第三阶段系统。

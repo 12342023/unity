@@ -10,15 +10,15 @@
 
 Codex 已根据新 `goal.md` 重新发布下一步要求。
 
-结论：**暂不批准进入原 MVP-03**。
+结论：**批准进入 MVP-02.1，不批准进入原 MVP-03**。
 
 原因：新 `goal.md` 的阶段顺序显示，当前应先补齐第一 / 第二阶段体验：巡逻、仇恨范围、脱战、集结和小波次推进。摧毁与重建、资源、升级、连地、区域奖励、传送阵、AI 都应后置。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **FAIL**
+Gate: **PASS FOR MVP-02.1**
 
-### [P1] Tower 攻击建筑问题需要 Play Mode 复验
+### 已处理：[P1] Tower 攻击建筑问题
 
 File: `kingbattle/Assets/Scripts/Buildings/TowerAttack.cs:51`
 
@@ -30,9 +30,9 @@ Impact:
 
 进入 Play Mode 后，Tower 可能先攻击敌方 Tower / Barracks / Granary 等建筑，而不是只攻击进入范围的单位。这违反 MVP-02 要求“Tower 自动攻击范围内敌方单位”，也会干扰 Barracks 出兵与单位战斗链路验证。
 
-Current:
+Fix:
 
-当前工作区已看到 `TowerAttack.cs` 中存在以下修复方向：
+`TowerAttack.cs` 已增加 `UnitCombat` 过滤：
 
 ```diff
 + var unitCombat = hitBuffer[i].GetComponent<UnitCombat>();
@@ -40,13 +40,13 @@ Current:
 +     continue;
 ```
 
-仍需 Claude 在 Unity Play Mode 中复验并记录：
+用户已确认验证 OK，修复已提交并推送：
 
-- Tower 不攻击建筑
-- Tower 攻击进入范围的 Soldier
-- Console 无明显错误
+```text
+48f7eb5 fix: tower targets units only, add missing meta files
+```
 
-### [P1] 新增脚本的 Unity meta 文件漏提交
+### 已处理：[P1] 新增脚本的 Unity meta 文件漏提交
 
 File: `kingbattle/Assets/Scripts/Buildings.meta`
 
@@ -70,7 +70,7 @@ Unity 项目应提交源码对应 `.meta` 文件，保持 GUID 稳定。漏提�
 
 Fix:
 
-Codex 本轮会把这些 `.meta` 文件作为仓库卫生补提交。Claude 后续提交 Unity 新脚本时必须同时提交对应 `.meta` 文件。
+相关 `.meta` 文件已纳入版本管理。Claude 后续提交 Unity 新脚本时必须同时提交对应 `.meta` 文件。
 
 ## 通过项
 
@@ -130,16 +130,18 @@ MVP-02.1 自动战争基础体验补强
 
 ## Codex 当前判断
 
-MVP-02 需要小修后复审：
+MVP-02 修复已通过，当前正式发布：
 
 ```text
-Tower 只攻击单位，不攻击建筑
-确认新增脚本 meta 文件已提交
-Play Mode 重新验证 Tower 攻击行为
-更新 WORKLOG.md
-再 commit / push
+MVP-02.1 自动战争基础体验补强
 ```
 
-在 MVP-02 修复验证前，不批准进入 MVP-02.1。
+允许范围：
+
+- 巡逻
+- 仇恨范围
+- 脱战
+- 集结点
+- 小波次推进
 
 在 MVP-02.1 完成前，不批准进入摧毁与重建、资源、升级、连地、区域奖励、传送阵或 AI。
