@@ -364,6 +364,28 @@ fatal: Authentication failed for 'https://github.com/12342023/unity.git/'
 
 当前待处理：
 
-- 检查本次文档 diff。
-- 按项目规则提交并推送本次文档更新。
-- 如需把 `goal.md` 和 `要求.md` 纳入版本管理，本次也应一并确认后提交。
+- 已检查本次文档 diff，未发现 Unity 生成目录进入 staged 文件。
+- 已将 `goal.md` 和 `要求.md` 作为需求来源文档纳入版本管理。
+- 已完成本地提交：
+
+```text
+8b6fa73 docs: define mvp movement requirements
+```
+
+- 首次推送到 GitHub 失败，原因是当前环境连接 GitHub 时 SSL 连接中断：
+
+```text
+LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to github.com:443
+```
+
+- 用户本地执行 `git ls-remote https://github.com/12342023/unity.git` 验证远端连接正常。
+- Codex 重试推送成功：
+
+```text
+To https://github.com/12342023/unity.git
+   663d3bd..8b6fa73  main -> main
+```
+
+当前状态：
+
+- `8b6fa73 docs: define mvp movement requirements` 已上传到 GitHub。
