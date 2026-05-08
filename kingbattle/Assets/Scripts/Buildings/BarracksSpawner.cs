@@ -129,10 +129,14 @@ namespace Buildings
             col.radius = 0.2f;
             col.isTrigger = true;
 
-            // ── Patrol (waypoints around rally area) ──
+            // ── Circular patrol (circles around rally/building) ──
             var patrol = go.AddComponent<UnitPatrol>();
-            var patrolPaths = BuildPatrolWaypoints(destPlotId);
-            patrol.Setup(patrolPaths);
+            Vector3 patrolCenter = mapData.GetPlot(destPlotId)?.worldPosition ?? transform.position;
+            float patrolRadius = 0.9f;
+            float startAngle = (spawnedUnits.Count % 12) * 30f; // stagger angles so units don't overlap
+            patrol.Setup(
+                new Vector3(patrolCenter.x, patrolCenter.y, -0.2f),
+                patrolRadius, startAngle);
 
             // ── Combat (self-managed aggro/chase/deaggro) ──
             var combat = go.AddComponent<UnitCombat>();
@@ -152,36 +156,6 @@ namespace Buildings
 
             var pathStr = string.Join(" -> ", pathIds);
             Debug.Log($"[Barracks] Spawned {faction} Soldier, rallying at {destPlotId}: {pathStr}");
-        }
-
-        // ── Patrol waypoints ────────────────────────────────────────────
-
-        /// <summary>Build patrol waypoints around a plot using its road neighbours.</summary>
-        private List<Vector3> BuildPatrolWaypoints(string centerPlotId)
-        {
-            var pts = new List<Vector3>();
-            var center = mapData.GetPlot(centerPlotId);
-            if (center == null) return pts;
-
-            // Add the center plot position
-            pts.Add(new Vector3(center.worldPosition.x, center.worldPosition.y, -0.2f));
-
-            // Add neighbour plot positions (up to 3)
-            int count = 0;
-            foreach (var nId in mapData.GetNeighbors(centerPlotId))
-            {
-                var nPlot = mapData.GetPlot(nId);
-                if (nPlot == null) continue;
-                pts.Add(new Vector3(nPlot.worldPosition.x, nPlot.worldPosition.y, -0.2f));
-                count++;
-                if (count >= 3) break;
-            }
-
-            // If we only have 1 point, duplicate it (stand ground)
-            if (pts.Count < 2)
-                pts.Add(pts[0]);
-
-            return pts;
         }
 
         // ── Wave push ───────────────────────────────────────────────────

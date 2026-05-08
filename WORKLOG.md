@@ -925,6 +925,59 @@ GitHub 上传状态：
 
 - 已提交并推送本次需求澄清文档。
 
+### MVP-02.1 巡逻修正：地块间移动 → 建筑周边转圈
+
+操作人：Claude
+
+修改内容：
+
+1. **`Units/UnitPatrol.cs`** — 完全重写
+   - 删除旧的 `List<Vector3> patrolPoints` 方式点巡逻模式
+   - 新增圆形巡逻：`Setup(center, radius, startAngle, speed)`
+   - `Tick(float deltaTime)` 每帧推进角度，在圆上移动
+   - 圆周 = 2πr，角速度 = 线速度/圆周 × 360°
+   - 多个单位通过 `startAngle` 错开（每多一个单位 +30°），避免完全重叠
+   - `Pause()` / `Resume()` 支持战斗时暂停巡逻
+
+2. **`Combat/UnitCombat.cs`** — 修改 Idle + Deaggro
+   - `UpdateIdle()`: 删除旧的 plot-waypoint 巡逻，改为 `patrol.Tick(Time.deltaTime)`
+   - `Deaggro()`: 目标死亡或超出 chaseRange 后调用 `patrol.Resume()`，向巡逻圆位置移动
+   - `SetHomePosition()`: 同时设置巡逻中心（半径为 0.9）
+
+3. **`Buildings/BarracksSpawner.cs`** — 简化
+   - 删除 `BuildPatrolWaypoints()` 方法
+   - 新单位创建时：`UnitPatrol.Setup(patrolCenter, 0.9f, staggerAngle)` 围绕集结点转圈
+   - 错开角度基于 `spawnedUnits.Count % 12 * 30°`
+
+4. **场景文件和 ProjectSettings** — 均未修改
+
+Play Mode 验证步骤：
+1. 打开 `SampleScene` → Play
+2. 等待 5 秒，Player Barracks 生成蓝色 Soldier
+3. 蓝色 Soldier 沿道路移动到 Village（集结点）
+4. 到达后 → **围绕 Village 地块中心以半径 0.9 转圈巡逻**，多个蓝兵角度错开
+5. 同时红色 Soldier 移动到 EnemyOutpost → 围绕 Outpost 转圈
+6. 当红色 Soldier 巡逻转圈进入 Crossroads 附近 → Player Tower 自动攻击（只打单位）
+7. 当双方 Soldier 巡逻中互相进入 aggroRange(4) → Chase → Attack
+8. 一方死亡后脱战 → 另一方返回集结点继续转圈
+9. Village 聚集 ≥ 3 个蓝兵 → 波次推送 → 沿道路推向 EnemyBase
+10. Console 无明显错误
+
+新增/修改文件对应的 .meta 文件：
+- `UnitPatrol.cs.meta` 最初漏提交，本次一并纳入版本管理
+
+手动 git 推送命令：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Units/UnitPatrol.cs \
+        kingbattle/Assets/Scripts/Units/UnitPatrol.cs.meta \
+        kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
+        kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs \
+        WORKLOG.md TASK.md
+git commit -m "fix: change patrol to circle around building, not walk between plots"
+git push origin main
+```
+
 提交记录：
 
 ```text

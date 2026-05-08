@@ -52,11 +52,16 @@ namespace Combat
 
         // ── Public API ──────────────────────────────────────────────────
 
-        /// <summary>Set the home position to return to after deaggro.</summary>
+        /// <summary>Set the home position to return to after deaggro.
+        /// Also used as the center of circular patrol.</summary>
         public void SetHomePosition(Vector3 pos)
         {
             homePosition = pos;
             hasHome = true;
+
+            // If we have a patrol component, wire it to circle around home
+            if (patrol != null)
+                patrol.Setup(pos, 0.9f, Random.Range(0f, 360f));
         }
 
         /// <summary>Assign a push path: unit will traverse this path toward the enemy,
@@ -141,15 +146,10 @@ namespace Combat
                 return;
             }
 
-            // 3. Patrol cycling
-            if (patrol != null && patrol.HasPatrol && !movement.HasRemainingPath && !movement.IsMoving)
+            // 3. Circular patrol (circle around home / rally building)
+            if (patrol != null)
             {
-                var dest = patrol.CurrentTarget;
-                patrol.Advance();
-                // Direct movement to next patrol waypoint
-                var step = movement.speed * Time.deltaTime;
-                if (Vector3.Distance(transform.position, dest) > 0.3f)
-                    transform.position = Vector3.MoveTowards(transform.position, dest, step);
+                patrol.Tick(Time.deltaTime);
             }
         }
 
@@ -225,10 +225,18 @@ namespace Combat
             chaseTarget = null;
             state = CState.Idle;
 
-            // If we have a home position, return there
-            if (hasHome)
+            // Resume circular patrol around home
+            if (patrol != null)
             {
-                // Simple direct return (can be refined to road-based later)
+                patrol.Resume();
+
+                // Direct return toward the patrol circle
+                var targetPos = patrol.CurrentPatrolPosition;
+                var step = movement.speed * Time.deltaTime * 0.8f;
+                transform.position = Vector3.MoveTowards(transform.position, targetPos, step);
+            }
+            else if (hasHome)
+            {
                 var step = movement.speed * Time.deltaTime * 0.8f;
                 transform.position = Vector3.MoveTowards(
                     transform.position, homePosition, step);
