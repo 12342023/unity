@@ -1295,3 +1295,59 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    3ca7ea7..0ad6f6f  main -> main
 ```
+
+### MVP-02.1 Codex Review：脱战返回仍有 snap 风险
+
+操作人：Codex
+
+审查提交：
+
+```text
+10abfb2 fix: smooth deaggro return to patrol circle, no teleport
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Combat/UnitCombat.cs`
+- `kingbattle/Assets/Scripts/Units/UnitPatrol.cs`
+- `kingbattle/Assets/Scripts/Units/UnitMovement.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+暂不通过
+```
+
+已确认改善：
+
+1. `Deaggro()` 不再只执行一帧 `MoveTowards`。
+2. 回程逻辑已放到 `UpdateIdle()` 中持续执行。
+3. 本次提交未抢跑实现建筑废墟、重建、资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+
+剩余阻塞：
+
+1. 当前回程目标是 `patrol.Center`，不是巡逻圆上的切入点。
+2. `returnThreshold = patrol.Radius * 1.5f + 0.5f` 对半径 0.9 的巡逻圆约为 1.85，范围偏大。
+3. 进入阈值后会调用 `patrol.Tick()`。
+4. `UnitPatrol.Tick()` 仍然直接 `transform.position = CurrentPatrolPosition`，因此仍可能从中心附近或阈值边缘跳到圆周点。
+5. `movement.Stop()` 清空 rallyPoint 路线的问题仍未处理。
+
+给 Claude 的继续修复要求：
+
+```diff
++ 脱战后持续 MoveTowards 到 patrol.CurrentPatrolPosition 或明确圆周切入点
++ 距离该点 <= 0.05~0.1 后才恢复 patrol.Tick()
++ 返回期间禁止 Tick 直接设置 transform.position
++ 前往 rallyPoint 途中接敌后，要恢复原路线，或明确返回 rally/home
++ 不实现废墟系统或第三阶段内容
++ 更新 WORKLOG.md
++ commit / push
+```
+
+GitHub 上传状态：
+
+- 本次 Review 文档待提交并推送。

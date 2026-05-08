@@ -5,155 +5,131 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-91d2bfb fix: prevent patrol overwriting road movement, handle missing rally point
+10abfb2 fix: smooth deaggro return to patrol circle, no teleport
 ```
 
 结论：**暂不批准 MVP-02.1 通过**。
 
-原因：上一轮两个阻塞点已修复，但脱战返回巡逻仍存在瞬移风险。单位从追击/攻击脱战后，`Deaggro()` 只移动一小步，下一帧 `UpdateIdle()` 可能直接调用 `patrol.Tick()`，而 `UnitPatrol.Tick()` 会直接设置 `transform.position` 到巡逻圆位置。
+原因：Claude 已尝试修复脱战返回，但当前实现仍不是“走回巡逻圆后再转圈”。它只让单位走回 `patrol.Center` 附近，一旦进入较大的阈值范围，就继续调用 `patrol.Tick()`；而 `UnitPatrol.Tick()` 仍然直接设置 `transform.position = CurrentPatrolPosition`，所以仍可能产生位置跳变。前往 rallyPoint 途中接敌后 `movement.Stop()` 清空路线的问题也未处理。
 
 ## CODEX PROJECT REVIEW
 
 Gate: **FAIL**
 
-### 已修复：[P1] 巡逻 Tick 覆盖前往集结点的道路移动
+### 已修复：[P1] Deaggro 不再只移动一帧
 
 Files:
 
 ```text
 kingbattle/Assets/Scripts/Combat/UnitCombat.cs:145
-kingbattle/Assets/Scripts/Units/UnitPatrol.cs:27
+kingbattle/Assets/Scripts/Combat/UnitCombat.cs:232
 ```
 
 Review:
 
-Claude 已在 `UpdateIdle()` 中增加守卫：
+`Deaggro()` 已删除旧的一帧 `MoveTowards`，改为 `patrol?.Resume()`，并把返回逻辑放进 `UpdateIdle()` 持续执行。这比上一版更接近目标。
 
-```text
-patrol != null && pushPath == null && movement != null && !movement.HasRemainingPath
-```
-
-同时 `UnitPatrol.Setup()` 不再初始化时直接 snap 到巡逻圆。该方向符合要求：
-
-```diff
-+ 新兵沿道路移动期间不会被 patrol.Tick() 覆盖
-+ 到达 rally/building 后才开始圆周巡逻
-```
-
-### 已修复：[P2] 无 rallyPoint 时 Barracks 可能无法出兵
-
-File:
-
-```text
-kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs:90
-```
-
-Review:
-
-`SpawnUnit()` 已改为先创建单位，再判断是否需要道路移动：
-
-```text
-needRoadMove = destPlotId != currentPlotId
-```
-
-无 rallyPoint 时不再要求 `pathIds.Count >= 2`，单位可以围绕所属 Barracks 本地巡逻。该问题通过代码审查。
-
-### [P1] 脱战后下一帧仍可能被 patrol.Tick() 拉回巡逻圆
+### [P1] 进入 center 阈值后仍可能被 patrol.Tick() snap 到巡逻圆
 
 Files:
 
 ```text
-kingbattle/Assets/Scripts/Combat/UnitCombat.cs:218
 kingbattle/Assets/Scripts/Combat/UnitCombat.cs:145
 kingbattle/Assets/Scripts/Units/UnitPatrol.cs:57
-kingbattle/Assets/Scripts/Units/UnitPatrol.cs:86
+kingbattle/Assets/Scripts/Units/UnitPatrol.cs:89
 ```
 
 Problem:
 
-`Deaggro()` 当前逻辑：
+当前返回逻辑是：
 
-```text
-1. state = Idle
-2. patrol.Resume()
-3. MoveTowards(transform.position, patrol.CurrentPatrolPosition, one frame step)
+```csharp
+float distToCenter = Vector3.Distance(transform.position, patrol.Center);
+float returnThreshold = patrol.Radius * 1.5f + 0.5f;
+if (distToCenter > returnThreshold)
+{
+    transform.position = Vector3.MoveTowards(transform.position, patrol.Center, step);
+    return;
+}
 ```
 
-但下一帧进入 `UpdateIdle()` 后，如果没有敌人、没有 pushPath、没有 remaining road path，就会调用 `patrol.Tick(Time.deltaTime)`。`UnitPatrol.Tick()` 最终调用 `ApplyCirclePosition()`，直接执行：
+`radius = 0.9` 时，阈值约为 `1.85`。这意味着单位只要进入中心点 1.85 范围内，就会停止“返回”逻辑，开始执行：
+
+```csharp
+patrol.Tick(Time.deltaTime);
+```
+
+但 `UnitPatrol.Tick()` 最终仍然直接：
 
 ```csharp
 transform.position = CurrentPatrolPosition;
 ```
 
-如果单位追敌离开了建筑/集结点较远，下一帧会被直接拉回巡逻圆，看起来像瞬移。
+如果单位在距离中心 1.8 的位置，而当前巡逻圆目标点在另一侧，下一帧仍可能被拉动很大距离。即使单位走到 `Center`，恢复 Tick 时也会从中心跳到半径 `0.9` 的圆周点。这不是可见的平滑返回。
 
 Impact:
 
-这违反用户对巡逻的明确要求：
-
-```text
-遇敌后从巡逻切换到接敌，脱战后回到建筑附近继续转圈
-```
-
-这里的“回到”应该是可观察的移动返回，而不是突然跳回巡逻圆。该问题会破坏自动战争的空间可信度，也会影响后续 macOS / Android / 微信小程序移植时的表现一致性。
+Play Mode 里仍可能看到单位追敌脱战后靠近建筑/集结点时突然跳到圆周位置。用户要求的是“回到建筑附近继续转圈”，不是“靠近一点后被吸到巡逻圆上”。
 
 Fix:
 
-请 Claude 做最小修复，不要重构整套状态机。可选方向：
+请 Claude 做更小但更精确的修复：
 
 ```diff
-+ 增加 ReturningToPatrol / ReturningHome 状态
-+ 脱战后先 MoveTowards 回到 patrol.CurrentPatrolPosition 或 patrol.Center 附近
-+ 距离小于阈值后才 Resume 并允许 patrol.Tick()
-+ UnitPatrol.Tick() 不应在单位离巡逻圆很远时直接 snap
++ 返回目标应是 patrol.CurrentPatrolPosition，或当前角度对应的圆周切入点
++ 只有距离该目标足够近，例如 <= 0.05 或 <= 0.1，才允许 patrol.Tick()
++ 返回期间不要调用 patrol.Tick()
++ 或者把 UnitPatrol.Tick() 改成 MoveTowards 到 CurrentPatrolPosition，再进入圆周推进
 ```
 
-验收条件：
+不要新增复杂 AI，也不要做废墟系统。
 
-- 单位追敌离开建筑/集结点后，目标死亡或超出 chaseRange，会走回巡逻圆附近。
-- 返回过程中不能瞬移。
-- 回到巡逻圆附近后才继续围绕建筑/集结点转圈。
-- Console 无明显错误。
-- 不引入全局单例，不扩展第三阶段系统。
+### [P2] 前往 rally 途中接敌后，原道路移动仍会被 Stop 清掉
 
-### [P2] 前往 rally 途中接敌后，原道路移动会被 Stop 清掉
-
-File:
+Files:
 
 ```text
 kingbattle/Assets/Scripts/Combat/UnitCombat.cs:112
+kingbattle/Assets/Scripts/Units/UnitMovement.cs:63
 ```
 
 Problem:
 
-`UpdateIdle()` 在扫描到敌人时会执行：
+`UpdateIdle()` 扫描到敌人时仍然执行：
 
 ```csharp
 movement?.Stop();
 ```
 
-如果单位此时还在沿道路前往 rallyPoint，`Stop()` 会清空 `UnitMovement` 的剩余路径。战斗结束后，单位不再知道自己原本还要继续走到 rallyPoint，只能进入当前的巡逻/回家逻辑。
+`UnitMovement.Stop()` 会清空：
+
+```csharp
+hasPath = false;
+waypoints = null;
+```
+
+如果单位正在前往 rallyPoint，这条路线会丢失。Claude 本次提交没有修改 `UnitMovement`，也没有在 `UnitCombat` 中保存或恢复被打断的路线。
 
 Impact:
 
-这不一定立刻阻塞 MVP-02.1 的主演示，但会造成边界行为不稳定：单位在前往集结点途中接敌，脱战后可能不恢复原路线。后续“多线调兵”和“小波次推进”会更容易暴露这个问题。
+单位在前往集结点途中接敌，脱战后不一定能继续到 rallyPoint。后续“多线调兵”和“小波次推进”会依赖这个行为，因此现在应该至少给出明确策略：恢复路线，或明确转入 return-to-rally/home。
 
 Fix:
 
-请 Claude 与 P1 一起小修：
+最小修复方向：
 
 ```diff
-+ 如果单位是在 road movement 中接敌，脱战后应继续原路线，或明确转入返回 rally/home 的移动状态
-+ 不要在业务逻辑中留下“路径被清掉但状态不知道”的半完成状态
++ 不要用 Stop() 清掉 road movement 路线；可改为 Pause()/Resume()
++ 如果必须 Stop()，则保存 interrupted route 或 rally/home 返回目标
++ 脱战后恢复原路线，或明确走回 rally/home，再进入巡逻
 ```
 
-## 通过项
+### 通过项
 
-- 当前提交没有提前实现摧毁与重建、资源、升级、连地、区域奖励、传送阵或 AI。
-- `Buildings/`、`Combat/`、`Units/` 边界仍然清晰。
-- `GameEntry` 没有被继续塞入巡逻/战斗核心逻辑。
-- 无 rallyPoint 出兵路径已补齐。
-- `ProjectSettings` 未纳入本次提交。
+- 本次提交没有实现建筑变废墟，也没有抢跑第三阶段。
+- 未修改 `ProjectSettings`。
+- `UnitPatrol` 只新增 `Radius` 只读属性，范围较小。
+- `GameEntry` 未继续膨胀。
 
 ## 残留注意事项
 
@@ -173,16 +149,22 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 
 ## 给 Claude 的下一条任务
 
-请 Claude 继续修复 MVP-02.1，不要进入新系统：
+请 Claude 继续小修 MVP-02.1，不要进入第三阶段：
 
 ```text
-修复脱战返回巡逻：单位追敌离开建筑/集结点后，目标死亡或超出 chaseRange 时，必须可见地走回巡逻圆附近，然后再恢复围绕建筑/集结点转圈。禁止下一帧 patrol.Tick 直接把单位 snap 回 CurrentPatrolPosition。
+Codex Review 仍不通过。
 
-同时处理前往 rallyPoint 途中接敌的边界：不要让 movement.Stop() 清掉路线后没有恢复策略。可以选择恢复原道路路线，或脱战后明确返回 rally/home，再恢复巡逻。
+问题 1：
+你现在是走回 patrol.Center 附近，进入 returnThreshold 后就调用 patrol.Tick()。但 patrol.Tick() 仍然会直接 transform.position = CurrentPatrolPosition，所以单位仍可能从 center 附近或阈值边缘跳到圆周点。
 
-只做最小修改；不要开发摧毁与重建、资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+请改成：脱战后持续 MoveTowards 到 patrol.CurrentPatrolPosition 或一个明确的圆周切入点。只有距离该点 <= 0.05~0.1 时，才允许恢复 patrol.Tick()。返回期间禁止 Tick。
 
-完成后请更新 WORKLOG.md，说明修改文件、Play Mode 验证步骤、是否修改场景/ProjectSettings，并 commit / push。
+问题 2：
+前往 rallyPoint 途中接敌时，movement.Stop() 仍会清掉 UnitMovement 路线。请改为 Pause/Resume，或保存被打断的路线，或脱战后明确返回 rally/home。不要留下“路线丢了但状态不知道”的情况。
+
+只做以上两点最小修复。不要实现建筑废墟、重建、资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+
+完成后更新 WORKLOG.md，说明修改文件、Play Mode 验证步骤、是否修改场景/ProjectSettings，并 commit / push。
 ```
 
 在以上问题修复并通过 Play Mode 验证前，不批准 MVP-02.1 通过，也不批准进入第三阶段系统。
