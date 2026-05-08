@@ -1350,4 +1350,17 @@ To https://github.com/12342023/unity.git
 
 GitHub 上传状态：
 
-- 本次 Review 文档待提交并推送。
+- 已提交并推送本次 Review 文档。
+
+提交记录：
+
+```text
+76c25b0 docs: review mvp-02.1 return snap risk
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   10abfb2..76c25b0  main -> main
+```
