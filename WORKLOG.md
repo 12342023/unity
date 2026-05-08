@@ -1186,4 +1186,17 @@ git push origin main
 
 GitHub 上传状态：
 
-- 本条 Review 文档待提交并推送。
+- 已提交并推送本次 Review 文档。
+
+提交记录：
+
+```text
+2a426d8 docs: review mvp-02.1 deaggro return
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   91d2bfb..2a426d8  main -> main
+```
