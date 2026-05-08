@@ -498,20 +498,60 @@ Codex Review 指出的阻塞项已修复：
    - 已验证：`MapRenderer.cs` 和 `TestUnitSpawner.cs` 均通过 `Initialize(MapData)` 参数传入，不依赖静态 Instance
    - 全局搜索确认无其他代码引用 `MapData.Instance`
 
-2. **Unity Play Mode 验证**
-   - 当前工作目录 bash 环境不可用，暂无法通过命令行执行 Unity batchmode 验证
-   - 建议用户在本地手动验证：
-     1. 打开 `kingbattle/` 项目
-     2. 打开 `SampleScene`
-     3. 点击 Play
-     4. 按 Key 1 / 2 / 3 / 4
-     5. 确认 Console 无红/黄错误
+2. **Unity Play Mode 验证 — 已通过**
+   - Console 无编译错误、无运行时错误
+   - Key 1 生成 Samurai → EnemyBase，速度正常
+   - Key 2 生成 Elf Archer → EnemyBase，速度正常
+   - Key 3 生成 Soldier → EnemyBase，速度正常
+   - Key 4 生成 Samurai → Crossroads，路径正确
+   - 地图渲染正常：地块颜色、道路线条、建筑槽位标记、主基地金色边框均可见
+   - 验证人：用户手动验证
 
 3. **Git commit / push**
-   - 当前 bash 环境不可用，无法执行 git 命令
-   - 用户可在本地手动提交：
+   - bash 环境不可用，用户需在本地手动操作：
      ```sh
      git add kingbattle/Assets/Scripts/Map/MapData.cs WORKLOG.md TASK.md REVIEW.md NEXT_STEPS.md
      git commit -m "fix: remove MapData.Instance global static state per codex review"
      git push origin main
      ```
+
+### MVP-01 复审通过与 MVP-02 要求生成
+
+操作人：Codex
+
+用户反馈：
+
+- 已移除 `public static MapData Instance { get; private set; }` 属性及注释。
+- 已移除 `CreateFixedMap()` 中的 `Instance = map;` 赋值。
+- 已全局 grep 确认 `Assets/Scripts/` 下无 `MapData.Instance` 引用。
+- `MapRenderer` 和 `TestUnitSpawner` 均通过 `Initialize(MapData)` 参数传入。
+- Unity Play Mode 手动验证已通过。
+- Git commit / push 已完成。
+
+Codex 复查结果：
+
+- `rg "MapData\\.Instance|public static MapData Instance|Instance = map" kingbattle/Assets/Scripts` 无结果。
+- `MapData.cs` 已改为显式返回 `new MapData(...)`。
+- `WORKLOG.md` 已记录 Play Mode 验证结果。
+- 远端已有提交：
+
+```text
+2743571 fix: remove MapData.Instance global static state per codex review
+```
+
+发现的问题：
+
+- 远端提交只包含 `WORKLOG.md` 和 `kingbattle/Assets/Scripts/Map/MapData.cs`。
+- 其余 MVP-01 脚本仍处于未跟踪状态，需要由 Codex 补充纳入提交。
+- Unity Editor 新增了未跟踪文件 `kingbattle/ProjectSettings/SceneTemplateSettings.json`，本次不提交，后续单独决定是否提交或忽略。
+
+本次处理：
+
+- 更新 `REVIEW.md`：MVP-01 复审通过，允许进入 MVP-02。
+- 更新 `NEXT_STEPS.md`：生成 MVP-02 建筑、出兵与基础战斗要求。
+- 更新 `TASK.md`：同步当前任务状态和 MVP-02 范围。
+
+下一步：
+
+- Codex 将补充提交 MVP-01 其余脚本和本次文档更新。
+- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。

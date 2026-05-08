@@ -2,95 +2,96 @@
 
 ## Review 状态
 
-Codex 已完成 Claude 的 MVP-01 固定地图与道路移动原型静态审查。
+Codex 已完成 Claude 的 MVP-01 固定地图与道路移动原型复审。
 
-结论：**暂不批准进入 MVP-02**。
-
-原因不是功能方向错误，而是 MVP-01 还有两个必须收口的问题：
-
-1. 代码中出现了不必要的全局状态入口。
-2. Play Mode / Console Error 验证尚未完成。
+结论：**MVP-01 通过，允许进入 MVP-02。**
 
 ## CODEX PROJECT REVIEW
 
-Gate: **FAIL**
+Gate: **PASS**
 
-### [P1] MVP-01 缺少 Play Mode 验证
+## 复审结论
 
-File: `WORKLOG.md`
+### 已修复：移除 MapData.Instance
 
-Problem:
+Claude 已按 Review 要求移除 `MapData.Instance`：
 
-`NEXT_STEPS.md` 的 MVP-01 验收标准要求 Play Mode 无明显 Console Error。Claude 的记录说明其未执行 commit / push，但也没有提供 Unity Play Mode 验证结果。Codex 尝试使用 Unity batchmode 验证，第一次被 Unity License Client IPC 超时阻断，第二次被 `kingbattle/Temp/UnityLockfile` 阻断，提示已有 Unity 实例打开项目。
+- `kingbattle/Assets/Scripts/Map/MapData.cs` 中不再存在 `public static MapData Instance`
+- `CreateFixedMap()` 中不再存在 `Instance = map`
+- 全局搜索 `kingbattle/Assets/Scripts` 未发现 `MapData.Instance` 引用
+- `MapRenderer` 和 `TestUnitSpawner` 仍通过 `Initialize(MapData)` 显式传入地图数据
 
-Impact:
+该项通过。
 
-当前只能确认脚本结构和代码意图，不能确认 Unity 是否完成脚本导入、编译，以及按键 1-4 是否能在 Play Mode 中正常生成并移动单位。
+### 已验证：Unity Play Mode
 
-Fix:
+根据 `WORKLOG.md` 记录，用户已在 Unity Editor 中手动验证：
 
-Claude 或用户需要在 Unity Editor 中打开 `kingbattle/`，进入 Play Mode，验证：
+- Console 无编译错误、无运行时错误
+- Key 1 生成 Samurai 并移动到 EnemyBase
+- Key 2 生成 Elf Archer 并移动到 EnemyBase
+- Key 3 生成 Soldier 并移动到 EnemyBase
+- Key 4 生成 Samurai 并移动到 Crossroads
+- 地图渲染、道路、建筑槽位标记、主基地边框均可见
 
-- Console 没有编译错误或运行时错误
-- 进入 Play Mode 后自动生成地图
-- Key 1 / 2 / 3 可分别生成 Samurai / Elf Archer / Soldier
-- 单位沿道路移动到 EnemyBase
-- Key 4 可生成 Samurai 并移动到 Crossroads
+该项通过。
 
-验证完成后，把结果写入 `WORKLOG.md`。
+### 已确认：MVP-01 范围控制
 
-### [P2] 移除未使用的全局 MapData.Instance
+本轮实现仍保持在 MVP-01 范围：
 
-File: `kingbattle/Assets/Scripts/Map/MapData.cs:14`
+- 固定地图
+- 地块数据
+- 固定道路
+- BFS 道路寻路
+- 单位沿道路移动
+- 临时键盘测试入口
 
-Problem:
+未提前实现：
 
-`MapData` 新增了 `public static MapData Instance { get; private set; }`，并在 `CreateFixedMap()` 里赋值。当前代码已经通过 `GameEntry` 显式把 `mapData` 传给 `MapRenderer` 和 `TestUnitSpawner`，这个静态入口没有实际必要。
+- 战斗
+- AI
+- 占领进度
+- 建筑建造 / 重建 / 拆除
+- 粮食资源
+- 英雄
+- 联机
+- 随机地图
+- 复杂 UI
 
-Impact:
+该项通过。
 
-项目要求明确避免随意新增全局状态。现在保留 `MapData.Instance` 会给后续建筑、战斗、AI、平台适配留下隐式依赖入口，容易让系统逐渐绕过清晰的模块边界。
+## 残留注意事项
 
-Fix:
+### ProjectSettings 新增文件未纳入本次提交
 
-请 Claude 删除：
+当前工作树出现未跟踪文件：
 
-```diff
-- public static MapData Instance { get; private set; }
+```text
+kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
 
-以及：
+该文件是 Unity Editor 生成的 ProjectSettings 文件。由于项目规则要求不随意修改 `ProjectSettings`，本次不纳入提交。后续需要单独决定：
 
-```diff
-- Instance = map;
-```
+- 是否确认为 Unity 项目必要设置并提交
+- 或是否作为本机 / 编辑器生成文件忽略
 
-继续使用显式依赖传递。
+在明确前不要把它和业务代码一起提交。
 
-## 通过项
+### 注释风格
 
-- MVP-01 范围控制良好，没有提前实现战斗、AI、占领、建筑、资源或英雄系统。
-- `Scripts/Core`、`Scripts/Map`、`Scripts/Units` 目录边界符合要求。
-- 固定地图包含 6 个地块和 7 条道路，满足 5 到 7 个地块的要求。
-- 地块大小、阵营、主基地标记和建筑槽位数据标记已覆盖。
-- BFS 道路寻路方向合理，单位移动入口使用道路路径生成 waypoint，没有直接穿越空白地图的公开接口。
-- 三个兵种速度差异符合 `goal.md`：Samurai 最慢，Elf Archer 中等，Soldier 最快。
-- 未修改 `ProjectSettings`。
-- 当前未发现 Unity 生成目录被 stage。
-
-## 风格建议
-
-本次新增脚本中有较多非 ASCII 注释符号，例如箭头和线框字符。功能上不是阻塞项，但后续建议 Claude 使用普通 ASCII 注释，保持代码文件风格稳定。
+本次脚本中仍存在部分非 ASCII 注释符号。功能上不阻塞，但后续 Claude 写新脚本时应优先使用普通 ASCII 注释，减少跨编辑器显示差异。
 
 ## Codex 当前判断
 
-MVP-01 方向正确，但需要先让 Claude 做一次小修：
+MVP-01 已满足目标，可以进入 MVP-02。
+
+MVP-02 应继续保持小步推进，只做：
 
 ```text
-移除 MapData.Instance
-完成 Unity Play Mode 验证
-更新 WORKLOG.md
-再提交并推送
+建筑数据
+兵营出兵
+基础战斗
 ```
 
-在这两项完成前，不批准进入 MVP-02。
+暂不加入 AI、占领进度、粮食资源、建筑重建 / 拆除、英雄和复杂 UI。
