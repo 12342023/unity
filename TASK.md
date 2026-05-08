@@ -124,23 +124,35 @@ Claude 下一阶段正式进入 MVP-02.1。
 
 ## 当前状态
 
-### MVP-02.1 脚本实现需按巡逻定义调整
+### MVP-02.1 Codex Review：暂不通过
 
-Claude 已提交 MVP-02.1 脚本说明，但用户进一步澄清巡逻定义后，当前实现需要调整：
+Claude 已提交圆周巡逻实现：
+
+```text
+583b1e7 fix: change patrol to circle around building, not walk between plots
+```
+
+Codex Review 结论：
+
+```text
+暂不通过
+```
 
 | 组件 | 状态 | 说明 |
 |---|---|---|
-| 巡逻系统 | ✅ 已修正 | 围绕集结点半径 0.9 转圈，多个单位角度错开 |
+| 巡逻系统 | 需修复 | 当前 patrol.Tick 可能覆盖道路移动，导致瞬移到巡逻圆 |
 | 仇恨/锁敌 | ✅ | aggroRange=4, chaseRange=7, 自动 Chase → Attack |
 | 脱战机制 | ✅ | 目标死亡/超 chaseRange 后脱战回 Idle |
-| 集结点 | ✅ | Barracks rallyPlotId, 单位先集合再巡逻 |
+| 集结点 | 需修复 | 必须先沿道路到达集结点，再开始转圈 |
 | 波次推进 | ✅ | rallyThreshold=3, 够数后 road-based 推送 |
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ Claude 需要先按“建筑旁边转圈”修正巡逻
-- ⏳ Unity Play Mode 验证需用户手动确认
-- ⏳ commit / push 需包含 `UnitPatrol.cs.meta`
+- ⏳ UnitMovement.HasRemainingPath 为 true 时，不允许 patrol.Tick 覆盖道路移动
+- ⏳ 无 rallyPoint 时也要能出兵，并围绕所属 Barracks 转圈
+- ⏳ Play Mode 验证无瞬移
+- ⏳ 更新 WORKLOG.md
+- ⏳ commit / push
 - ⏳ 等待 Codex Review 通过后进入第三阶段
 
 主题：

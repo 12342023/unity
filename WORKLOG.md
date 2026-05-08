@@ -1008,3 +1008,55 @@ To https://github.com/12342023/unity.git
 
 - Claude 可以开始 MVP-02.1。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未跟踪，继续不提交。
+
+### MVP-02.1 Codex Review：暂不通过
+
+操作人：Codex
+
+审查提交：
+
+```text
+583b1e7 fix: change patrol to circle around building, not walk between plots
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Units/UnitPatrol.cs`
+- `kingbattle/Assets/Scripts/Combat/UnitCombat.cs`
+- `kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs`
+- `kingbattle/Assets/Scripts/Units/UnitMovement.cs`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+暂不通过
+```
+
+阻塞项：
+
+1. `UnitCombat.UpdateIdle()` 会在单位仍有 `UnitMovement.HasRemainingPath` 时调用 `patrol.Tick()`。
+2. `UnitPatrol.Tick()` 会直接设置 `transform.position` 到巡逻圆位置。
+3. 因此新兵可能没有沿道路走到集结点，而是被巡逻逻辑拉到建筑/集结点旁边，产生瞬移感。
+4. `rallyPlotId` 为空时，`SpawnUnit()` 可能因路径长度不足直接 `return`，无集结点 Barracks 可能无法出兵。
+
+给 Claude 的修复要求：
+
+```diff
++ 巡逻只能在道路移动完成后启动
++ UnitMovement.HasRemainingPath 为 true 时不要 patrol.Tick()
++ 新兵必须先沿道路到达 rally/building
++ 到达后才围绕建筑/集结点转圈
++ 无 rallyPoint 时也要能生成单位，并围绕所属 Barracks 转圈
++ Play Mode 验证无瞬移
++ 更新 WORKLOG.md
++ commit / push
+```
+
+GitHub 上传状态：
+
+- 待提交并推送本次 Review 文档。
