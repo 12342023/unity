@@ -19,6 +19,10 @@ using UnityEngine;
 /// </summary>
 public class GameEntry : MonoBehaviour
 {
+    // Test-shortcut references for MVP-03.2 faction defeat verification
+    private HealthComponent playerBaseHealth;
+    private HealthComponent enemyBaseHealth;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
     {
@@ -45,7 +49,26 @@ public class GameEntry : MonoBehaviour
         var spawner = spawnerObj.AddComponent<TestUnitSpawner>();
         spawner.Initialize(mapData);
 
-        Debug.Log("[GameEntry] MVP-02.1 ready. Units patrol, aggro, and wave-push.");
+        Debug.Log("[GameEntry] MVP-02.1 ready. K=kill EnemyBase, L=kill PlayerBase.");
+    }
+
+    // ── Test shortcuts for MVP-03.2 faction defeat ─────────────────────
+
+    private void Update()
+    {
+        // K = instantly destroy EnemyBase (test faction defeat cleanup)
+        if (Input.GetKeyDown(KeyCode.K) && enemyBaseHealth != null && !enemyBaseHealth.IsDead)
+        {
+            Debug.Log("[GameEntry] Test shortcut K: destroying EnemyBase...");
+            enemyBaseHealth.TakeDamage(enemyBaseHealth.CurrentHealth);
+        }
+
+        // L = instantly destroy PlayerBase (test faction defeat cleanup)
+        if (Input.GetKeyDown(KeyCode.L) && playerBaseHealth != null && !playerBaseHealth.IsDead)
+        {
+            Debug.Log("[GameEntry] Test shortcut L: destroying PlayerBase...");
+            playerBaseHealth.TakeDamage(playerBaseHealth.CurrentHealth);
+        }
     }
 
     // ── Building setup ─────────────────────────────────────────────────
@@ -99,19 +122,19 @@ public class GameEntry : MonoBehaviour
         // ── Faction defeat handlers ──
         if (playerBarracks != null)
         {
+            playerBaseHealth = playerBarracks.GetComponent<HealthComponent>();
             var playerHandlerGo = new GameObject("PlayerDefeatHandler");
             var playerHandler = playerHandlerGo.AddComponent<FactionDefeatHandler>();
             playerHandler.Initialize(Faction.Player, playerBuildings);
-            var playerBaseHealth = playerBarracks.GetComponent<HealthComponent>();
             playerBaseHealth.OnDeath += (hc) => playerHandler.OnMainBaseDefeated();
         }
 
         if (enemyBarracks != null)
         {
+            enemyBaseHealth = enemyBarracks.GetComponent<HealthComponent>();
             var enemyHandlerGo = new GameObject("EnemyDefeatHandler");
             var enemyHandler = enemyHandlerGo.AddComponent<FactionDefeatHandler>();
             enemyHandler.Initialize(Faction.Enemy, enemyBuildings);
-            var enemyBaseHealth = enemyBarracks.GetComponent<HealthComponent>();
             enemyBaseHealth.OnDeath += (hc) => enemyHandler.OnMainBaseDefeated();
         }
 

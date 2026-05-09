@@ -2192,3 +2192,39 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    a5f49ad..650a6f4  main -> main
 ```
+
+### 测试快捷键：K=击败 EnemyBase，L=击败 PlayerBase
+
+操作人：Claude
+
+新增两个 Play Mode 测试快捷键，用于快速验证 MVP-03.2 阵营清场。
+
+修改文件：
+- `Assets/Scripts/GameEntry.cs`
+  - 新增 `playerBaseHealth` / `enemyBaseHealth` 字段，保存大本营 HealthComponent 引用
+  - 新增 `Update()` 方法：
+    ```csharp
+    // K = 立即摧毁 EnemyBase（测试红方清场）
+    if (Input.GetKeyDown(KeyCode.K) && enemyBaseHealth != null && !enemyBaseHealth.IsDead)
+        enemyBaseHealth.TakeDamage(enemyBaseHealth.CurrentHealth);
+
+    // L = 立即摧毁 PlayerBase（测试蓝方清场）
+    if (Input.GetKeyDown(KeyCode.L) && playerBaseHealth != null && !playerBaseHealth.IsDead)
+        playerBaseHealth.TakeDamage(playerBaseHealth.CurrentHealth);
+    ```
+  - SetupBuildings 中保存 baseHealth 引用并通过 closure 传递
+
+测试方法（Play Mode）：
+1. Play → 按 **K** → EnemyBase 立即被摧毁 → 红方清场（Tower 变废墟、所有红兵死亡）
+2. Play → 按 **L** → PlayerBase 立即被摧毁 → 蓝方清场（Tower/Granary 变废墟、所有蓝兵死亡）
+3. K / L 不会重复触发（`IsDead` 守卫）
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/GameEntry.cs WORKLOG.md TASK.md
+git commit -m "feat: add K/L test shortcuts for faction defeat"
+git push origin main
+```
