@@ -1956,4 +1956,17 @@ MVP-03.1 仍暂不通过
 
 GitHub 上传状态：
 
-- 本次 Review 文档待提交并推送。
+- 已提交并推送本次 Review 文档。
+
+提交记录：
+
+```text
+984a33b docs: review mvp-03.1 null target patrol
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   852c70c..984a33b  main -> main
+```
