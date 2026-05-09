@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-2e19281 feat: PlotCaptureService + MapRenderer.RefreshPlotColor, U triggers capture
+224db1d fix: capture guards (Player-only, no main base, Reset, one-shot handler)
 ```
 
-结论：**MVP-03.13 暂不通过，需要一轮小修后再继续**。
+结论：**MVP-03.13 仍暂不通过，需要最后一轮很小的收口修复**。
 
-说明：主路径已经接近目标，U 派兵到达后可以调用占领服务并刷新地块颜色。但当前占领服务与到达回调还有几个边界问题，会影响后续连地/派兵系统稳定性。
+说明：Player-only、main base 拒绝、`PlotCaptureService.Reset()` 都已补上；普通一次 U 派兵到达后的占领主路径基本成立。但 U 的回调生命周期还没有完全解决“到达前重复派兵/改派”场景，WORKLOG 最新验证描述也仍与代码行为不一致。
 
 ## CODEX PROJECT REVIEW
 
@@ -18,70 +18,79 @@ Gate: **FAIL**
 
 Findings:
 
-### [P1] 静态 capturedPlots 没有 reset，可能导致 Play Mode 第二次无法占领
+### [P2] 到达前重复按 U 时，旧 OnPushDestinationReached handler 仍可能残留
 
-File: `kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs:15`
+File: `kingbattle/Assets/Scripts/GameEntry.cs:214`
 
-Problem: `capturedPlots` 是 static，`Reset()` 已写但没有任何地方调用。如果 Unity 关闭 Domain Reload，或者后续切换场景/重启玩法但静态状态没清掉，新的 `MapData` 里 Crossroads 仍是 Neutral，但 `capturedPlots` 还记着它已占领，导致 `TryCapture` 返回 false，颜色和归属都不会更新。
+Problem: 当前 handler 会在触发后 self-unsubscribe，这修复了“到达后继续残留”的一部分问题。但如果玩家在士兵到达目标前再次按 U，`ClearPushPath()` 会取消旧 push path，却不会移除上一次注册的 handler。随后新的 U 又注册一个新 handler。等士兵最终到达时，旧 handler 和新 handler 都可能触发，只是各自 self-unsubscribe。当前只有 Crossroads 一个目标时影响较小，但后续多目标派兵会造成旧目标占领尝试、日志噪音或错误占领。
 
-Fix: 在 `GameEntry.Start()` 初始化新一局玩法时调用 `PlotCaptureService.Reset()`。更长期可以考虑去掉 `capturedPlots`，只用 `plot.faction != Faction.Neutral` 判断重复占领。
+Fix: 在 `GameEntry` 内维护 U 专用的 handler 记录，例如：
 
-### [P2] TryCapture 没有强制只能 Player 占领，也没有拒绝 main base
+```csharp
+private readonly Dictionary<UnitCombat, System.Action> uCaptureHandlers = new();
+```
 
-File: `kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs:29`
+给某个单位注册新的 U capture handler 前：
 
-Problem: 任务要求“只允许 Neutral -> Player”和“不允许占领 main base ruin 本身”。但当前 public API 接收任意 `capturingFaction`，只要目标是 Neutral，就会改成该阵营；同时没有检查 `plot.isMainBase`。虽然当前 `GameEntry` 只传 `Faction.Player`，但服务边界本身不符合任务合同，后续复用时容易引入错误。
+```csharp
+if (uCaptureHandlers.TryGetValue(u, out var previous))
+{
+    u.OnPushDestinationReached -= previous;
+    uCaptureHandlers.Remove(u);
+}
+```
 
-Fix: 在 `TryCapture` 入口明确拒绝 `capturingFaction != Faction.Player`，并在拿到 plot 后拒绝 `plot.isMainBase`。
+新 handler 触发时先取消订阅并从字典移除，再执行 `captureOnce` / `TryCapture`。不要清空 `OnPushDestinationReached`，避免影响其他系统可能注册的回调。
 
-### [P2] OnPushDestinationReached 回调会累积，后续派兵可能触发旧占领逻辑
-
-File: `kingbattle/Assets/Scripts/GameEntry.cs:213`
-
-Problem: U 每次派兵都会 `+=` 一个 lambda，但 lambda 到达后不会 unsubscribe。当前只有一个目标时影响还小；后续一旦支持多个 Neutral 目标或多次派兵，旧回调可能在下一次到达时再次执行，造成日志噪音或错误占领尝试。
-
-Fix: 使用 one-shot handler：注册前创建 `System.Action handler = null; handler = () => { u.OnPushDestinationReached -= handler; ... }`，到达后先反订阅，再执行 `captureOnce` 判断。
-
-### [P3] WORKLOG 的二次 U 验证描述与当前逻辑不一致
+### [P3] WORKLOG 最新验证描述仍与当前代码行为不一致
 
 File: `WORKLOG.md`
 
-Problem: WORKLOG 写“再次 U 会再次走向 Crossroads 并显示 already captured”。但第一次占领后 Crossroads 已变 Player，`GetConnectableNeutralPlots` 不再返回 Crossroads，所以再次 U 更可能输出没有可连接 Neutral plot。
+Problem: 最新 WORKLOG 写“再次 U → 蓝兵走向 Crossroads，到达后 TryCapture 因 not neutral 拒绝”。但当前 `GameEntry.U` 会先调用 `GetConnectableNeutralPlots(mapData)`；Crossroads 第一次占领后已变 Player，不再是 Neutral，所以再次 U 应该在派兵前输出 `EnemyBase has no connectable neutral plots`，不会再次派兵去 Crossroads，也不会触发 `TryCapture not neutral`。
 
-Fix: 更新 WORKLOG 验证描述，保持和代码行为一致。
+Fix: 更新 WORKLOG 最新验证描述：
+
+- 第一次 U：蓝兵到 Crossroads，Crossroads Neutral -> Player，颜色变蓝。
+- 再次 Y：EnemyBase 没有可连接 Neutral。
+- 再次 U：输出 no connectable neutral plots，不派兵，不触发旧回调。
+
+## 已确认通过的部分
+
+- `GameEntry.Start()` 已调用 `PlotCaptureService.Reset()`。
+- `TryCapture` 已拒绝 `capturingFaction != Faction.Player`。
+- `TryCapture` 已拒绝 `plot.isMainBase`。
+- `TryCapture` 仍只允许 `plot.faction == Faction.Neutral`。
+- `MapRenderer.RefreshPlotColor` 保持最小范围。
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.13 暂不通过，需要小修后再继续。
+Codex Review：MVP-03.13 还差最后一轮很小的收口修复，暂不进入新功能。
 
-本轮只修 MVP-03.13，占领边界与回调生命周期，不做新功能。
+本轮只修两个点：
 
-必须修复：
+1. U capture handler 的取消/替换
+   - 当前 self-unsubscribe 只解决“到达后移除”。
+   - 还需要解决“到达前重复按 U / 重新派兵”时旧 handler 残留的问题。
+   - 在 GameEntry 内维护 U 专用 handler 字典，例如：
+     `private readonly Dictionary<UnitCombat, System.Action> uCaptureHandlers = new();`
+   - 给某个单位注册新的 U capture handler 前，如果字典里已有旧 handler，先：
+     `u.OnPushDestinationReached -= previous;`
+     `uCaptureHandlers.Remove(u);`
+   - 新 handler 触发时先：
+     `u.OnPushDestinationReached -= localHandler;`
+     `uCaptureHandlers.Remove(u);`
+   - 然后再执行 captureOnce / PlotCaptureService.TryCapture。
+   - 不要清空整个 OnPushDestinationReached，避免影响其他系统。
 
-1. PlotCaptureService static 状态重置
-   - 在 GameEntry.Start() 新一局初始化时调用 PlotCaptureService.Reset()。
-   - 保证反复进入 Play Mode 时，Crossroads 不会因为旧 capturedPlots 状态而无法再次占领。
-
-2. PlotCaptureService 占领边界
-   - TryCapture 必须明确只允许 capturingFaction == Faction.Player。
-   - 如果 capturingFaction 不是 Player，返回 false 并输出清晰日志。
-   - 如果目标 plot.isMainBase == true，返回 false 并输出清晰日志。
-   - 仍然只允许 plot.faction == Faction.Neutral 时占领。
-   - 不允许占领 Enemy plot。
-
-3. U 派兵到达回调改成 one-shot
-   - 不要一直累积 OnPushDestinationReached lambda。
-   - 使用可反订阅的一次性 handler。
-   - handler 到达后先取消订阅，再执行 captureOnce / TryCapture。
-   - 保持多个士兵里只有第一个到达者触发占领。
-
-4. 修正 WORKLOG 验证描述
-   - 第一次 U 到达 Crossroads 后，Crossroads 变 Player。
-   - 再次 Y / U 时，EnemyBase 可能没有可连接 Neutral plot，因为 Crossroads 已不是 Neutral。
-   - 不要写“再次 U 会再次走向 Crossroads”。
+2. 修正 WORKLOG 最新验证描述
+   - Crossroads 第一次被占领后已经是 Player，不再是 Neutral。
+   - 再次 Y 应显示 EnemyBase 没有可连接 Neutral。
+   - 再次 U 应输出 no connectable neutral plots，不应写成再次走向 Crossroads。
+   - 不要写 TryCapture 因 not neutral 拒绝，除非代码真的绕过 GetConnectableNeutralPlots 去调用 TryCapture。
 
 禁止：
 - 不做正式 UI。
@@ -91,5 +100,5 @@ Codex Review：MVP-03.13 暂不通过，需要小修后再继续。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
 
-完成后更新 WORKLOG.md，说明修改文件、K/T/Y/U/R/L Play Mode 验证结果，并 commit / push。
+完成后更新 WORKLOG.md，说明修改文件、重复按 U 的验证、K/T/Y/U/R/L Play Mode 验证结果，并 commit / push。
 ```

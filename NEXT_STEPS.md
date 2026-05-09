@@ -13,24 +13,24 @@
 - R 已能跳过大本营废墟，重建普通废墟。
 - Y 已能查询 main base ruin 相邻 Neutral 地点。
 - U 已能从 main base ruin 向第一个可连接 Neutral plot 临时派兵。
-- MVP-03.13 主路径已接近完成，但占领边界和回调生命周期需要小修。
+- Neutral -> Player 最小占领主路径已实现。
+- 还剩 U capture handler 到达前替换与 WORKLOG 验证描述收口。
 
-## 当前正式任务：MVP-03.13 小修
+## 当前正式任务：MVP-03.13 收口小修
 
 目标：
 
 ```text
-修稳 PlotCaptureService 与 U 到达回调，不继续加新玩法。
+修稳重复 U / 到达前重新派兵时的 handler 生命周期，并修正验证文档。
 ```
 
 实现方向：
 
 ```diff
-+ GameEntry.Start 调用 PlotCaptureService.Reset()
-+ TryCapture 明确只允许 Player 占领
-+ TryCapture 拒绝 main base plot
-+ U 的 OnPushDestinationReached 使用 one-shot handler
-+ 修正 WORKLOG 二次 U 验证描述
++ GameEntry 维护 U 专用 handler 字典
++ 注册新 U handler 前移除该单位旧 U handler
++ handler 触发时 self-unsubscribe 并从字典移除
++ WORKLOG 改成再次 Y/U 没有可连接 Neutral
 - 不做正式 UI
 - 不做占领进度条
 - 不做资源、升级、区域奖励、传送阵、AI

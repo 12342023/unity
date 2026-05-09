@@ -4089,3 +4089,53 @@ git add kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs \
 git commit -m "fix: capture guards (Player-only, no main base, Reset, one-shot handler)"
 git push origin main
 ```
+
+### MVP-03.13 Codex Review：仍需收口小修
+
+操作人：Codex
+
+审查提交：
+
+```text
+224db1d fix: capture guards (Player-only, no main base, Reset, one-shot handler)
+```
+
+结论：
+
+```text
+MVP-03.13 仍暂不通过，需要最后一轮很小的收口修复
+```
+
+已确认修复：
+
+1. `GameEntry.Start()` 已调用 `PlotCaptureService.Reset()`。
+2. `PlotCaptureService.TryCapture()` 已限制只有 `Faction.Player` 可以占领。
+3. `PlotCaptureService.TryCapture()` 已拒绝 `plot.isMainBase`。
+4. `TryCapture` 仍只允许 `plot.faction == Faction.Neutral`。
+
+剩余问题：
+
+1. 当前 self-unsubscribe 只在 handler 触发后移除自己。
+2. 如果玩家在士兵到达前重复按 U，旧 handler 没有触发，因此不会被移除；新的 U 又会注册新 handler。
+3. 最新 WORKLOG 仍写“再次 U 会走向 Crossroads 并触发 not neutral”，但当前代码会先通过 `GetConnectableNeutralPlots` 过滤，Crossroads 被占领后不再是 Neutral，所以再次 U 应该不派兵。
+
+新发布任务：
+
+```text
+MVP-03.13 收口小修：U capture handler 替换与 WORKLOG 验证修正
+```
+
+任务边界：
+
+```diff
++ GameEntry 维护 U 专用 handler 字典
++ 注册新 U handler 前移除该单位旧 U handler
++ handler 触发时 self-unsubscribe 并从字典移除
++ WORKLOG 改成再次 Y/U 没有可连接 Neutral
+- 不做正式 UI
+- 不做占领进度条
+- 不做资源、升级、区域奖励、传送阵、AI
+- 不重构 GameEntry / UnitCombat
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
