@@ -131,13 +131,13 @@ Claude 下一阶段正式进入 MVP-02.1。
 Claude 最新提交：
 
 ```text
-162df1a fix: MoveTowards patrol circle until 0.1, Pause/Resume road path
+88455d4 fix: preserve unit original color, prevent one-frame chase to dead target
 ```
 
 Codex Review 结论：
 
 ```text
-核心行为通过；进入 MVP-02.1a 小修，不进入第三阶段
+MVP-02.1a 暂不通过；颜色修复方向正确，但折返仍存在
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,7 +150,8 @@ Codex Review 结论：
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ 士兵颜色 + 折返修复已提交，需用户 Play Mode 验证
+- ⏳ 打败敌人大本营后返回时短暂折返仍存在：需要清理目标死亡后的 `pushPath` / push order 残留
+- ⏳ Claude 完成折返小修后，Codex 再 Review
 - ⏳ 两个小问题通过后，再进入第三阶段任务拆分
 
 已处理：
@@ -160,6 +161,7 @@ Codex Review 结论：
 - ✅ 脱战后 MoveTowards 到 `patrol.CurrentPatrolPosition`，0.1 阈值后才恢复 Tick
 - ✅ 接敌时 `movement.Pause()` 保留 road path，脱战时 `movement.Resume()` 恢复路线
 - ✅ 用户确认核心四项没问题
+- ✅ HealthComponent 已记录原始颜色作为满血颜色，颜色修复方向正确
 
 主题：
 

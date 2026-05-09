@@ -1566,3 +1566,61 @@ git add kingbattle/Assets/Scripts/Combat/HealthComponent.cs \
 git commit -m "fix: preserve unit original color, prevent one-frame chase to dead target"
 git push origin main
 ```
+
+### MVP-02.1a Codex Review：颜色修复通过，折返仍未解决
+
+操作人：Codex
+
+审查提交：
+
+```text
+88455d4 fix: preserve unit original color, prevent one-frame chase to dead target
+```
+
+用户反馈：
+
+```text
+他修改完成了，但是还是会出现短暂折回的情况。
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Combat/HealthComponent.cs`
+- `kingbattle/Assets/Scripts/Combat/UnitCombat.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-02.1a 暂不通过
+```
+
+已确认：
+
+1. `HealthComponent` 已改为捕获 `SpriteRenderer.color` 作为 `originalColor`。
+2. 受伤颜色从 `originalColor` 向 `lowHealthColor` 过渡，颜色修复方向正确。
+3. `UnitCombat.UpdateAttack()` 在 `TakeDamage()` 后检查 `target.IsDead`，可避免一帧继续 chase dead target。
+
+剩余问题：
+
+1. 用户确认“打败敌人大本营后回来时短暂折返”仍存在。
+2. Claude 本次只处理了 dead target chase，没有处理 `pushPath` / push order 残留。
+3. `UpdateIdle()` 会在返回巡逻前优先执行 `pushPath`。
+4. 如果目标建筑死亡后 `pushPath` 仍指向敌方大本营/旧推进终点，单位会先朝旧目标点走一下，再返回 rally/patrol。
+
+给 Claude 的继续修复要求：
+
+```diff
++ 目标建筑死亡且属于当前 push 目标 / 敌方大本营时，清理 pushPath
++ 清理 target / chaseTarget / pushPath 后，单位应直接稳定返回 rally/patrol
++ 不要让单位继续执行指向已摧毁建筑的旧 pushPath
++ 保留 HealthComponent 原色修复
+- 不实现建筑废墟、占领、重建、资源、升级、连地、区域奖励、传送阵、AI 或 UI
+```
+
+GitHub 上传状态：
+
+- 本次 Review 文档待提交并推送。

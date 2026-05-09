@@ -90,10 +90,10 @@
 Claude 已提交最新修复：
 
 ```text
-162df1a fix: MoveTowards patrol circle until 0.1, Pause/Resume road path
+88455d4 fix: preserve unit original color, prevent one-frame chase to dead target
 ```
 
-Codex Review 结论：代码审查通过；用户 Play Mode 确认核心四项没问题，但发现两个可见体验问题。
+Codex Review 结论：MVP-02.1a 暂不通过。颜色修复方向正确，但用户确认打败敌人大本营后短暂折返仍存在。
 
 已确认修复：
 
@@ -110,8 +110,8 @@ Codex Review 结论：代码审查通过；用户 Play Mode 确认核心四项�
 
 ```diff
 + 核心四项没问题
-- 兵在集合前进的时候中途会变颜色
-- 打败敌人大本营后回来的时候会折返一下
++ 颜色问题已按正确方向修复，待最终 Play Mode 确认
+- 打败敌人大本营后回来的时候仍会折返一下
 ```
 
 进入第三阶段前，先发布 MVP-02.1a 小修。
@@ -120,14 +120,14 @@ Codex Review 结论：代码审查通过；用户 Play Mode 确认核心四项�
 
 范围：
 
-- 修复士兵集合/前进途中变颜色的问题
 - 修复打败敌人大本营后返回时短暂折返的问题
 
 要求：
 
-- `HealthComponent` 应保留 `SpriteRenderer.color` 原始颜色作为满血颜色
-- 受伤反馈可以向低血量颜色过渡，但不能把 Soldier 原色直接覆盖成白色
 - 目标建筑死亡后，单位应稳定返回 rally/patrol，不要短暂折返到旧 push / 已死亡目标方向
+- 重点检查 `pushPath` / push order 是否在目标建筑死亡后仍残留
+- 如果目标是当前 push 目标 / 敌方大本营，目标死亡时应清理 `pushPath`
+- `HealthComponent` 原色修复保持不回退
 - 只做最小修复，不新增 UI / 血条 / 废墟 / 占领 / 重建
 
 禁止：
