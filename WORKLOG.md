@@ -4288,3 +4288,55 @@ e82675d docs: review mvp-03.13 and release mvp-03.14
 To https://github.com/12342023/unity.git
    ab78ee4..e82675d  main -> main
 ```
+
+### MVP-03.14 派兵边界整理 —— StrategicDispatchService
+
+操作人：Claude
+
+已完成目标：将 U 派兵与 capture handler 逻辑从 GameEntry 下沉到 StrategicDispatchService。
+
+新增 1 个文件：
+- `Assets/Scripts/Combat/StrategicDispatchService.cs` — 派兵调度服务
+  - 静态 `captureHandlers` 字典管理 U 专用 handler 注册/替换/自销毁
+  - `DispatchToPlot(rallyPos, waypoints, targetPlotId, mapData, mapRenderer, gatherRadius=5)`
+    → 筛选附近 Player 存活单位
+    → ClearPushPath + Stop
+    → 注册/替换 one-shot handler
+    → SetPushPath
+    → 首个到达单位触发 PlotCaptureService.TryCapture
+  - `Reset()` 清空 handler 字典
+
+修改 2 个文件：
+- `Assets/Scripts/GameEntry.cs` — 删除旧字典/派兵循环（约 35 行）
+  - 删除 `uCaptureHandlers` 字段
+  - U 分支核心逻辑：`StrategicDispatchService.DispatchToPlot(...)`
+  - `Start()` 新增 `StrategicDispatchService.Reset()`
+  - U 约从 50 行减少到 10 行（保留高层流程）
+
+职责边界：
+```
+GameEntry U 快捷键:
+  → 找 main base ruin → GetConnectableNeutralPlots → RoadPathFinder
+  → StrategicDispatchService.DispatchToPlot(rallyPos, waypoints, targetPlotId, ...)
+      ↓ (内部)
+      → 筛选士兵 → handler 管理 → SetPushPath → TryCapture
+```
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证全流程（同 MVP-03.13，行为不变）：
+1. Play → K → Y("Crossroads") → T → U → 蓝兵到达占领 Crossroads(变蓝)
+2. Y → "no neutral neighbours" → U → "no connectable neutral plots"
+3. R → 重建 EnemyOutpost → L → 蓝方全灭
+4. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs \
+        kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs.meta \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "refactor: extract dispatch + capture handler to StrategicDispatchService"
+git push origin main
+```

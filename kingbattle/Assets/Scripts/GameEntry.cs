@@ -26,10 +26,6 @@ public class GameEntry : MonoBehaviour
     private MapData mapData;
     private MapRenderer mapRenderer;
 
-    // Tracks active U capture handlers so re-pressing U removes old handlers
-    // before the dispatched units reach their destination.
-    private readonly System.Collections.Generic.Dictionary<UnitCombat, System.Action> uCaptureHandlers
-        = new System.Collections.Generic.Dictionary<UnitCombat, System.Action>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
@@ -42,7 +38,8 @@ public class GameEntry : MonoBehaviour
     {
         // ── Build fixed map data ──
         mapData = MapData.CreateFixedMap();
-        PlotCaptureService.Reset(); // fresh capture state per game
+        PlotCaptureService.Reset();
+        StrategicDispatchService.Reset();
         Debug.Log($"[GameEntry] Map loaded: {mapData.Plots.Count} plots, {mapData.Roads.Count} roads.");
 
         // ── Render map visuals ──
@@ -204,42 +201,9 @@ public class GameEntry : MonoBehaviour
                             if (p != null)
                                 waypoints.Add(new Vector3(p.worldPosition.x, p.worldPosition.y, -0.2f));
                         }
-                        // Find Player soldiers near the ruin
                         Vector3 ruinPos = rallyRuin.transform.position;
-                        int count = 0;
-                        bool captureOnce = false;
-                        foreach (var u in FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
-                        {
-                            if (u.faction != Faction.Player) continue;
-                            if (u.GetComponent<HealthComponent>().IsDead) continue;
-                            float d = Vector3.Distance(u.transform.position, ruinPos);
-                            if (d > 5f) continue; // only nearby soldiers
-                            u.ClearPushPath();
-                            u.GetComponent<UnitMovement>()?.Stop();
-                            // Remove any old U capture handler for this unit
-                            if (uCaptureHandlers.TryGetValue(u, out var oldHandler))
-                            {
-                                u.OnPushDestinationReached -= oldHandler;
-                                uCaptureHandlers.Remove(u);
-                            }
-                            // One-shot handler: self-unsubscribes + removes from dict
-                            System.Action localHandler = null;
-                            localHandler = () =>
-                            {
-                                u.OnPushDestinationReached -= localHandler;
-                                uCaptureHandlers.Remove(u);
-                                if (!captureOnce)
-                                {
-                                    captureOnce = true;
-                                    PlotCaptureService.TryCapture(
-                                        targetPlotId, mapData, mapRenderer, Faction.Player);
-                                }
-                            };
-                            uCaptureHandlers[u] = localHandler;
-                            u.OnPushDestinationReached += localHandler;
-                            u.SetPushPath(new List<Vector3>(waypoints));
-                            count++;
-                        }
+                        int count = StrategicDispatchService.DispatchToPlot(
+                            ruinPos, waypoints, targetPlotId, mapData, mapRenderer);
                         Debug.Log($"[GameEntry] Test shortcut U: dispatched {count} soldiers to {targetPlotId} ({string.Join("->", pathIds)}).");
                     }
                 }
