@@ -2850,3 +2850,20 @@ MVP-03.7 建筑运行时注册表
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 Review 与任务发布文档。
+
+提交记录：
+
+```text
+a75dfa5 docs: review mvp-03.6 and release mvp-03.7
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   774a48e..a75dfa5  main -> main
+```
