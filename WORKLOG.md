@@ -4458,3 +4458,62 @@ git add kingbattle/Assets/Scripts/Combat/StrategicConnectionService.cs \
 git commit -m "feat: StrategicConnectionService + I shortcut for frontier neutral plots"
 git push origin main
 ```
+
+### MVP-03.15 Codex Review：通过并发布 MVP-03.16
+
+操作人：Codex
+
+审查提交：
+
+```text
+966a408 feat: StrategicConnectionService + I shortcut for frontier neutral plots
+```
+
+结论：
+
+```text
+MVP-03.15 代码审查通过
+```
+
+已确认：
+
+1. 新增 `kingbattle/Assets/Scripts/Combat/StrategicConnectionService.cs`。
+2. 新增脚本 `.meta` 已提交。
+3. `GetPlayerFrontierPlots(mapData)` 只返回 Player-owned 且非 main base 的前线 plot。
+4. 只收集相邻 `Faction.Neutral` plotId。
+5. 查询方法不改变任何 `plot.faction`。
+6. I 只打印 frontier 查询结果，不派兵、不占领。
+7. K / L / R / T / Y / U 行为未被改动。
+8. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+文档更正：
+
+- Claude WORKLOG 写 Crossroads 被占领后只连接 Farmland，并称 Village=Player。
+- 按当前 `MapData.CreateFixedMap()`，Village 和 Farmland 都是 Neutral。
+- 因此 Crossroads 被占领后，I 的合理输出应包含 `Village, Farmland`。
+
+说明：
+
+- `git show --check HEAD` 会报告 Unity `.meta` 空值字段的尾随空格。
+- 当前仓库内 Unity `.meta` 文件普遍采用该格式，本轮不作为阻塞问题。
+
+新发布任务：
+
+```text
+MVP-03.16 从已占领 plot 临时派兵到相邻 Neutral
+```
+
+任务边界：
+
+```diff
++ GameEntry 增加 O 临时测试快捷键
++ O 复用 StrategicConnectionService 查询 source/target
++ O 复用 RoadPathFinder 生成路径
++ O 复用 StrategicDispatchService 派兵并触发占领
+- 不改变 K/L/R/T/Y/U/I 行为
+- 不做正式 UI
+- 不做自动扩张
+- 不做资源、升级、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```

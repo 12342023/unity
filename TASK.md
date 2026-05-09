@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-发布 MVP-03.15：占领后的下一层可连接 Neutral 查询。
+发布 MVP-03.16：从已占领 plot 临时派兵到相邻 Neutral。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,23 +11,23 @@ Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业�
 Claude 最新提交：
 
 ```text
-712cd39 refactor: extract dispatch + capture handler to StrategicDispatchService
+966a408 feat: StrategicConnectionService + I shortcut for frontier neutral plots
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.14 代码审查通过；允许进入 MVP-03.15
+MVP-03.15 代码审查通过；允许进入 MVP-03.16
 ```
 
 ## 本轮目标
 
-只做数据层/临时验证，不做正式 UI 和复杂派兵。
+只做临时测试入口，不做正式 UI。
 
 目标：
 
 ```text
-已占领的 Player plot 能查询相邻 Neutral plot，为后续从 Crossroads 继续扩张做准备。
+Crossroads 被占领为 Player 后，可以从 Crossroads 派兵到它相邻的 Neutral plot。
 ```
 
 ## 当前工作区注意事项
@@ -40,43 +40,48 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 
 ## 已完成基础能力
 
-- Main base ruin 不能通过 R 重建。
-- Main base ruin 可以作为 T 聚兵点。
-- Y 可以查询 main base ruin 相邻 Neutral 地点。
 - U 可以从 main base ruin 派兵去第一个相邻 Neutral plot。
 - U 到达 Crossroads 后可将 Crossroads 从 Neutral 改为 Player。
 - Crossroads 颜色会刷新为 Player 颜色。
-- Crossroads 变 Player 后，再次 Y / U 不再把 Crossroads 当作 Neutral。
+- Crossroads 变 Player 后，I 可以查询它相邻的 Neutral plot。
 - U 派兵与 capture handler 管理已下沉到 `StrategicDispatchService`。
+- `StrategicConnectionService` 已提供 Player-owned frontier 查询。
 
-## MVP-03.15 允许范围
+## 文档更正
 
-- 可以新增小服务类，例如：
+当前 `MapData.CreateFixedMap()` 中：
 
 ```text
-kingbattle/Assets/Scripts/Map/StrategicConnectionService.cs
+Village = Neutral
+Farmland = Neutral
 ```
 
-- 服务职责：
-  - 给定 `MapData`、`sourcePlotId`、`Faction`。
-  - 检查 source plot 是否存在。
-  - 检查 source plot 是否属于传入 faction。
-  - 只返回相邻 `Faction.Neutral` plotId。
-  - 不改变任何 plot 归属。
-- 可以在 `GameEntry` 增加临时测试快捷键，例如 `I`。
-- `I` 的行为：
-  - 找到第一个 Player-owned 且非 main base 的 plot。
-  - 打印它可连接的 Neutral 邻居。
-  - 不派兵，不占领。
-- 如果 Crossroads 还没被占领，I 可以输出 no owned frontier plot。
-- 新增 `.cs` 文件必须提交 `.meta`。
+所以 Crossroads 被占领后，I 的合理输出应包含：
+
+```text
+Village, Farmland
+```
+
+不要把 Village 写成 Player，除非本轮代码显式改变了 `Village.faction`。
+
+## MVP-03.16 允许范围
+
+- 可以在 `GameEntry` 增加临时测试快捷键，例如 `O`。
+- `O` 的行为：
+  - 调用 `StrategicConnectionService.GetPlayerFrontierPlots(mapData)`。
+  - 选择第一个 frontier plot。
+  - 选择第一个相邻 Neutral target plot。
+  - 使用 `RoadPathFinder.FindPath(mapData, sourcePlotId, targetPlotId)` 算路径。
+  - 将 path 转成 world waypoints。
+  - 调用 `StrategicDispatchService.DispatchToPlot(sourcePlot.worldPosition, waypoints, targetPlotId, mapData, mapRenderer)`。
+  - 输出日志说明派出多少士兵、source -> target。
+- 可以小幅整理辅助代码，但不要做大重构。
 - 更新 `WORKLOG.md`。
 
 ## 禁止范围
 
-- 不改变 K / L / R / T / Y / U 行为。
+- 不改变 K / L / R / T / Y / U / I 行为。
 - 不做正式派兵 UI。
-- 不做多点派兵。
 - 不做自动扩张。
 - 不做占领进度条。
 - 不做敌方反夺。
@@ -89,14 +94,15 @@ kingbattle/Assets/Scripts/Map/StrategicConnectionService.cs
 
 ## 验收标准
 
-- 新增 `StrategicConnectionService.cs` 或等价小服务。
-- 新增脚本的 `.meta` 已提交。
 - Play Mode：
   - K -> T -> Y -> U。
   - U 到达 Crossroads 后，Crossroads 变 Player。
-  - 再按 I，Console 能打印 Crossroads 可连接的 Neutral 邻居，例如 Village / Farmland。
-- I 不改变任何 plot 归属。
-- I 不派兵。
+  - I 能打印 Crossroads 可连接的 Neutral，例如 Village / Farmland。
+  - O 能从 Crossroads 附近派 Player 士兵到第一个 Neutral target。
+  - O 到达后 target 从 Neutral 变 Player，并刷新颜色。
+- O 不应占领 Enemy plot。
+- O 不应占领 main base plot。
+- I 不派兵、不占领。
 - Y / U 原有行为不变。
 - R 仍跳过大本营废墟。
 - K / L 清场行为不变。

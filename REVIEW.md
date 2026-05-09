@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-712cd39 refactor: extract dispatch + capture handler to StrategicDispatchService
+966a408 feat: StrategicConnectionService + I shortcut for frontier neutral plots
 ```
 
-结论：**MVP-03.14 代码审查通过，允许进入 MVP-03.15**。
+结论：**MVP-03.15 代码审查通过，允许进入 MVP-03.16**。
 
-说明：U 派兵、附近士兵筛选、capture handler 管理、到达后占领触发已经从 `GameEntry` 下沉到 `StrategicDispatchService`。`GameEntry` 的 U 分支明显变薄，玩法表现保持不变。
+说明：`StrategicConnectionService` 已提供从 Player-owned non-main-base plot 查询相邻 Neutral plot 的最小数据能力；`GameEntry` 的 I 临时测试快捷键只打印结果，不派兵、不占领、不改变归属。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,83 +24,93 @@ Findings:
 
 ### 已确认
 
-- 新增 `kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs`。
+- 新增 `kingbattle/Assets/Scripts/Combat/StrategicConnectionService.cs`。
 - 新增脚本 `.meta` 已提交。
-- `StrategicDispatchService.DispatchToPlot(...)` 负责筛选附近 Player 存活士兵。
-- 服务内部负责 `ClearPushPath()`、`UnitMovement.Stop()`、`SetPushPath(...)`。
-- 服务内部负责 U 专用 capture handler 注册、替换和 self cleanup。
-- 到达后仍调用 `PlotCaptureService.TryCapture(...)`。
-- `GameEntry.Start()` 已调用 `StrategicDispatchService.Reset()`。
-- `GameEntry` 的 U 分支只保留 main base ruin 查询、Neutral 目标选择、路径计算和服务调用。
-- K / L / R / T / Y / U 行为保持。
+- `GetPlayerFrontierPlots(mapData)` 只返回 Player-owned 且非 main base 的前线 plot。
+- 只收集相邻 `Faction.Neutral` plotId。
+- 查询方法不改变任何 `plot.faction`。
+- I 只打印 frontier 查询结果，不派兵、不占领。
+- K / L / R / T / Y / U 行为未被改动。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
+
+### 文档更正
+
+Claude 的 WORKLOG 写到 Crossroads 被占领后只连接 `Farmland`，并称 `Village=Player`。按当前 `MapData.CreateFixedMap()` 和当前代码：
+
+```text
+Village: Neutral
+Farmland: Neutral
+Crossroads: U 到达后变 Player
+EnemyOutpost: Enemy
+EnemyBase: Enemy / main base ruin 后 mapData faction 仍不是 Neutral
+```
+
+因此 Crossroads 被占领后，I 的合理输出应是：
+
+```text
+Crossroads can connect to: Village, Farmland
+```
+
+除非后续另有代码显式改变 `Village.faction`，否则不要把 Village 写成 Player。
 
 ### 说明
 
-`git show --check HEAD` 会报告 Unity `.meta` 里的空值字段存在尾随空格，例如 `userData:`。这是当前仓库 Unity `.meta` 文件的一贯格式，本轮不作为阻塞问题，也不要求为此批量改动历史 `.meta` 文件。
+`git show --check HEAD` 仍会报告 Unity `.meta` 空值字段的尾随空格。这是当前仓库 Unity `.meta` 文件的一贯格式，本轮不作为阻塞问题。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.14 代码审查通过。
+Codex Review：MVP-03.15 代码审查通过。
 
-进入 MVP-03.15：占领后的下一层可连接 Neutral 查询。
+进入 MVP-03.16：从已占领 plot 临时派兵到相邻 Neutral。
 
 背景：
-- 当前 main base ruin 可以通过 Y 查询相邻 Neutral。
-- U 可以从 main base ruin 派兵占领 Crossroads。
-- Crossroads 被占领后变为 Player。
-- 下一步先不要做正式 UI，也不要直接扩展复杂派兵。
-- 先做数据层/临时验证：已占领的 Player plot 能查询它相邻的 Neutral plot。
+- U 仍只负责从 main base ruin 派兵到第一个相邻 Neutral。
+- I 已能打印 Player-owned frontier plot 的相邻 Neutral。
+- Crossroads 被 U 占领后，应能查询到 Village / Farmland。
+- 本轮仍不做正式 UI，只做临时测试入口。
 
 本轮目标：
-- 不改变当前 K / L / R / T / Y / U 行为。
-- 不做正式 UI。
-- 不做资源、升级、区域奖励、传送阵、AI。
-- 不做占领进度条。
-- 新增一个最小查询能力：给定一个 Player-owned plot，返回它相邻的 Neutral plot。
+- 新增一个临时快捷键，例如 O。
+- O 从第一个 Player-owned frontier plot 派附近 Player 士兵到它的第一个相邻 Neutral plot。
+- 到达后复用现有 capture 流程，让目标 Neutral 变 Player 并刷新颜色。
 
 允许：
-- 新增小服务类，例如：
-  `kingbattle/Assets/Scripts/Map/StrategicConnectionService.cs`
-  或放在更合适的现有命名空间，但职责必须清晰。
-- 提供方法，例如：
-  `GetConnectableNeutralPlotsFromOwnedPlot(MapData mapData, string sourcePlotId, Faction faction)`
-- 方法规则：
-  1. source plot 必须存在。
-  2. source plot 必须属于传入 faction，例如 Faction.Player。
-  3. source plot 不能是 Neutral。
-  4. 只返回相邻且 `plot.faction == Faction.Neutral` 的 plotId。
-  5. 不改变任何 plot 归属。
-- 可以在 GameEntry 增加临时测试快捷键，例如 I。
-- I 的行为：
-  1. 找到第一个 Player-owned 且非 main base 的 plot，例如 Crossroads。
-  2. 打印它可连接的 Neutral 邻居。
-  3. 不派兵，不占领。
-- 如果 Crossroads 还没被占领，I 可以输出 no owned frontier plot。
-- 新增脚本必须提交 `.meta`。
+- 复用 `StrategicConnectionService.GetPlayerFrontierPlots(mapData)`。
+- 复用 `RoadPathFinder.FindPath(mapData, sourcePlotId, targetPlotId)`。
+- 复用 `StrategicDispatchService.DispatchToPlot(...)`。
+- O 的高层流程：
+  1. 获取 frontier plots。
+  2. 选择第一个 frontier。
+  3. 选择它的第一个 connectableNeutralPlots 目标。
+  4. 从 source plot 到 target plot 算 path。
+  5. 转换 waypoints。
+  6. 调用 StrategicDispatchService.DispatchToPlot(sourcePlot.worldPosition, waypoints, targetPlotId, mapData, mapRenderer)。
+  7. 输出日志说明派出多少士兵、source -> target。
+- 保持 I 只打印，不派兵。
+- 保持 U 只从 main base ruin 派兵。
+- 新增逻辑尽量薄，不要做正式 UI。
 - 更新 WORKLOG.md。
 
 必须保持：
-- Y 仍只查询 main base ruin 相邻 Neutral。
-- U 仍只从 main base ruin 派兵到第一个相邻 Neutral。
-- Crossroads 被 U 占领后，再按 I 应能看到它下一层 Neutral 连接，例如 Village / Farmland（按当前地图邻接关系）。
-- I 不改变归属，不派兵。
-- PlotCaptureService 规则不变。
+- O 不改变 Enemy plot。
+- O 不改变 main base plot。
+- O 只通过现有 PlotCaptureService 占领 Neutral。
+- PlotCaptureService 的 Player-only / no-main-base / Neutral-only 规则不变。
 - StrategicDispatchService 行为不变。
+- K / L / R / T / Y / U / I 行为不变。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
 
 禁止：
 - 不做正式选择目标 UI。
-- 不做多点派兵。
 - 不做自动扩张。
 - 不做资源、升级、区域奖励、传送阵、AI。
+- 不做占领进度条。
 - 不改变 MapData 初始地图。
 - 不重构 UnitCombat。
-- 不改 K/L/R/T/Y/U 的现有行为。
 
-完成后更新 WORKLOG.md，说明修改文件、I/Y/U/K/T/R/L Play Mode 验证结果、是否新增 .meta、是否修改 ProjectSettings，并 commit / push。
+完成后更新 WORKLOG.md，说明修改文件、O/I/Y/U/K/T/R/L Play Mode 验证结果、是否新增 .meta、是否修改 ProjectSettings，并 commit / push。
 ```
