@@ -186,6 +186,12 @@ public class GameEntry : MonoBehaviour
         health.maxHealth = type == BuildingType.Tower ? 80f : 50f;
         health.faction = faction;
 
+        // ── Building identity (for future reconstruction) ──
+        var identity = go.AddComponent<BuildingIdentity>();
+        identity.plotId = plotId;
+        identity.buildingType = type;
+        identity.faction = faction;
+
         // ── Building death → ruin (self-contained in BuildingDeathHandler) ──
         go.AddComponent<BuildingDeathHandler>();
 

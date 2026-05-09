@@ -2509,3 +2509,58 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    bb7ea8b..1bdb18d  main -> main
 ```
+
+### MVP-03.4 建筑身份数据与废墟元数据
+
+操作人：Claude
+
+已完成目标：为每个建筑和废墟添加身份元数据，为未来重建准备最小必要数据。
+
+新增 1 个文件：
+- `Assets/Scripts/Buildings/BuildingIdentity.cs` — 建筑身份组件
+  - `plotId` — 所在地块 ID
+  - `buildingType` — Tower / Barracks / Granary
+  - `faction` — Player / Enemy / Neutral
+
+修改 2 个文件：
+- `Assets/Scripts/Buildings/RuinComponent.cs` — 扩展废墟元数据
+  - 新增 `sourcePlotId` — 废墟来源地块
+  - 新增 `sourceBuildingType` — 废墟原建筑类型
+  - 新增 `originalFaction` — 废墟原阵营
+- `Assets/Scripts/Buildings/BuildingDeathHandler.cs` — 传递身份数据
+  - `Start()` 中读取 `GetComponent<BuildingIdentity>()`
+  - `SpawnRuin()` 调用时将 identity 数据写入 `RuinComponent`
+- `Assets/Scripts/GameEntry.cs` — 装配 BuildingIdentity
+  - `CreateBuilding()` 中 `go.AddComponent<BuildingIdentity>()` 写入 plotId / type / faction
+  - identity 添加在 BuildingDeathHandler 之前，确保死亡时 identity 可用
+
+数据流：
+```
+CreateBuilding()
+  → go.AddComponent<BuildingIdentity> { plotId, buildingType, faction }
+  → go.AddComponent<BuildingDeathHandler>
+
+建筑死亡
+  → BuildingDeathHandler.SpawnRuin(pos, faction, identity)
+  → RuinComponent { sourcePlotId, sourceBuildingType, originalFaction }
+```
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证（行为无变化，新增元数据不可见）：
+1. Play → 按 K → EnemyBase 变废墟 → RuinComponent.sourcePlotId == "EnemyBase" ✅
+2. 按 L → PlayerBase 变废墟 → RuinComponent.sourceBuildingType == Barracks ✅
+3. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/BuildingIdentity.cs \
+        kingbattle/Assets/Scripts/Buildings/BuildingIdentity.cs.meta \
+        kingbattle/Assets/Scripts/Buildings/RuinComponent.cs \
+        kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: building identity data and ruin metadata for future reconstruction"
+git push origin main
+```
