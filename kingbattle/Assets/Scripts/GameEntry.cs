@@ -132,6 +132,30 @@ public class GameEntry : MonoBehaviour
                 Debug.Log($"[GameEntry] Test shortcut T: rallied {count} soldiers to main-base ruin.");
             }
         }
+
+        // Y = print connectable neutral plots for main-base ruin (test MVP-03.11)
+        if (Input.GetKeyDown(KeyCode.Y) && mapData != null)
+        {
+            var ruins = FindObjectsByType<RuinComponent>(FindObjectsSortMode.None);
+            bool found = false;
+            foreach (var r in ruins)
+            {
+                if (!r.CanUseAsRallyPoint(mapData)) continue;
+                var plots = r.GetConnectableNeutralPlots(mapData);
+                if (plots.Count > 0)
+                {
+                    Debug.Log($"[GameEntry] Test shortcut Y: {r.sourcePlotId} can connect to: {string.Join(", ", plots)}");
+                    found = true;
+                }
+                else
+                {
+                    Debug.Log($"[GameEntry] Test shortcut Y: {r.sourcePlotId} has no neutral neighbours.");
+                    found = true;
+                }
+            }
+            if (!found)
+                Debug.Log("[GameEntry] Test shortcut Y: no main-base ruin found.");
+        }
     }
 
     // ── Building setup ─────────────────────────────────────────────────

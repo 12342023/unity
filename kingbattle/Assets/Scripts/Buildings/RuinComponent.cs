@@ -65,5 +65,25 @@ namespace Buildings
             var plot = mapData.GetPlot(sourcePlotId);
             return plot != null && plot.isMainBase;
         }
+
+        /// <summary>
+        /// Returns plot IDs of neutral neighbours that this rally-point ruin
+        /// could potentially connect to for future troop dispatch.
+        /// Only returns results when CanUseAsRallyPoint is true.
+        /// </summary>
+        public System.Collections.Generic.List<string> GetConnectableNeutralPlots(MapData mapData)
+        {
+            var result = new System.Collections.Generic.List<string>();
+            if (!CanUseAsRallyPoint(mapData) || mapData == null)
+                return result;
+
+            foreach (var neighborId in mapData.GetNeighbors(sourcePlotId))
+            {
+                var plot = mapData.GetPlot(neighborId);
+                if (plot != null && plot.faction == Faction.Neutral)
+                    result.Add(neighborId);
+            }
+            return result;
+        }
     }
 }

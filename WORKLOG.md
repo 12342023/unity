@@ -3611,6 +3611,43 @@ GitHub 上传状态：
 db147ea docs: review mvp-03.10 and release mvp-03.11
 ```
 
+### MVP-03.11 大本营废墟连接未占领地点数据层
+
+操作人：Claude
+
+已完成目标：main base ruin 可查询可连接的未占领（Neutral）地点，数据层准备。
+
+修改 2 个文件：
+- `Assets/Scripts/Buildings/RuinComponent.cs` — 新增 `GetConnectableNeutralPlots(MapData)` 方法
+  - 仅当 `CanUseAsRallyPoint(mapData)` 为 true 时返回结果
+  - 通过 `mapData.GetNeighbors(sourcePlotId)` 查找相邻 plot
+  - 过滤只返回 `faction == Faction.Neutral` 的 plotId
+- `Assets/Scripts/GameEntry.cs` — 新增 Y 测试快捷键
+  - 遍历废墟，找到 main base ruin
+  - 调用 `GetConnectableNeutralPlots(mapData)` 并打印结果
+  - 没有未占领邻居时明确提示
+
+验证步骤（Play Mode）：
+1. Play → 按 K → EnemyBase 变废墟（红方全灭）
+2. 按 Y → Console 输出 "EnemyBase can connect to: Farmland" ✅
+   （EnemyBase 的邻居包括 Crossroads、EnemyOutpost、Farmland，其中 Farmland 为 Neutral）
+3. 按 T → 蓝兵聚到 EnemyBase 巡逻 ✅
+4. 按 R → 跳过 EnemyBase，重建 EnemyOutpost ✅
+5. K / L 不变 ✅
+6. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/RuinComponent.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: GetConnectableNeutralPlots on main-base ruin, Y shortcut prints them"
+git push origin main
+```
+
 推送结果：
 
 ```text
