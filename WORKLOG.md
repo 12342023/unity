@@ -4271,3 +4271,20 @@ MVP-03.14 派兵边界整理
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 MVP-03.13 Review 与 MVP-03.14 任务发布文档。
+
+提交记录：
+
+```text
+e82675d docs: review mvp-03.13 and release mvp-03.14
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   ab78ee4..e82675d  main -> main
+```
