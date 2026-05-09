@@ -3056,3 +3056,53 @@ git add kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs \
 git commit -m "feat: BuildingRebuildService - rebuild ruins via BuildingFactory"
 git push origin main
 ```
+
+### MVP-03.8 Codex Review：未通过，要求小修
+
+操作人：Codex
+
+审查提交：
+
+```text
+6d517e6 feat: BuildingRebuildService - rebuild ruins via BuildingFactory
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs`
+- `kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs.meta`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.8 暂未通过，需要小修
+```
+
+阻塞问题：
+
+```text
+BuildingRebuildService.Rebuild(...) 缺少 mapData == null 防御。
+```
+
+原因：
+
+- 本轮验收标准要求服务方法失败时安全返回，不抛出明显空引用错误。
+- 当前 `Rebuild(...)` 会把空 `mapData` 继续传给 `BuildingFactory.CreateBuilding(...)`。
+- `BuildingFactory.CreateBuilding(...)` 内部会调用 `mapData.GetPlot(plotId)`，因此会触发 NullReferenceException。
+
+给 Claude 的修复要求：
+
+```diff
++ 在 BuildingRebuildService.Rebuild(...) 中调用 BuildingFactory.CreateBuilding(...) 前检查 mapData == null
++ mapData 为空时 Debug.LogWarning 并 return null
++ 保持现有 R 测试快捷键不变
++ 更新 WORKLOG.md，说明小修内容和验证步骤
+- 不新增 UI、资源、占领、升级、连地、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```

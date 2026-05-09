@@ -5,97 +5,85 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-04adcc7 refactor: BuildingRegistry runtime registry, removes manual building lists
+6d517e6 feat: BuildingRebuildService - rebuild ruins via BuildingFactory
 ```
 
-结论：**MVP-03.7 代码审查通过**。
+结论：**MVP-03.8 代码审查未通过，需要小修**。
 
-说明：本轮新增 `BuildingRegistry`，并让 `FactionDefeatHandler` 从注册表查询阵营建筑，解决了后续“重建出的建筑也必须被阵营清场逻辑管理”的边界问题。没有实现 UI、资源、占领、升级、连地、AI 或真正重建。
+说明：`BuildingRebuildService` 的方向正确，已经复用 `RuinComponent`、`BuildingFactory`、`BuildingRegistry`，也提交了 `.meta`。但当前服务方法没有防御 `mapData == null`，不满足本轮“服务失败时应安全返回，不抛出明显空引用错误”的验收标准。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **FAIL**
 
 Findings:
 
-```text
-无阻塞问题。
-```
+### [P1] `BuildingRebuildService.Rebuild` 缺少 `mapData` 空值保护
 
-### 已确认
-
-- `kingbattle/Assets/Scripts/Buildings/BuildingRegistry.cs` 已新增。
-- `kingbattle/Assets/Scripts/Buildings/BuildingRegistry.cs.meta` 已提交。
-- `BuildingFactory.CreateBuilding(...)` 会在建筑装配完成后调用 `BuildingRegistry.Register(go, faction)`。
-- `FactionDefeatHandler` 不再依赖 `GameEntry` 传入的一次性建筑列表。
-- `BuildingRegistry.GetBuildings(faction)` 会过滤 `null` 和已死亡建筑，降低重复清场 / 重复废墟风险。
-- `GameEntry` 删除了手动维护 `playerBuildings` / `enemyBuildings` 的逻辑，继续只负责场景装配、rally / push target、K / L 快捷键。
-- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
-
-## 残留注意事项
-
-### Play Mode 未由 Codex 本地亲跑
-
-Claude 在 `WORKLOG.md` 记录了 K / L Play Mode 验证通过。Codex 本轮做的是代码审查与文档审查，没有亲自打开 Unity 运行 Play Mode。
-
-### 轻微文档措辞
-
-`BuildingRegistry.cs` 注释中写了 `BuildingFactory.Register()`，实际调用是 `BuildingRegistry.Register(...)`。这是注释措辞问题，不影响编译和玩法，不阻塞本轮。
-
-### ProjectSettings 新增文件仍未处理
-
-当前工作树仍有未跟踪文件：
+File:
 
 ```text
-kingbattle/ProjectSettings/SceneTemplateSettings.json
+kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs:27
 ```
 
-该文件由 Unity Editor 生成。由于项目规则要求不随意修改 `ProjectSettings`，继续保持未提交状态。
+Problem:
 
-## 给 Claude 的下一条任务
+当前只检查了 `ruin == null` 和 `ruin.CanRebuildFor(faction)`。如果调用方传入 `mapData == null`，代码会继续执行到：
+
+```text
+BuildingFactory.CreateBuilding(plotId, mapData, faction, buildingType)
+```
+
+而 `BuildingFactory.CreateBuilding(...)` 里面会直接调用 `mapData.GetPlot(plotId)`，导致空引用异常。
+
+本轮 `TASK.md` 的验收标准明确要求：
+
+```text
+服务方法失败时应安全返回，不抛出明显空引用错误。
+```
+
+Fix:
+
+在读取 plot / 创建建筑前增加空值保护：
+
+```diff
++ if (mapData == null)
++ {
++     Debug.LogWarning("[BuildingRebuildService] MapData is null.");
++     return null;
++ }
+```
+
+建议顺手确认 `sourcePlotId` 是否为空或无效时仍安全返回。当前 `CanRebuildFor` 已覆盖空 `sourcePlotId`，`BuildingFactory.CreateBuilding` 对不存在 plot 会返回 `null`，这部分可以接受。
+
+## 已通过部分
+
+- `BuildingRebuildService.cs` 已新增。
+- `BuildingRebuildService.cs.meta` 已提交。
+- 重建服务读取 `RuinComponent.sourcePlotId` 和 `GetRebuildBuildingType()`。
+- 创建建筑通过 `BuildingFactory.CreateBuilding(...)`，因此新建筑会自动注册进 `BuildingRegistry`。
+- 创建成功后销毁旧废墟。
+- 本轮没有做正式 UI、资源、占领、升级、连地、区域奖励、传送阵或 AI。
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
+
+## 需要 Claude 修复
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.7 代码审查通过。
+Codex Review：MVP-03.8 暂未通过，只需要小修。
 
-进入 MVP-03.8：废墟重建最小服务。
+阻塞问题：
+- BuildingRebuildService.Rebuild(...) 缺少 mapData == null 防御。
+- 这会让服务方法在错误入参下抛 NullReferenceException，不满足“失败时安全返回”的验收标准。
 
-目标：
-- 不做正式 UI。
-- 不做资源、占领、升级、连地、区域奖励、传送阵或 AI。
-- 新增一个很小的 BuildingRebuildService 或同等小类，提供“从 RuinComponent 重建建筑”的服务方法。
-- 该服务应复用 RuinComponent 的来源数据、BuildingFactory、BuildingRegistry。
-
-允许：
-- 新增 Buildings/BuildingRebuildService.cs 或同等小类。
-- 提供类似 TryRebuild(RuinComponent ruin, MapData mapData, Faction faction, out GameObject building) 的方法。
-- 检查 ruin 不为空，CanRebuildFor(faction) 为 true，sourcePlotId 不为空。
-- 使用 ruin.GetRebuildBuildingType() 决定建筑类型。
-- 调用 BuildingFactory.CreateBuilding(sourcePlotId, mapData, faction, type) 创建建筑。
-- 创建成功后销毁废墟 GameObject。
-- 因为 BuildingFactory 已自动注册，重建出的建筑也应自动进入 BuildingRegistry。
-- 可以保留服务暂时未接入正式输入；本轮重点是服务边界。
-- 新增脚本必须提交 .meta。
-
-必须保持：
-- 当前开局建筑、出兵、Tower 攻击、建筑死亡生成废墟、大本营清场、K / L 快捷键行为不变。
-- 单个建筑死亡仍只生成一个废墟。
-- Console 无明显错误。
-
-禁止：
-- 不做正式重建按钮。
-- 不做选择废墟 UI。
-- 不做资源消耗、进度条、占领、升级、连地、区域奖励、传送阵、AI。
+请修改：
+- 在 BuildingRebuildService.Rebuild(...) 中调用 BuildingFactory.CreateBuilding(...) 前增加 mapData 空值检查。
+- mapData 为空时 Debug.LogWarning 并 return null。
+- 保持现有 R 测试快捷键不变。
+- 不新增 UI、资源、占领、升级、连地、区域奖励、传送阵、AI。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
-- 不提交 Library、Logs、UserSettings。
 
-完成后更新 WORKLOG.md，说明：
-- 修改文件
-- BuildingRebuildService 的职责边界
-- 是否接入任何临时入口
-- Play Mode 验证步骤
-- 是否修改场景 / ProjectSettings
-- commit / push 结果
+修复后请更新 WORKLOG.md，说明小修内容、Play Mode / Console 验证，并 commit / push。
 ```
