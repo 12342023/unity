@@ -2724,4 +2724,17 @@ MVP-03.6 建筑创建逻辑边界整理
 
 GitHub 上传状态：
 
-- 本次 Review 与任务发布文档待提交并推送。
+- 已提交并推送本次 Review 与任务发布文档。
+
+提交记录：
+
+```text
+ea52635 docs: review mvp-03.5 and release mvp-03.6
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   ca20f62..ea52635  main -> main
+```
