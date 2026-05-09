@@ -126,18 +126,18 @@ MVP-02.1 / MVP-02.1a 已完成核心收尾。
 
 ## 当前状态
 
-### MVP-03.3 Codex Review：暂不通过
+### MVP-03.4 任务发布：建筑身份数据与废墟元数据
 
-Claude 当前输出：
+Claude 最新提交：
 
 ```text
-未提交的 BuildingDeathHandler.cs / GameEntry.cs 改动
+bb7ea8b refactor: move ruin spawning from GameEntry to BuildingDeathHandler
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.3 暂不通过；缺少 BuildingDeathHandler.cs.meta，且代码尚未 commit / push
+MVP-03.3 代码审查通过；允许进入 MVP-03.4
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,8 +150,7 @@ MVP-03.3 暂不通过；缺少 BuildingDeathHandler.cs.meta，且代码尚未 co
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ 生成并提交 `kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta`
-- ⏳ 提交并推送 MVP-03.3 代码
+- ⏳ MVP-03.4：为建筑和废墟补充最小身份数据
 - ⏳ Claude 完成后，Codex 再 Review
 
 已处理：
@@ -169,6 +168,49 @@ MVP-03.3 暂不通过；缺少 BuildingDeathHandler.cs.meta，且代码尚未 co
 - ✅ 一方大本营被击败后，该方建筑清场为废墟，士兵立即死亡
 - ✅ K / L Play Mode 测试快捷键已添加，便于验证双方大本营清场
 - ✅ `SpawnRuin` 已从 `GameEntry` 移入 `Buildings/BuildingDeathHandler.cs`
+- ✅ `BuildingDeathHandler.cs.meta` 已提交
+
+## 新发布要求：MVP-03.4 建筑身份数据与废墟元数据
+
+```text
+不做完整重建系统，只为未来重建准备最小必要数据。
+```
+
+## MVP-03.4 目标
+
+- 每个建筑应有清晰身份数据：所属 plot、建筑类型、阵营。
+- 建筑死亡后生成的废墟应保留来源信息：
+  - `sourcePlotId`
+  - `sourceBuildingType`
+  - `originalFaction`
+- 当前玩法表现保持不变。
+
+## MVP-03.4 允许范围
+
+- 新增 `Buildings/BuildingIdentity.cs` 或同等小组件。
+- 在 `GameEntry.CreateBuilding()` 装配建筑时写入 `plotId`、`BuildingType`、`Faction`。
+- 扩展 `RuinComponent` 记录来源建筑元数据。
+- `BuildingDeathHandler` 生成 Ruin 时，把建筑身份数据传给 `RuinComponent`。
+- 小范围调整 `GameEntry` 装配代码。
+- 更新 `WORKLOG.md`。
+
+## MVP-03.4 禁止范围
+
+- 不做重建按钮。
+- 不做占领进度。
+- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不改变当前战斗、巡逻、清场表现。
+- 不修改 `ProjectSettings`。
+- 不提交 Unity 生成目录。
+
+## MVP-03.4 验收标准
+
+- 建筑 GameObject 上存在清晰的身份组件或等价数据。
+- Ruin 上能记录来源 plot / 原建筑类型 / 原阵营。
+- 建筑死亡、K/L 清场、士兵围绕废墟巡逻行为不变。
+- 单个建筑死亡仍只生成一个废墟。
+- Console 无明显错误。
+- 新增脚本必须提交对应 `.meta`。
 
 ## 新发布要求：MVP-03.3 建筑死亡 / 废墟职责边界整理
 

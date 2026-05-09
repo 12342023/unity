@@ -87,13 +87,13 @@
 
 ## 当前 Review 结论
 
-Claude 当前输出：
+Claude 最新提交：
 
 ```text
-未提交的 BuildingDeathHandler.cs / GameEntry.cs 改动
+bb7ea8b refactor: move ruin spawning from GameEntry to BuildingDeathHandler
 ```
 
-Codex Review 结论：MVP-03.3 暂不通过。废墟生成职责下沉方向正确，但新增脚本缺少 `.meta`，且代码尚未 commit / push。
+Codex Review 结论：MVP-03.3 代码审查通过。允许进入 MVP-03.4。
 
 已确认修复：
 
@@ -112,7 +112,42 @@ Codex Review 结论：MVP-03.3 暂不通过。废墟生成职责下沉方向正�
 + 一方大本营被击败后，该方建筑清场为废墟，士兵立即死亡
 + K / L Play Mode 测试快捷键已添加，便于验证双方大本营清场
 + SpawnRuin 已从 GameEntry 移入 Buildings/BuildingDeathHandler.cs
++ BuildingDeathHandler.cs.meta 已提交
 ```
+
+### MVP-03.4 建筑身份数据与废墟元数据
+
+目标：
+
+- 不做完整重建系统。
+- 只为未来重建准备最小必要数据。
+- 建筑死亡后生成的 Ruin 应知道自己来自哪个 plot、哪个建筑类型、哪个阵营。
+
+允许：
+
+- 新增 `Buildings/BuildingIdentity.cs` 或同等小组件。
+- 在 `GameEntry.CreateBuilding()` 装配建筑时写入 `plotId`、`BuildingType`、`Faction`。
+- 扩展 `RuinComponent`，让废墟记录 `sourcePlotId`、`sourceBuildingType`、`originalFaction`。
+- `BuildingDeathHandler` 生成 Ruin 时，把建筑身份数据传给 `RuinComponent`。
+- 小范围调整 `GameEntry` 装配代码。
+
+必须保持：
+
+- 当前玩法表现不变。
+- 建筑死亡后仍生成废墟。
+- 士兵击败建筑后仍围绕废墟巡逻。
+- 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
+- K / L 测试快捷键仍可验证双方大本营清场。
+- 单个建筑死亡只生成一个废墟。
+
+禁止：
+
+- 不做重建按钮。
+- 不做占领进度。
+- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不修改 `ProjectSettings`。
+- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+- 不提交 Unity 生成目录。
 
 ### MVP-03.3 建筑死亡 / 废墟职责边界整理
 
@@ -136,21 +171,6 @@ Codex Review 结论：MVP-03.3 暂不通过。废墟生成职责下沉方向正�
 - 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
 - K / L 测试快捷键仍可验证双方大本营清场。
 - 单个建筑死亡只生成一个废墟。
-
-当前阻塞：
-
-- `kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta` 尚未出现。
-- MVP-03.3 代码仍是本地未提交状态。
-
-Claude 下一步只需补齐：
-
-```diff
-+ 生成并提交 BuildingDeathHandler.cs.meta
-+ 提交 BuildingDeathHandler.cs / BuildingDeathHandler.cs.meta / GameEntry.cs / WORKLOG.md / TASK.md
-+ 推送到 GitHub
-- 不改 ProjectSettings
-- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
-```
 
 禁止：
 

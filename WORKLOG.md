@@ -2438,3 +2438,61 @@ git add kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs \
 git commit -m "refactor: move ruin spawning from GameEntry to BuildingDeathHandler"
 git push origin main
 ```
+
+### MVP-03.3 Codex Review：通过并发布 MVP-03.4
+
+操作人：Codex
+
+审查提交：
+
+```text
+bb7ea8b refactor: move ruin spawning from GameEntry to BuildingDeathHandler
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs`
+- `kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.3 代码审查通过
+```
+
+已确认：
+
+1. `BuildingDeathHandler.cs.meta` 已提交。
+2. `SpawnRuin` 已从 `GameEntry` 下沉到 `Buildings/BuildingDeathHandler.cs`。
+3. `GameEntry` 不再包含具体废墟生成方法。
+4. 建筑死亡、阵营清场、K / L 测试快捷键仍走 `HealthComponent.OnDeath` 路径。
+
+新发布任务：
+
+```text
+MVP-03.4 建筑身份数据与废墟元数据
+```
+
+给 Claude 的任务边界：
+
+```diff
++ 新增 BuildingIdentity 或同等小组件，记录 plotId / BuildingType / Faction
++ RuinComponent 记录 sourcePlotId / sourceBuildingType / originalFaction
++ BuildingDeathHandler 生成 Ruin 时传递建筑身份数据
++ 保持当前玩法表现不变
++ 新增脚本必须提交 .meta
+- 不做重建按钮
+- 不做占领进度
+- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
+
+GitHub 上传状态：
+
+- 本次 Review 与任务发布文档待提交并推送。
