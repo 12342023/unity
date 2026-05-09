@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Combat;
 using Core;
 using UnityEngine;
@@ -12,18 +11,15 @@ namespace Buildings
     ///   1. All surviving buildings of this faction become ruins.
     ///   2. All surviving units of this faction are killed.
     ///
-    /// Ruins are not double-generated — buildings that already died are
-    /// filtered out via IsDead / null checks.
+    /// Buildings are queried from BuildingRegistry instead of a manual list.
     /// </summary>
     public class FactionDefeatHandler : MonoBehaviour
     {
         private Faction faction;
-        private List<GameObject> factionBuildings;
 
-        public void Initialize(Faction fact, List<GameObject> buildings)
+        public void Initialize(Faction fact)
         {
             faction = fact;
-            factionBuildings = buildings;
         }
 
         /// <summary>Called when this faction's main base is destroyed.</summary>
@@ -32,9 +28,10 @@ namespace Buildings
             Debug.Log($"[FactionDefeatHandler] {faction} base destroyed! Cleaning up...");
 
             // ── Kill all surviving buildings (their OnDeath → SpawnRuin → Destroy) ──
+            var factionBuildings = BuildingRegistry.GetBuildings(faction);
             foreach (var b in factionBuildings)
             {
-                if (b == null) continue; // already destroyed
+                if (b == null) continue;
                 var health = b.GetComponent<HealthComponent>();
                 if (health != null && !health.IsDead)
                 {

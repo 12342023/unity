@@ -2867,3 +2867,58 @@ a75dfa5 docs: review mvp-03.6 and release mvp-03.7
 To https://github.com/12342023/unity.git
    774a48e..a75dfa5  main -> main
 ```
+
+### MVP-03.7 建筑运行时注册表 BuildingRegistry
+
+操作人：Claude
+
+已完成目标：新增 `BuildingRegistry` 运行时注册表，替代 GameEntry 手动维护建筑列表，
+FactionDefeatHandler 通过 registry 查询当前阵营建筑。
+
+新增 1 个文件：
+- `Assets/Scripts/Buildings/BuildingRegistry.cs` — 运行时建筑注册表
+  - `Register(GameObject, Faction)` — 注册建筑
+  - `GetBuildings(Faction)` — 查询阵营存活建筑，自动过滤 null / IsDead
+
+修改 2 个文件：
+- `Assets/Scripts/Buildings/BuildingFactory.cs` — 创建后自动注册
+  - `CreateBuilding()` 末尾: `BuildingRegistry.Register(go, faction)`
+- `Assets/Scripts/Buildings/FactionDefeatHandler.cs` — 改用 registry
+  - 删除 `List<GameObject> factionBuildings` 字段
+  - `Initialize(Faction)` 不再接受 list 参数
+  - `OnMainBaseDefeated()` 中 `BuildingRegistry.GetBuildings(faction)` 替代旧 list
+- `Assets/Scripts/GameEntry.cs` — 删除手动列表跟踪
+  - 删除 `playerBuildings` / `enemyBuildings` 变量和分组代码
+  - 删除 `FactionDefeatHandler.Initialize` 的第二个参数
+
+数据流：
+```
+BuildingFactory.CreateBuilding()
+  → 组装所有组件
+  → BuildingRegistry.Register(go, faction)    ← 自动注册
+
+FactionDefeatHandler.OnMainBaseDefeated()
+  → BuildingRegistry.GetBuildings(faction)    ← 替代手动 list
+  → 遍历 → Kill() 每个存活建筑
+```
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. Play → 建筑正常出现 → BuildingRegistry 已注册 ✅
+2. 按 K → EnemyBase 被摧毁 → FactionDefeatHandler 通过 registry 找到所有红方建筑 → 变废墟 ✅
+3. 按 L → PlayerBase 被摧毁 → 同理蓝方全灭 ✅
+4. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/BuildingRegistry.cs \
+        kingbattle/Assets/Scripts/Buildings/BuildingRegistry.cs.meta \
+        kingbattle/Assets/Scripts/Buildings/BuildingFactory.cs \
+        kingbattle/Assets/Scripts/Buildings/FactionDefeatHandler.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "refactor: BuildingRegistry runtime registry, removes manual building lists"
+git push origin main
+```

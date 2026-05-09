@@ -92,6 +92,9 @@ namespace Buildings
                 // Granary: no special component yet (just visual + health)
             }
 
+            // ── Register in runtime registry ──
+            BuildingRegistry.Register(go, faction);
+
             return go;
         }
     }
