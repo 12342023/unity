@@ -126,7 +126,7 @@ Claude 下一阶段正式进入 MVP-02.1。
 
 ## 当前状态
 
-### MVP-02.1 Codex Review：代码审查通过，等待 Play Mode 最终确认
+### MVP-02.1 Play Mode QA：核心通过，进入 MVP-02.1a 小修
 
 Claude 最新提交：
 
@@ -137,7 +137,7 @@ Claude 最新提交：
 Codex Review 结论：
 
 ```text
-代码审查通过，等待用户 Play Mode 最终确认
+核心行为通过；进入 MVP-02.1a 小修，不进入第三阶段
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,9 +150,10 @@ Codex Review 结论：
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ Unity Play Mode 验证需用户手动确认
-- ⏳ Codex Review 文档更新后 commit / push
-- ⏳ 用户确认 Play Mode 通过后，再进入第三阶段任务拆分
+- ⏳ 士兵集合/前进途中变颜色：保留单位/阵营原色，只做受伤反馈
+- ⏳ 打败敌人大本营后返回时短暂折返：修复目标死亡后的返回意图切换
+- ⏳ Claude 完成 MVP-02.1a 小修后，Codex 再 Review
+- ⏳ 两个小问题通过后，再进入第三阶段任务拆分
 
 已处理：
 - ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动
@@ -160,6 +161,7 @@ Codex Review 结论：
 - ✅ 旧版 Deaggro 一帧 MoveTowards 已删除，返回逻辑改为持续执行
 - ✅ 脱战后 MoveTowards 到 `patrol.CurrentPatrolPosition`，0.1 阈值后才恢复 Tick
 - ✅ 接敌时 `movement.Pause()` 保留 road path，脱战时 `movement.Resume()` 恢复路线
+- ✅ 用户确认核心四项没问题
 
 主题：
 

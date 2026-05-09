@@ -93,7 +93,7 @@ Claude 已提交最新修复：
 162df1a fix: MoveTowards patrol circle until 0.1, Pause/Resume road path
 ```
 
-Codex Review 结论：代码审查通过，等待用户 Play Mode 最终确认。
+Codex Review 结论：代码审查通过；用户 Play Mode 确认核心四项没问题，但发现两个可见体验问题。
 
 已确认修复：
 
@@ -106,15 +106,42 @@ Codex Review 结论：代码审查通过，等待用户 Play Mode 最终确认�
 + 前往 rallyPoint 途中接敌时，Pause/Resume 保留并恢复道路路线
 ```
 
-剩余确认项：
+用户反馈：
 
 ```diff
-+ 用户在 Unity Play Mode 中确认无明显瞬移
-+ 用户确认前往 rallyPoint 途中接敌后，脱战能继续原路线
-+ Console 无明显错误
++ 核心四项没问题
+- 兵在集合前进的时候中途会变颜色
+- 打败敌人大本营后回来的时候会折返一下
 ```
 
-Play Mode 确认前不要继续扩展新系统。
+进入第三阶段前，先发布 MVP-02.1a 小修。
+
+### MVP-02.1a 小修
+
+范围：
+
+- 修复士兵集合/前进途中变颜色的问题
+- 修复打败敌人大本营后返回时短暂折返的问题
+
+要求：
+
+- `HealthComponent` 应保留 `SpriteRenderer.color` 原始颜色作为满血颜色
+- 受伤反馈可以向低血量颜色过渡，但不能把 Soldier 原色直接覆盖成白色
+- 目标建筑死亡后，单位应稳定返回 rally/patrol，不要短暂折返到旧 push / 已死亡目标方向
+- 只做最小修复，不新增 UI / 血条 / 废墟 / 占领 / 重建
+
+禁止：
+
+- 建筑废墟
+- 重建
+- 资源
+- 升级
+- 连地
+- 区域奖励
+- 传送阵
+- AI
+
+MVP-02.1a 通过后再进入第三阶段拆分。
 
 ### 1. 巡逻系统
 

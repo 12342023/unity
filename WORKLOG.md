@@ -1469,3 +1469,46 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    162df1a..439e9a9  main -> main
 ```
+
+### MVP-02.1 Play Mode 用户反馈：核心通过，发现两个小问题
+
+操作人：用户 / Codex
+
+用户反馈：
+
+```text
+这四个没问题，就是兵在集合前进的时候中途会变颜色，再打败敌人大本营后回来的时候会折返一下。
+```
+
+Codex 判断：
+
+```text
+MVP-02.1 核心行为通过，但进入第三阶段前需要做 MVP-02.1a 小修。
+```
+
+问题 1：士兵集合/前进途中变颜色
+
+- 相关文件：`kingbattle/Assets/Scripts/Combat/HealthComponent.cs`
+- 初步原因：`HealthComponent` 使用 `Color.white` 作为满血颜色，受伤后把 `SpriteRenderer.color` 往白色/红色插值，可能覆盖 Soldier 原本蓝色。
+- 修复要求：记录 `targetRenderer.color` 作为原始满血颜色；受伤反馈从原色过渡到低血量颜色；未受伤/满血时保持单位原色。
+
+问题 2：打败敌人大本营后返回时短暂折返
+
+- 相关文件：`kingbattle/Assets/Scripts/Combat/UnitCombat.cs`、`kingbattle/Assets/Scripts/Buildings/BarracksSpawner.cs`
+- 初步判断：目标建筑死亡后，单位的 attack/chase/push/return 意图可能还有短暂切换。
+- 修复要求：Claude 先复现并定位；目标死亡后应稳定返回 rally/patrol，不要短暂朝已死亡目标或旧 push 方向移动。
+
+给 Claude 的要求：
+
+```diff
++ 先阅读 AGENTS.md / TASK.md / REVIEW.md / NEXT_STEPS.md / WORKLOG.md
++ 只做 MVP-02.1a 小修
++ 修复颜色覆盖
++ 修复击败敌方大本营后返回折返
+- 不实现建筑废墟
+- 不实现重建、资源、升级、连地、区域奖励、传送阵、AI 或 UI
+```
+
+GitHub 上传状态：
+
+- 本次 QA 反馈文档待提交并推送。
