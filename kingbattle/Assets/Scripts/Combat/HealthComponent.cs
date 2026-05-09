@@ -6,6 +6,8 @@ namespace Combat
     /// <summary>
     /// Health + damage + death for any combatant (units and buildings).
     /// When health reaches zero the GameObject is destroyed.
+    /// Uses the SpriteRenderer's original color as the full-health colour,
+    /// so faction colours (blue Player / red Enemy) are preserved on damage.
     /// </summary>
     public class HealthComponent : MonoBehaviour
     {
@@ -15,9 +17,10 @@ namespace Combat
         public Faction faction;
 
         [Header("Visual")]
-        [SerializeField] private Color fullHealthColor = Color.white;
         [SerializeField] private Color lowHealthColor = Color.red;
-        [SerializeField] private SpriteRenderer targetRenderer;
+
+        private SpriteRenderer targetRenderer;
+        private Color originalColor; // captured in Start — used as fullHealthColor
 
         public float CurrentHealth { get; private set; }
         public bool IsDead => CurrentHealth <= 0f;
@@ -31,6 +34,11 @@ namespace Combat
 
             if (targetRenderer == null)
                 targetRenderer = GetComponent<SpriteRenderer>();
+
+            // Capture the original colour so damage-tinting doesn't wash out
+            // faction colours (blue Player, red Enemy, etc.).
+            if (targetRenderer != null)
+                originalColor = targetRenderer.color;
         }
 
         public void TakeDamage(float amount)
@@ -39,11 +47,11 @@ namespace Combat
 
             CurrentHealth -= amount;
 
-            // Visual feedback — tint redder as health drops
+            // Visual feedback — tint toward lowHealthColor, preserving original colour
             if (targetRenderer != null)
             {
                 float t = Mathf.Clamp01(CurrentHealth / maxHealth);
-                targetRenderer.color = Color.Lerp(lowHealthColor, fullHealthColor, t);
+                targetRenderer.color = Color.Lerp(lowHealthColor, originalColor, t);
             }
 
             if (CurrentHealth <= 0f)

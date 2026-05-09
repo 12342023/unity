@@ -225,6 +225,15 @@ namespace Combat
             {
                 attackTimer = 0f;
                 target.TakeDamage(damage);
+
+                // Immediately deaggro if the killing blow destroyed the target.
+                // Without this check the frame would continue and might transition
+                // to Chase toward a dead target, causing a one-frame "折返".
+                if (target.IsDead)
+                {
+                    Deaggro();
+                    return;
+                }
             }
         }
 

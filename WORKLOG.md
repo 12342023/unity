@@ -1525,3 +1525,44 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    4baa3ad..333a4d4  main -> main
 ```
+
+### MVP-02.1a 小修：颜色 + 折返
+
+操作人：Claude
+
+用户 Play Mode 反馈的两个问题已修复。
+
+**问题 1：士兵颜色被覆盖**
+
+根因：`HealthComponent` 的 `fullHealthColor = Color.white`，受伤时从白色向红色插值，覆盖了 Soldier 的原始蓝色/红色。
+
+修复：`HealthComponent.Start()` 时捕获 `targetRenderer.color` 作为 `originalColor`，受伤时从 `lowHealthColor` 向 `originalColor` 插值。
+- 满血 / 未受伤时：保持单位原色（蓝色 Player / 红色 Enemy）
+- 受伤时：从原色渐变为红色，不经过白色
+
+**问题 2：击败敌人大本营后返回时短暂折返**
+
+根因：`UpdateAttack()` 中 `target.TakeDamage(damage)` 杀死目标后当前帧继续执行，若 `dist > attackRange * 1.2f` 则设置 `chaseTarget = target`（已死亡目标）进入 Chase，下一帧才检测到死亡并 Deaggro。这一帧的 Chase 产生了一步朝向已死亡目标的错误移动。
+
+修复：`UpdateAttack()` 中 `TakeDamage` 后立即检查 `target.IsDead`，若已死亡立即 `Deaggro()` 并 `return`。
+
+修改文件（2 个）：
+- `Assets/Scripts/Combat/HealthComponent.cs` — Start() 捕获 originalColor
+- `Assets/Scripts/Combat/UnitCombat.cs` — UpdateAttack() 中 TakeDamage 后立即检查死亡
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. 士兵被攻击后颜色从蓝色渐变为红色（不发白）
+2. 击败 EnemyBase Barracks 后蓝兵稳定走回 Village 巡逻圆，无折返
+3. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/HealthComponent.cs \
+        kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
+        WORKLOG.md TASK.md
+git commit -m "fix: preserve unit original color, prevent one-frame chase to dead target"
+git push origin main
+```
