@@ -3807,3 +3807,20 @@ Unity 报错，需要修改
 3. Play Mode：K → T → Y → U。
 4. U 应输出派兵日志，并让 EnemyBase 废墟附近的蓝兵向 Crossroads 移动。
 5. R / K / L / T / Y 原有行为保持不变。
+
+GitHub 上传状态：
+
+- 已提交并推送本次 U 快捷键编译修复。
+
+提交记录：
+
+```text
+8b61f54 fix: compile U dispatch shortcut
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   e20c8c8..8b61f54  main -> main
+```
