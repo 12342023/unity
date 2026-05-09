@@ -171,7 +171,8 @@ namespace Combat
             // Deaggro checks
             if (chaseTarget == null || chaseTarget.IsDead)
             {
-                Deaggro();
+                Vector3 deathPos = chaseTarget != null ? chaseTarget.transform.position : transform.position;
+                Deaggro(deathPos);
                 return;
             }
 
@@ -205,7 +206,8 @@ namespace Combat
         {
             if (target == null || target.IsDead)
             {
-                Deaggro();
+                Vector3 deathPos = target != null ? target.transform.position : transform.position;
+                Deaggro(deathPos);
                 return;
             }
 
@@ -227,11 +229,10 @@ namespace Combat
                 target.TakeDamage(damage);
 
                 // Immediately deaggro if the killing blow destroyed the target.
-                // Without this check the frame would continue and might transition
-                // to Chase toward a dead target, causing a one-frame "折返".
                 if (target.IsDead)
                 {
-                    Deaggro();
+                    Vector3 deathPos = target.transform.position;
+                    Deaggro(deathPos);
                     return;
                 }
             }
@@ -239,14 +240,15 @@ namespace Combat
 
         // ── Deaggro ─────────────────────────────────────────────────────
 
-        private void Deaggro()
+        /// <summary>Deaggro from combat. If <paramref name="defeatedPos"/> is provided
+        /// (a building was destroyed), the patrol center moves to that location
+        /// so the unit patrols around the ruins.</summary>
+        private void Deaggro(Vector3? defeatedPos = null)
         {
             target = null;
             chaseTarget = null;
 
-            // Clear stale push orders — the unit may have intercepted the enemy
-            // before completing the full pushPath, leaving an unfinished path
-            // that would point toward a now-dead building.
+            // Clear stale push orders
             ClearPushPath();
 
             state = CState.Idle;
@@ -254,8 +256,16 @@ namespace Combat
             // Resume paused road path (if any) so unit continues toward rally point
             movement?.Resume();
 
-            // Resume patrol — UpdateIdle will handle walking back to the circle
-            // but only if there's no pending road path (HasRemainingPath == false).
+            // If a building was just defeated, update the patrol center to the
+            // ruins position so the unit patrols around the destroyed building.
+            if (defeatedPos.HasValue && patrol != null)
+            {
+                Vector3 center = new Vector3(defeatedPos.Value.x, defeatedPos.Value.y, -0.2f);
+                homePosition = center;
+                patrol.Setup(center, 0.9f, 0f);
+            }
+
+            // Resume patrol
             patrol?.Resume();
         }
 

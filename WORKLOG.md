@@ -1746,3 +1746,56 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    8dbbbd7..117ee28  main -> main
 ```
+
+### MVP-03.1 建筑废墟与废墟巡逻
+
+操作人：Claude
+
+已完成目标：
+- 建筑死亡后生成废墟（Ruin），保留原位置作为巡逻中心
+- 士兵击败建筑后在废墟位置转圈巡逻
+- 废墟不再执行原建筑功能（Tower 不攻击、Barracks 不出兵）
+- 普通单位死亡逻辑不变，不变成废墟
+
+修改文件（3 个）：
+
+新增 1 个：
+- `Assets/Scripts/Buildings/RuinComponent.cs` — 废墟标记组件，将 SpriteRenderer 设为暗色
+
+修改 2 个：
+- `Assets/Scripts/Combat/UnitCombat.cs` —
+  - `Deaggro()` 新增可选参数 `Vector3? defeatedPos`：当建筑被摧毁时，传入建筑位置
+  - `Deaggro()` 中当 `defeatedPos` 有值时，调用 `patrol.Setup(position, 0.9f, 0f)` 将巡逻中心改为废墟位置
+  - `UpdateAttack()` 和 `UpdateChase()` 在检测到目标死亡时，将死亡位置传给 Deaggro
+- `Assets/Scripts/GameEntry.cs` —
+  - `CreateBuilding()` 中为每个建筑注册 `health.OnDeath`：建筑死亡时调用 `SpawnRuin()`
+  - 新增 `SpawnRuin(Vector3 position, Faction faction)`：创建暗灰色废墟 GameObject，对应阵营色弱化
+
+实现细节：
+- 废墟只有 SpriteRenderer + BoxCollider2D + RuinComponent，无 HealthComponent
+- 无 HealthComponent → 不会被 aggro 系统或 Tower 检测为敌人
+- 无 TowerAttack / BarracksSpawner → 不攻击、不出兵
+- 建筑 `OnDeath` 在 `Destroy` 之前执行，废墟在建筑销毁帧同时生成
+- 废墟大小 0.7，渲染层 1（地块上、建筑下），带阵营指示色
+
+Play Mode 验证：
+1. Play → 等待蓝兵波次推进到 EnemyBase
+2. 蓝兵击败 EnemyBase Barracks → **建筑消失，原地出现暗灰色废墟方块**
+3. **蓝兵围绕废墟转圈巡逻**（patrol center 已移到废墟位置）
+4. 废墟无 Tower 攻击、无单位生成、不会被任何系统锁定为目标
+5. 同理验证红兵击败 Player Barracks 后产生废墟并围绕废墟巡逻
+6. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/RuinComponent.cs \
+        kingbattle/Assets/Scripts/Buildings/RuinComponent.cs.meta \
+        kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: building ruins with patrol around ruins after defeat"
+git push origin main
+```
