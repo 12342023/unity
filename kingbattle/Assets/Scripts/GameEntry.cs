@@ -186,10 +186,8 @@ public class GameEntry : MonoBehaviour
         health.maxHealth = type == BuildingType.Tower ? 80f : 50f;
         health.faction = faction;
 
-        // ── On death: spawn a ruin at this building's location ──
-        var capturedPos = go.transform.position;
-        var capturedFaction = faction;
-        health.OnDeath += (hc) => SpawnRuin(capturedPos, capturedFaction);
+        // ── Building death → ruin (self-contained in BuildingDeathHandler) ──
+        go.AddComponent<BuildingDeathHandler>();
 
         // ── Collider (needed for Tower's physics scan) ──
         var col = go.AddComponent<BoxCollider2D>();
@@ -217,35 +215,4 @@ public class GameEntry : MonoBehaviour
         return go;
     }
 
-    // ── Ruin spawning ──────────────────────────────────────────────
-
-    /// <summary>Spawn a ruin GameObject at the given position.
-    /// Ruins are purely visual — no attack, no spawn, no health.</summary>
-    private static void SpawnRuin(Vector3 position, Faction faction)
-    {
-        var ruin = new GameObject($"Ruin_{faction}_{Time.frameCount}");
-        ruin.transform.position = new Vector3(position.x, position.y, -0.04f);
-
-        var sr = ruin.AddComponent<SpriteRenderer>();
-        var tex = new Texture2D(1, 1);
-        tex.SetPixel(0, 0, Color.white);
-        tex.Apply();
-        sr.sprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), Vector2.one * 0.5f, 1f);
-        sr.sortingOrder = 1;
-
-        // Darkened tint: hint of faction colour but mostly gray
-        Color ruinColor = faction == Faction.Player
-            ? new Color(0.2f, 0.2f, 0.35f)
-            : new Color(0.35f, 0.2f, 0.2f);
-        sr.color = ruinColor;
-        ruin.transform.localScale = Vector3.one * 0.7f;
-
-        var col = ruin.AddComponent<BoxCollider2D>();
-        col.isTrigger = true;
-        col.size = Vector2.one * 0.6f;
-
-        ruin.AddComponent<RuinComponent>();
-
-        Debug.Log($"[GameEntry] Ruin spawned at {position}");
-    }
 }

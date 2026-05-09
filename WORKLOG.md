@@ -2314,7 +2314,9 @@ To https://github.com/12342023/unity.git
   - `SpawnRuin()` 静态方法从旧 `GameEntry` 迁移至此
   - 每个建筑自管理死亡 → 废墟逻辑，不需要 GameEntry 介入
 
-修改 1 个文件：
+修改文件（2 个）：
+- `Assets/Scripts/Buildings/BuildingDeathHandler.cs` — 新增
+- `Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta` — Unity 自动生成，补充提交
 - `Assets/Scripts/GameEntry.cs` — 移出死亡/废墟逻辑
   - `CreateBuilding()`: 删除 `OnDeath += (hc) => SpawnRuin(...)` hook
   - `CreateBuilding()`: 替换为 `go.AddComponent<BuildingDeathHandler>()`
@@ -2408,4 +2410,31 @@ e0d6574 docs: review mvp-03.3 missing meta
 ```text
 To https://github.com/12342023/unity.git
    d445c2b..e0d6574  main -> main
+```
+
+### MVP-03.3 修复：补充 .meta 文件
+
+操作人：Claude
+
+Codex Review 指出的阻塞项已处理。
+
+**问题：** `BuildingDeathHandler.cs.meta` 存在于文件系统（Unity 自动生成），但未纳入 git 提交。
+
+**确认：**
+- `BuildingDeathHandler.cs` — 存在 ✅
+- `BuildingDeathHandler.cs.meta` — 存在 ✅（guid: `84ea71435da7147b19c0145efee15c8c`）
+- `GameEntry.cs` — 已清理 ✅
+- 玩法表现不变 ✅
+
+**修复：** 无代码修改。只需在 git commit 中同时包含 `.cs` 和 `.cs.meta` 文件。
+
+**手动 git 推送：**
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs \
+        kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "refactor: move ruin spawning from GameEntry to BuildingDeathHandler"
+git push origin main
 ```
