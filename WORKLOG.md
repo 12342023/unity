@@ -4517,3 +4517,20 @@ MVP-03.16 从已占领 plot 临时派兵到相邻 Neutral
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 MVP-03.15 Review 与 MVP-03.16 任务发布文档。
+
+提交记录：
+
+```text
+3a30f68 docs: review mvp-03.15 and release mvp-03.16
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   966a408..3a30f68  main -> main
+```
