@@ -150,9 +150,8 @@ MVP-03.1 暂不通过；普通单位死亡也会把巡逻中心切到死亡点
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ 只允许建筑死亡后切换 patrol center 到废墟位置
-- ⏳ 普通单位死亡时不改变 patrol center
-- ⏳ Claude 修复后，Codex 再 Review
+- ⏳ 建筑/单位区分修复已提交，需用户 Play Mode 验证
+- ⏳ Codex 再 Review
 
 已处理：
 - ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动

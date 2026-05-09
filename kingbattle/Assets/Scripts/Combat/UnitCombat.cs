@@ -171,8 +171,17 @@ namespace Combat
             // Deaggro checks
             if (chaseTarget == null || chaseTarget.IsDead)
             {
-                Vector3 deathPos = chaseTarget != null ? chaseTarget.transform.position : transform.position;
-                Deaggro(deathPos);
+                // Only a building (no UnitCombat) triggers patrol-centre shift to ruins
+                bool isBuilding = chaseTarget == null || chaseTarget.GetComponent<UnitCombat>() == null;
+                if (isBuilding)
+                {
+                    Vector3 deathPos = chaseTarget != null ? chaseTarget.transform.position : transform.position;
+                    Deaggro(deathPos);
+                }
+                else
+                {
+                    Deaggro();
+                }
                 return;
             }
 
@@ -206,8 +215,17 @@ namespace Combat
         {
             if (target == null || target.IsDead)
             {
-                Vector3 deathPos = target != null ? target.transform.position : transform.position;
-                Deaggro(deathPos);
+                // Only a building (no UnitCombat) triggers patrol-centre shift to ruins
+                bool isBuilding = target == null || target.GetComponent<UnitCombat>() == null;
+                if (isBuilding)
+                {
+                    Vector3 deathPos = target != null ? target.transform.position : transform.position;
+                    Deaggro(deathPos);
+                }
+                else
+                {
+                    Deaggro();
+                }
                 return;
             }
 
@@ -231,8 +249,16 @@ namespace Combat
                 // Immediately deaggro if the killing blow destroyed the target.
                 if (target.IsDead)
                 {
-                    Vector3 deathPos = target.transform.position;
-                    Deaggro(deathPos);
+                    bool isBuilding = target.GetComponent<UnitCombat>() == null;
+                    if (isBuilding)
+                    {
+                        Vector3 deathPos = target.transform.position;
+                        Deaggro(deathPos);
+                    }
+                    else
+                    {
+                        Deaggro();
+                    }
                     return;
                 }
             }

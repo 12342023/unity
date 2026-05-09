@@ -1866,3 +1866,42 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    3df2ced..0dcac2a  main -> main
 ```
+
+### MVP-03.1 修复：只有建筑死亡才切换巡逻中心
+
+操作人：Claude
+
+Codex Review 指出的问题已修复。
+
+**问题：** `UpdateAttack()` 和 `UpdateChase()` 对任何目标死亡都调用 `Deaggro(deathPos)`，而 `Deaggro(Vector3?)` 无条件把 patrol center 切到 defeatedPos。导致士兵杀死普通敌方单位后也在单位死亡点转圈。
+
+**修复：** 在 `UpdateAttack()` 和 `UpdateChase()` 的死亡检测中，增加 `isBuilding` 判断：
+
+```csharp
+bool isBuilding = target == null || target.GetComponent<UnitCombat>() == null;
+```
+
+- `isBuilding == true` → 调用 `Deaggro(deathPos)`，patrol center 移到废墟位置
+- `isBuilding == false` → 调用 `Deaggro()`，不修改 patrol center，士兵回到原巡逻区
+
+判定依据：建筑没有 `UnitCombat` 组件，单位有。无需新建标记组件。
+
+修改文件：仅 `Assets/Scripts/Combat/UnitCombat.cs`
+- `UpdateAttack()` 两处死亡检测：各自判断 isBuilding
+- `UpdateChase()` 一处死亡检测：判断 isBuilding
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. 蓝兵波次击败 EnemyBase Barracks（建筑）→ 废墟出现 → **蓝兵围绕废墟转圈** ✅
+2. 蓝兵和红兵巡逻中相遇对战 → 一方死亡 → **胜方走回原巡逻区**，不会在死亡点转圈 ✅
+3. 红兵击败 Player Barracks → 废墟出现 → 红兵围绕废墟巡逻 ✅
+4. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs WORKLOG.md TASK.md
+git commit -m "fix: only buildings trigger patrol-center shift on death"
+git push origin main
+```
