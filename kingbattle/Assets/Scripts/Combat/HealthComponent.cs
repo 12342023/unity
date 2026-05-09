@@ -41,6 +41,16 @@ namespace Combat
                 originalColor = targetRenderer.color;
         }
 
+        /// <summary>Instant kill without visual feedback (used for faction-defeat cleanup).
+        /// Triggers OnDeath then destroys the GameObject.</summary>
+        public void Kill()
+        {
+            if (IsDead) return;
+            CurrentHealth = 0f;
+            OnDeath?.Invoke(this);
+            Destroy(gameObject);
+        }
+
         public void TakeDamage(float amount)
         {
             if (IsDead) return;

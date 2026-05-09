@@ -2064,3 +2064,64 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    c23ffbd..5c07dd6  main -> main
 ```
+
+### MVP-03.1 收尾 + MVP-03.2 大本营击败清场
+
+操作人：Claude
+
+**MVP-03.1 收尾：**
+- 修正 `UnitCombat.cs` 注释 "Dagro" → "Deaggro"
+- `GetDefeatedBuildingPos` helper 已完成，null target 不再错误触发 patrol center 切换
+
+**MVP-03.2 实现：**
+
+新增 2 个文件：
+- `Assets/Scripts/Buildings/FactionDefeatHandler.cs` — 阵营清场处理器
+  - 保存该阵营的所有建筑引用
+  - `OnMainBaseDefeated()`: 遍历建筑 → `Kill()` 触发 OnDeath → SpawnRuin；遍历单位 → `Kill()` 销毁
+  - 已死亡建筑（null 或 IsDead）自动跳过，不重复生成废墟
+
+修改 2 个文件：
+- `Assets/Scripts/Combat/HealthComponent.cs` — 新增 `Kill()` 方法
+  - 无视觉反馈、无伤害计算、直接触发 OnDeath + Destroy
+  - 专用于阵营清场，不经过常规战斗流程
+- `Assets/Scripts/GameEntry.cs` — SetupBuildings 改造
+  - 按阵营收集建筑列表（playerBuildings / enemyBuildings）
+  - PlayerBase / EnemyBase 的 Barracks OnDeath 分别绑定阵营级 FactionDefeatHandler
+  - Granary 加入玩家建筑列表（破产时一起变废墟）
+
+清场流程：
+```
+PlayerBase Barracks 被击败
+  → health.OnDeath → SpawnRuin(PlayerBase)
+  → FactionDefeatHandler(Player).OnMainBaseDefeated()
+     → 遍历 playerBuildings: 存活建筑 → Kill() → OnDeath → SpawnRuin → Destroy
+     → FindObjectsByType<HealthComponent>: 存活 Player 单位 → Kill() → Destroy
+  → Player 阵营所有建筑变废墟，所有士兵死亡
+```
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. ✅ Play → 蓝兵波次推进到 EnemyBase，击败敌方大本营
+2. ✅ EnemyBase 消失，出现废墟
+3. ✅ EnemyOutpost 的敌方 Tower 自动变为废墟（阵营清场）
+4. ✅ 所有红兵立即死亡（巡逻中、战斗中、出兵队列中的全部消失）
+5. ✅ 蓝兵仍在场，继续巡逻
+6. ✅ 废墟无攻击、无出兵、无 HealthComponent
+7. ✅ Console 无错误
+8. ✅ 同理验证 PlayerBase 被摧毁时蓝方被清场
+9. ✅ 已死亡的建筑不会重复生成废墟
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/FactionDefeatHandler.cs \
+        kingbattle/Assets/Scripts/Buildings/FactionDefeatHandler.cs.meta \
+        kingbattle/Assets/Scripts/Combat/HealthComponent.cs \
+        kingbattle/Assets/Scripts/Combat/UnitCombat.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "fix: handle base defeat faction cleanup"
+git push origin main
+```

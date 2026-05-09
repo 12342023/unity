@@ -171,17 +171,11 @@ namespace Combat
             // Deaggro checks
             if (chaseTarget == null || chaseTarget.IsDead)
             {
-                // Only a building (no UnitCombat) triggers patrol-centre shift to ruins
-                bool isBuilding = chaseTarget == null || chaseTarget.GetComponent<UnitCombat>() == null;
-                if (isBuilding)
-                {
-                    Vector3 deathPos = chaseTarget != null ? chaseTarget.transform.position : transform.position;
-                    Deaggro(deathPos);
-                }
+                var bldPos = GetDefeatedBuildingPos(chaseTarget);
+                if (bldPos.HasValue)
+                    Deaggro(bldPos.Value);
                 else
-                {
                     Deaggro();
-                }
                 return;
             }
 
@@ -215,17 +209,11 @@ namespace Combat
         {
             if (target == null || target.IsDead)
             {
-                // Only a building (no UnitCombat) triggers patrol-centre shift to ruins
-                bool isBuilding = target == null || target.GetComponent<UnitCombat>() == null;
-                if (isBuilding)
-                {
-                    Vector3 deathPos = target != null ? target.transform.position : transform.position;
-                    Deaggro(deathPos);
-                }
+                var bldPos = GetDefeatedBuildingPos(target);
+                if (bldPos.HasValue)
+                    Deaggro(bldPos.Value);
                 else
-                {
                     Deaggro();
-                }
                 return;
             }
 
@@ -249,22 +237,29 @@ namespace Combat
                 // Immediately deaggro if the killing blow destroyed the target.
                 if (target.IsDead)
                 {
-                    bool isBuilding = target.GetComponent<UnitCombat>() == null;
-                    if (isBuilding)
-                    {
-                        Vector3 deathPos = target.transform.position;
-                        Deaggro(deathPos);
-                    }
+                    var bldPos = GetDefeatedBuildingPos(target);
+                    if (bldPos.HasValue)
+                        Deaggro(bldPos.Value);
                     else
-                    {
                         Deaggro();
-                    }
                     return;
                 }
             }
         }
 
         // ── Deaggro ─────────────────────────────────────────────────────
+
+        /// <summary>If the defeated target is a non-null building
+        /// (no UnitCombat), returns its position so the patrol centre
+        /// can shift to the ruins. Returns null for units or null refs.</summary>
+        private Vector3? GetDefeatedBuildingPos(HealthComponent defeatedTarget)
+        {
+            if (defeatedTarget == null)
+                return null;
+            if (defeatedTarget.GetComponent<UnitCombat>() != null)
+                return null; // unit, not a building
+            return defeatedTarget.transform.position;
+        }
 
         /// <summary>Deaggro from combat. If <paramref name="defeatedPos"/> is provided
         /// (a building was destroyed), the patrol center moves to that location

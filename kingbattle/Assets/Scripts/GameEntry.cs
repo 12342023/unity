@@ -52,6 +52,10 @@ public class GameEntry : MonoBehaviour
 
     private void SetupBuildings(MapData mapData)
     {
+        // ── Track buildings per faction for defeat-handler cleanup ──
+        var playerBuildings = new System.Collections.Generic.List<GameObject>();
+        var enemyBuildings = new System.Collections.Generic.List<GameObject>();
+
         // ── Create building GameObjects ──
         var playerBarracks = CreateBuilding("PlayerBase",   mapData, Faction.Player, BuildingType.Barracks);
         var enemyBarracks  = CreateBuilding("EnemyBase",    mapData, Faction.Enemy,  BuildingType.Barracks);
@@ -60,6 +64,13 @@ public class GameEntry : MonoBehaviour
         var playerGranary  = CreateBuilding("Village",      mapData, Faction.Player, BuildingType.Granary);
         // Farmland intentionally left empty
 
+        // ── Group by faction ──
+        if (playerBarracks != null) playerBuildings.Add(playerBarracks);
+        if (playerTower != null)    playerBuildings.Add(playerTower);
+        if (playerGranary != null)  playerBuildings.Add(playerGranary);
+        if (enemyBarracks != null)  enemyBuildings.Add(enemyBarracks);
+        if (enemyTower != null)     enemyBuildings.Add(enemyTower);
+
         // ── Link Barracks to enemy targets, set rally points ──
         if (playerBarracks != null && enemyBarracks != null)
         {
@@ -67,8 +78,8 @@ public class GameEntry : MonoBehaviour
             if (pbSpawner != null)
             {
                 pbSpawner.SetEnemyTarget(enemyBarracks.GetComponent<HealthComponent>());
-                pbSpawner.rallyPlotId = "Village";          // gather at Village
-                pbSpawner.pushTargetPlotId = "EnemyBase";   // push toward enemy base
+                pbSpawner.rallyPlotId = "Village";
+                pbSpawner.pushTargetPlotId = "EnemyBase";
                 pbSpawner.rallyThreshold = 3;
             }
         }
@@ -79,13 +90,32 @@ public class GameEntry : MonoBehaviour
             if (ebSpawner != null)
             {
                 ebSpawner.SetEnemyTarget(playerBarracks.GetComponent<HealthComponent>());
-                ebSpawner.rallyPlotId = "EnemyOutpost";     // gather at Outpost
-                ebSpawner.pushTargetPlotId = "PlayerBase";  // push toward player base
+                ebSpawner.rallyPlotId = "EnemyOutpost";
+                ebSpawner.pushTargetPlotId = "PlayerBase";
                 ebSpawner.rallyThreshold = 3;
             }
         }
 
-        Debug.Log("[GameEntry] Buildings placed, rally points set, wave threshold = 3.");
+        // ── Faction defeat handlers ──
+        if (playerBarracks != null)
+        {
+            var playerHandlerGo = new GameObject("PlayerDefeatHandler");
+            var playerHandler = playerHandlerGo.AddComponent<FactionDefeatHandler>();
+            playerHandler.Initialize(Faction.Player, playerBuildings);
+            var playerBaseHealth = playerBarracks.GetComponent<HealthComponent>();
+            playerBaseHealth.OnDeath += (hc) => playerHandler.OnMainBaseDefeated();
+        }
+
+        if (enemyBarracks != null)
+        {
+            var enemyHandlerGo = new GameObject("EnemyDefeatHandler");
+            var enemyHandler = enemyHandlerGo.AddComponent<FactionDefeatHandler>();
+            enemyHandler.Initialize(Faction.Enemy, enemyBuildings);
+            var enemyBaseHealth = enemyBarracks.GetComponent<HealthComponent>();
+            enemyBaseHealth.OnDeath += (hc) => enemyHandler.OnMainBaseDefeated();
+        }
+
+        Debug.Log("[GameEntry] Buildings placed, defeat handlers active.");
     }
 
     // ── Factory helpers ────────────────────────────────────────────────
