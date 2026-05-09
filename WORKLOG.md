@@ -2624,4 +2624,17 @@ MVP-03.5 废墟可重建判定数据层
 
 GitHub 上传状态：
 
-- 本次 Review 与任务发布文档待提交并推送。
+- 已提交并推送本次 Review 与任务发布文档。
+
+提交记录：
+
+```text
+b335fec docs: review mvp-03.4 and release mvp-03.5
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   9bc149b..b335fec  main -> main
+```
