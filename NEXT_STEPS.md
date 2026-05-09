@@ -90,10 +90,10 @@
 Claude 已提交最新修复：
 
 ```text
-8dbbbd7 fix: clear stale pushPath on deaggro to prevent one-frame折返 toward dead building
+3df2ced feat: building ruins with patrol around ruins after defeat
 ```
 
-Codex Review 结论：MVP-02.1a 通过，允许进入 MVP-03.1。
+Codex Review 结论：MVP-03.1 暂不通过。建筑死亡生成废墟方向正确，但普通单位死亡也会改变 patrol center。
 
 已确认修复：
 
@@ -106,6 +106,7 @@ Codex Review 结论：MVP-02.1a 通过，允许进入 MVP-03.1。
 + 前往 rallyPoint 途中接敌时，Pause/Resume 保留并恢复道路路线
 + HealthComponent 保留单位原色作为满血颜色
 + Deaggro 清理残留 pushPath，击败敌方大本营后不再短暂折返
++ 建筑死亡后已能生成可见废墟
 ```
 
 ### MVP-03.1 建筑废墟与废墟巡逻
@@ -122,6 +123,7 @@ Codex Review 结论：MVP-02.1a 通过，允许进入 MVP-03.1。
 - 废墟不再执行原建筑功能：Tower 不攻击，Barracks 不出兵
 - 士兵打败建筑后，以废墟为 patrol center 转圈
 - 普通单位死亡逻辑保持原样，不变成废墟
+- 普通单位死亡时，士兵不能把 patrol center 切到单位死亡点
 - 废墟逻辑放在 `Buildings/` 或清晰小组件中，不新增大型 `GameManager`
 - 可使用 `HealthComponent.OnDeath`，但不要破坏单位死亡逻辑
 

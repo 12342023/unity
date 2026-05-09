@@ -126,18 +126,18 @@ MVP-02.1 / MVP-02.1a 已完成核心收尾。
 
 ## 当前状态
 
-### MVP-02.1a Codex Review：通过
+### MVP-03.1 Codex Review：暂不通过
 
 Claude 最新提交：
 
 ```text
-8dbbbd7 fix: clear stale pushPath on deaggro to prevent one-frame折返 toward dead building
+3df2ced feat: building ruins with patrol around ruins after defeat
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-02.1a 通过；允许进入第三阶段第一个小任务
+MVP-03.1 暂不通过；普通单位死亡也会把巡逻中心切到死亡点
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,8 +150,9 @@ MVP-02.1a 通过；允许进入第三阶段第一个小任务
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ MVP-03.1 建筑废墟与废墟巡逻 — 已提交，需用户 Play Mode 验证
-- ⏳ Claude 完成 MVP-03.1 后，Codex Review
+- ⏳ 只允许建筑死亡后切换 patrol center 到废墟位置
+- ⏳ 普通单位死亡时不改变 patrol center
+- ⏳ Claude 修复后，Codex 再 Review
 
 已处理：
 - ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动
@@ -162,6 +163,7 @@ MVP-02.1a 通过；允许进入第三阶段第一个小任务
 - ✅ 用户确认核心四项没问题
 - ✅ HealthComponent 已记录原始颜色作为满血颜色，颜色修复方向正确
 - ✅ Deaggro 清理残留 pushPath，解决击败敌方大本营后短暂折返
+- ✅ 建筑死亡后已能生成可见废墟
 
 ## 新发布要求：MVP-03.1 建筑废墟与废墟巡逻
 

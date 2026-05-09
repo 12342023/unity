@@ -1799,3 +1799,57 @@ git add kingbattle/Assets/Scripts/Buildings/RuinComponent.cs \
 git commit -m "feat: building ruins with patrol around ruins after defeat"
 git push origin main
 ```
+
+### MVP-03.1 Codex Review：普通单位死亡不应成为巡逻中心
+
+操作人：Codex
+
+审查提交：
+
+```text
+3df2ced feat: building ruins with patrol around ruins after defeat
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/RuinComponent.cs`
+- `kingbattle/Assets/Scripts/Combat/UnitCombat.cs`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.1 暂不通过
+```
+
+已确认：
+
+1. 建筑死亡后会通过 `HealthComponent.OnDeath` 生成可见 Ruin。
+2. Ruin 没有 `TowerAttack`、`BarracksSpawner`、`HealthComponent`，不会继续攻击、出兵或被当成战斗目标。
+3. `RuinComponent.cs.meta` 已提交。
+
+阻塞问题：
+
+1. `UnitCombat.UpdateAttack()` 对任何死亡 `target` 都调用 `Deaggro(deathPos)`。
+2. `Deaggro(defeatedPos)` 无条件把 `patrol.Setup(center, 0.9f, 0f)` 指向死亡位置。
+3. 如果士兵打死的是普通敌方单位，也会围绕单位死亡点巡逻。
+4. 这违反 MVP-03.1 验收标准：普通单位死亡仍按原逻辑销毁，不变成废墟，也不应成为巡逻中心。
+
+给 Claude 的继续修复要求：
+
+```diff
++ 只有目标是建筑时，才把 patrol center 切到死亡/废墟位置
++ 普通单位死亡时，只 Deaggro，不改变 patrol center
++ 可用 target.GetComponent<UnitCombat>() == null 区分建筑
++ 保持建筑死亡后生成废墟
++ 保持废墟无攻击、无出兵、无 HealthComponent
+- 不实现重建、占领、资源、升级、连地、区域奖励、传送阵、AI 或 UI
+```
+
+GitHub 上传状态：
+
+- 本次 Review 文档待提交并推送。
