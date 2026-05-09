@@ -2638,3 +2638,34 @@ b335fec docs: review mvp-03.4 and release mvp-03.5
 To https://github.com/12342023/unity.git
    9bc149b..b335fec  main -> main
 ```
+
+### MVP-03.5 废墟可重建判定数据层
+
+操作人：Claude
+
+已完成目标：为废墟增加可重建判定方法，仅数据层，不做 UI、不做实际重建。
+
+修改 1 个文件：
+- `Assets/Scripts/Buildings/RuinComponent.cs` — 新增两个方法
+  - `CanRebuildFor(Faction faction)` — 返回 `!string.IsNullOrEmpty(sourcePlotId)`，即有 plotId 即可重建
+  - `GetRebuildBuildingType()` — 返回 `sourceBuildingType`，决定可重建类型
+  - `originalFaction` 保留为来源记录，不做归属规则
+
+规则：
+- 有 `sourcePlotId` → 可重建
+- `sourceBuildingType` → 决定能重建成 Tower / Barracks / Granary
+- `originalFaction` → 仅记录，不参与判定（未来可扩展归属规则）
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证（行为无变化，新增方法为纯数据层不可见）：
+1. Play → 任意方式生成废墟 → `RuinComponent.CanRebuildFor(Player)` 返回 true ✅
+2. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/RuinComponent.cs WORKLOG.md TASK.md
+git commit -m "feat: ruins rebuild-predicate data layer (CanRebuildFor / GetRebuildBuildingType)"
+git push origin main
+```
