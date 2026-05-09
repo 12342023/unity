@@ -4410,3 +4410,51 @@ d29b28b docs: review mvp-03.14 and release mvp-03.15
 To https://github.com/12342023/unity.git
    712cd39..d29b28b  main -> main
 ```
+
+### MVP-03.15 占领后的下一层可连接 Neutral 查询
+
+操作人：Claude
+
+已完成目标：Player 占领 Crossroads 后，可查询它下一层相邻 Neutral plot。纯数据层，不派兵、不占领。
+
+新增 1 个文件：
+- `Assets/Scripts/Combat/StrategicConnectionService.cs` — 前线可连接查询服务
+  - `GetPlayerFrontierPlots(MapData)` → `List<FrontierInfo>`
+  - 遍历所有 plot，找到 Player 所有、非 main base、且有 Neutral 邻居的地块
+  - 每个 FrontierInfo 包含 plotId 和 connectableNeutralPlots 列表
+
+修改 1 个文件：
+- `Assets/Scripts/GameEntry.cs` — 新增 I 测试快捷键
+  - 调用 `StrategicConnectionService.GetPlayerFrontierPlots(mapData)`
+  - 打印每个 frontier plot 的可连接 Neutral 邻居
+
+数据流：
+```
+U 占领 Crossroads → Crossroads.faction = Player
+  → 按 I → StrategicConnectionService.GetPlayerFrontierPlots
+  → 遍历所有 plot → Crossroads(Player, non-main-base) → 邻居 {"Crossroads->Village", "Crossroads->Farmland", "Crossroads->EnemyOutpost"}
+  → neutral 邻居 = {"Farmland"} (Village=Player, EnemyOutpost=废墟)
+  → 打印 "Crossroads can connect to: Farmland"
+```
+
+Play Mode 验证：
+1. Play → **I** → "no Player-owned frontier plot"（Crossroads 还是 Neutral）
+2. **K** → **Y** → **T** → **U** → 蓝兵到达，Crossroads 变蓝
+3. **I** → "Crossroads can connect to: Farmland" ✅
+4. 再次 **U** → "no connectable neutral plots"（main base ruin 视角不变）
+5. **Y** → "has no neutral neighbours"（main base ruin 视角不变）
+6. **R** → **L** → 蓝方全灭
+7. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/StrategicConnectionService.cs \
+        kingbattle/Assets/Scripts/Combat/StrategicConnectionService.cs.meta \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: StrategicConnectionService + I shortcut for frontier neutral plots"
+git push origin main
+```

@@ -209,6 +209,23 @@ public class GameEntry : MonoBehaviour
                 }
             }
         }
+
+        // I = print Player-owned frontier plots with neutral neighbours (MVP-03.15)
+        if (Input.GetKeyDown(KeyCode.I) && mapData != null)
+        {
+            var frontiers = StrategicConnectionService.GetPlayerFrontierPlots(mapData);
+            if (frontiers.Count == 0)
+            {
+                Debug.Log("[GameEntry] Test shortcut I: no Player-owned frontier plot with neutral neighbours.");
+            }
+            else
+            {
+                foreach (var f in frontiers)
+                {
+                    Debug.Log($"[GameEntry] Test shortcut I: {f.plotId} can connect to: {string.Join(", ", f.connectableNeutralPlots)}");
+                }
+            }
+        }
     }
 
     // ── Building setup ─────────────────────────────────────────────────
