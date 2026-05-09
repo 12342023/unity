@@ -1732,4 +1732,17 @@ Claude 任务范围：
 
 GitHub 上传状态：
 
-- 本次任务发布文档待提交并推送。
+- 已提交并推送本次任务发布文档。
+
+提交记录：
+
+```text
+117ee28 docs: release mvp-03.1 ruins patrol task
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   8dbbbd7..117ee28  main -> main
+```
