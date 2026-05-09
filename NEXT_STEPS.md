@@ -90,10 +90,10 @@
 Claude 已提交最新修复：
 
 ```text
-a5f49ad fix: handle base defeat faction cleanup
+eb62289 feat: add K/L test shortcuts for faction defeat
 ```
 
-Codex Review 结论：MVP-03.1 / MVP-03.2 代码审查通过。等待用户 Play Mode 最终确认。
+Codex Review 结论：K / L 测试快捷键代码审查通过，允许进入 MVP-03.3。
 
 已确认修复：
 
@@ -110,15 +110,51 @@ Codex Review 结论：MVP-03.1 / MVP-03.2 代码审查通过。等待用户 Play
 + 非空目标场景下，普通单位死亡不再把死亡点传给 Deaggro
 + target == null / chaseTarget == null 时只 Deaggro，不再切换 patrol center
 + 一方大本营被击败后，该方建筑清场为废墟，士兵立即死亡
++ K / L Play Mode 测试快捷键已添加，便于验证双方大本营清场
 ```
 
-### 用户 Play Mode 最终确认清单
+### MVP-03.3 建筑死亡 / 废墟职责边界整理
+
+目标：
+
+- 不改变当前玩法表现。
+- 将 `SpawnRuin` / 建筑死亡处理从 `GameEntry` 下沉到 `Buildings/` 下的小组件或小服务。
+- `GameEntry` 只负责装配测试场景。
+
+允许：
+
+- 新增 `Buildings/BuildingDeathHandler.cs`、`Buildings/RuinSpawner.cs` 或同等小组件。
+- 让建筑自己的死亡逻辑负责生成废墟。
+- `FactionDefeatHandler` 继续通过 `HealthComponent.Kill()` 触发建筑死亡逻辑。
+- 小范围调整 `GameEntry` 装配代码。
+
+必须保持：
+
+- 建筑死亡后生成废墟。
+- 士兵击败建筑后围绕废墟巡逻。
+- 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
+- K / L 测试快捷键仍可验证双方大本营清场。
+- 单个建筑死亡只生成一个废墟。
+
+禁止：
+
+- 不做重建。
+- 不做占领进度。
+- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不扩大 K / L 测试快捷键为正式功能。
+- 不修改 `ProjectSettings`。
+- 不提交 Unity 生成目录。
+- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+### Play Mode 验证清单
 
 - 击败 `EnemyBase` 后，敌方 `EnemyBase` 和 `EnemyOutpost` 都变成废墟。
 - 所有红方士兵立即死亡。
 - 蓝方士兵仍存活，并围绕废墟巡逻。
 - 击败 `PlayerBase` 后，蓝方 `PlayerBase`、`Crossroads`、`Village` 变成废墟。
 - 所有蓝方士兵立即死亡。
+- 按 K 可快速触发 EnemyBase 被击败。
+- 按 L 可快速触发 PlayerBase 被击败。
 - Console 无明显错误。
 
 ### MVP-03.1 建筑废墟与废墟巡逻
@@ -178,27 +214,6 @@ Codex Review 结论：MVP-03.1 / MVP-03.2 代码审查通过。等待用户 Play
 - UI / 美术大改 / 音效
 
 MVP-03.1 通过后，再考虑重建、占领或资源。
-
-### 下一条建议小任务
-
-用户 Play Mode 确认 OK 后，建议先做：
-
-```text
-MVP-03.3 建筑死亡 / 废墟职责边界整理
-```
-
-目标：
-
-- 将 `SpawnRuin` / 建筑死亡处理从 `GameEntry` 逐步下沉到 `Buildings/` 下的小组件。
-- `GameEntry` 保持测试场景装配职责。
-- 不改变当前玩法表现。
-
-禁止：
-
-- 不做完整重建系统
-- 不做占领进度
-- 不做资源 / 升级
-- 不做 UI
 
 ### 1. 巡逻系统
 

@@ -5,88 +5,64 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-a5f49ad fix: handle base defeat faction cleanup
+eb62289 feat: add K/L test shortcuts for faction defeat
 ```
 
-结论：**MVP-03.1 / MVP-03.2 代码审查通过**。
+结论：**测试快捷键代码审查通过，允许进入 MVP-03.3**。
 
-说明：Claude 已修复 `target == null` / `chaseTarget == null` 被误当成建筑的问题，并实现“大本营被击败后，该阵营所有建筑变废墟、所有士兵立即死亡”的最小闭环。当前代码方向符合 `TASK.md` / `NEXT_STEPS.md` 的范围要求。
+说明：K / L 仅用于 Play Mode 快速验证双方大本营清场，改动范围小，没有改变正式战斗逻辑。当前下一步应整理 `GameEntry` 中过多的建筑死亡 / 废墟生成职责。
 
 ## CODEX PROJECT REVIEW
 
 Gate: **PASS**
 
-### 已通过：[P1] null target 不再切换 patrol center
+### 已通过：[P2] K / L 测试快捷键范围可接受
 
 File:
 
 ```text
-kingbattle/Assets/Scripts/Combat/UnitCombat.cs
-```
-
-Review:
-
-`UnitCombat` 新增 `GetDefeatedBuildingPos(HealthComponent defeatedTarget)`：
-
-```csharp
-if (defeatedTarget == null)
-    return null;
-if (defeatedTarget.GetComponent<UnitCombat>() != null)
-    return null;
-return defeatedTarget.transform.position;
-```
-
-这满足上一轮 review 要求：
-
-```diff
-+ target == null 或 chaseTarget == null 时，只 Deaggro()
-+ 只有目标非空且无 UnitCombat 时，才 Deaggro(deathPos)
-```
-
-### 已通过：[P1] 大本营击败后触发阵营清场
-
-Files:
-
-```text
-kingbattle/Assets/Scripts/Buildings/FactionDefeatHandler.cs
-kingbattle/Assets/Scripts/Combat/HealthComponent.cs
 kingbattle/Assets/Scripts/GameEntry.cs
 ```
 
 Review:
 
-`FactionDefeatHandler.OnMainBaseDefeated()` 会：
+`GameEntry.Update()` 中新增：
 
-1. 遍历该阵营建筑列表。
-2. 跳过 null 或 `IsDead` 的建筑，避免重复废墟。
-3. 对仍存活建筑调用 `HealthComponent.Kill()`，触发原有 `OnDeath -> SpawnRuin -> Destroy`。
-4. 通过 `FindObjectsByType<HealthComponent>(FindObjectsSortMode.None)` 找到该阵营所有带 `UnitCombat` 的存活单位并 `Kill()`。
+```csharp
+if (Input.GetKeyDown(KeyCode.K) && enemyBaseHealth != null && !enemyBaseHealth.IsDead)
+    enemyBaseHealth.TakeDamage(enemyBaseHealth.CurrentHealth);
 
-`GameEntry` 将 `PlayerBase` / `EnemyBase` 的 Barracks 作为双方大本营，并把对应 `OnDeath` 绑定到阵营清场处理器。Unity 版本为 `2022.3.62f1`，`FindObjectsByType` API 可用。
+if (Input.GetKeyDown(KeyCode.L) && playerBaseHealth != null && !playerBaseHealth.IsDead)
+    playerBaseHealth.TakeDamage(playerBaseHealth.CurrentHealth);
+```
 
-### 已通过：[P2] HealthComponent.Kill() 复用 OnDeath 语义
+这会走正常 `TakeDamage -> OnDeath -> FactionDefeatHandler` 路径，适合验证 MVP-03.2。`IsDead` 守卫可以避免重复触发已死亡大本营。
+
+### 残留：[P2] GameEntry 继续承载过多业务职责
 
 File:
 
 ```text
-kingbattle/Assets/Scripts/Combat/HealthComponent.cs
+kingbattle/Assets/Scripts/GameEntry.cs
 ```
 
-Review:
+Problem:
 
-`Kill()` 与 `TakeDamage()` 的死亡路径保持一致：设置 `CurrentHealth = 0f`，触发 `OnDeath`，然后 `Destroy(gameObject)`。因此建筑清场能复用既有废墟生成逻辑，单位清场也能直接销毁。
+`GameEntry` 当前仍包含：
+
+- 建筑创建和装配。
+- 大本营清场处理器装配。
+- K / L 测试快捷键。
+- `SpawnRuin()` 具体实现。
+- 建筑 `OnDeath` 到废墟生成的绑定逻辑。
+
+这已经超过“薄启动脚本”的长期职责。短期可运行，但后续会让建筑死亡、废墟、清场、测试入口混在一起。
+
+Fix:
+
+发布下一条小任务：`MVP-03.3 建筑死亡 / 废墟职责边界整理`。
 
 ## 残留注意事项
-
-### Play Mode 仍需用户最终确认
-
-Codex 本轮做了代码审查，没有在 Unity Editor 中亲自运行 Play Mode。Claude 的 `WORKLOG.md` 记录了 Play Mode 验证通过，但用户仍应在本机确认以下场景：
-
-1. 蓝方击败 `EnemyBase` 后，敌方 `EnemyBase` 和 `EnemyOutpost` 都变成废墟。
-2. 所有红方士兵立即死亡。
-3. 蓝方士兵仍存活，并围绕废墟巡逻。
-4. 红方击败 `PlayerBase` 时，蓝方建筑和士兵同样被清场。
-5. Console 无明显错误。
 
 ### ProjectSettings 新增文件仍未处理
 
@@ -103,18 +79,36 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.1 / MVP-03.2 代码审查通过。
+Codex Review：K / L 测试快捷键通过。现在进入 MVP-03.3。
 
-请先不要继续做新功能，等待用户 Play Mode 最终确认：
-- 击败 EnemyBase 后，敌方所有建筑变成废墟。
-- 所有敌方士兵立即死亡。
-- 己方士兵仍存活，并围绕废墟巡逻。
-- 反向验证 PlayerBase 被击败时蓝方被清场。
-- Console 无明显错误。
+任务：建筑死亡 / 废墟职责边界整理。
 
-如果用户确认 OK，再进入下一条小任务。
-下一条建议任务先不要做完整资源/升级系统，而是整理建筑死亡/废墟职责边界：
-- 将 SpawnRuin / 建筑死亡处理从 GameEntry 逐步下沉到 Buildings 下的小组件。
+目标：
+- 不改变当前玩法表现。
+- 将 SpawnRuin / 建筑死亡处理从 GameEntry 下沉到 Buildings/ 下的小组件或小服务。
 - GameEntry 只负责装配测试场景。
-- 不做重建、占领进度、资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+
+允许：
+- 新增 Buildings/BuildingDeathHandler.cs、Buildings/RuinSpawner.cs 或同等小组件。
+- 让建筑自己的死亡逻辑负责生成废墟。
+- FactionDefeatHandler 继续通过 HealthComponent.Kill() 触发建筑死亡逻辑。
+- 小范围调整 GameEntry 装配代码。
+
+必须保持：
+- 建筑死亡后生成废墟。
+- 士兵击败建筑后围绕废墟巡逻。
+- 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
+- K / L 测试快捷键仍可验证双方大本营清场。
+- 单个建筑死亡只生成一个废墟。
+
+禁止：
+- 不做重建。
+- 不做占领进度。
+- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不扩大 K / L 测试快捷键为正式功能。
+- 不修改 ProjectSettings。
+- 不提交 Unity 生成目录。
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
+
+完成后更新 WORKLOG.md，说明修改文件、Play Mode 验证步骤、是否修改场景/ProjectSettings，并 commit / push。
 ```

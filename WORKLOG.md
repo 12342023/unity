@@ -2228,3 +2228,60 @@ git add kingbattle/Assets/Scripts/GameEntry.cs WORKLOG.md TASK.md
 git commit -m "feat: add K/L test shortcuts for faction defeat"
 git push origin main
 ```
+
+### MVP-03.3 任务发布：建筑死亡 / 废墟职责边界整理
+
+操作人：Codex
+
+审查提交：
+
+```text
+eb62289 feat: add K/L test shortcuts for faction defeat
+```
+
+审查结论：
+
+```text
+K / L 测试快捷键代码审查通过，允许进入 MVP-03.3
+```
+
+已确认：
+
+1. K 会通过 `enemyBaseHealth.TakeDamage(enemyBaseHealth.CurrentHealth)` 触发 EnemyBase 正常死亡流程。
+2. L 会通过 `playerBaseHealth.TakeDamage(playerBaseHealth.CurrentHealth)` 触发 PlayerBase 正常死亡流程。
+3. 两个快捷键都有 `IsDead` 守卫，避免重复触发已死亡大本营。
+4. 该快捷键只用于 Play Mode 验证 MVP-03.2。
+
+新任务：
+
+```text
+MVP-03.3 建筑死亡 / 废墟职责边界整理
+```
+
+给 Claude 的任务边界：
+
+```diff
++ 将 SpawnRuin / 建筑死亡处理从 GameEntry 下沉到 Buildings/ 下的小组件或小服务
++ GameEntry 只负责装配测试场景
++ 保持建筑死亡生成废墟
++ 保持士兵击败建筑后围绕废墟巡逻
++ 保持大本营被击败后的阵营清场
++ 保持 K / L 测试快捷键可用
++ 单个建筑死亡只生成一个废墟
+- 不改变当前玩法表现
+- 不做重建、占领进度、资源、升级、连地、区域奖励、传送阵、AI 或 UI
+- 不扩大 K / L 测试快捷键为正式功能
+- 不修改 ProjectSettings
+- 不提交 Unity 生成目录
+```
+
+文档更新：
+
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+GitHub 上传状态：
+
+- 本次任务发布文档待提交并推送。

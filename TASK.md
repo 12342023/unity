@@ -126,18 +126,18 @@ MVP-02.1 / MVP-02.1a 已完成核心收尾。
 
 ## 当前状态
 
-### MVP-03.1 / MVP-03.2 Codex Review：代码审查通过
+### MVP-03.3 任务发布：建筑死亡 / 废墟职责边界整理
 
 Claude 最新提交：
 
 ```text
-a5f49ad fix: handle base defeat faction cleanup
+eb62289 feat: add K/L test shortcuts for faction defeat
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.1 / MVP-03.2 代码审查通过；等待用户 Play Mode 最终确认
+MVP-03.1 / MVP-03.2 已通过，允许进入 MVP-03.3
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,8 +150,8 @@ MVP-03.1 / MVP-03.2 代码审查通过；等待用户 Play Mode 最终确认
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ 用户 Play Mode 最终确认 EnemyBase / PlayerBase 被击败后的阵营清场
-- ⏳ 用户确认 OK 后，再进入下一条小任务
+- ⏳ MVP-03.3：将建筑死亡 / 废墟生成职责从 GameEntry 下沉到 Buildings 小组件
+- ⏳ Claude 完成后，Codex Review
 
 已处理：
 - ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动
@@ -166,8 +166,54 @@ MVP-03.1 / MVP-03.2 代码审查通过；等待用户 Play Mode 最终确认
 - ✅ 非空目标场景下，普通单位死亡不再把死亡点传给 Deaggro
 - ✅ target == null / chaseTarget == null 时只 Deaggro，不再切换 patrol center
 - ✅ 一方大本营被击败后，该方建筑清场为废墟，士兵立即死亡
+- ✅ K / L Play Mode 测试快捷键已添加，便于验证双方大本营清场
 
-## 新发布要求：MVP-03.1 建筑废墟与废墟巡逻
+## 新发布要求：MVP-03.3 建筑死亡 / 废墟职责边界整理
+
+```text
+不改变玩法表现，只整理建筑死亡和废墟生成的代码职责。
+```
+
+## MVP-03.3 目标
+
+- 将 `SpawnRuin` / 建筑死亡处理从 `GameEntry` 中下沉到 `Buildings/` 下的小组件或小服务。
+- `GameEntry` 保持测试场景装配职责，不继续承载建筑死亡业务逻辑。
+- 保持当前所有玩法表现不变：
+  - 建筑死亡后生成废墟。
+  - 士兵击败建筑后围绕废墟巡逻。
+  - 大本营被击败后，该阵营建筑清场为废墟，士兵立即死亡。
+  - K / L 测试快捷键仍可用于 Play Mode 验证。
+
+## MVP-03.3 允许范围
+
+- 新增 `Buildings/BuildingDeathHandler.cs`、`Buildings/RuinSpawner.cs` 或同等小组件。
+- 让建筑自己的死亡逻辑负责生成废墟。
+- 让 `FactionDefeatHandler` 继续复用 `HealthComponent.Kill()` 和建筑死亡逻辑。
+- 小范围调整 `GameEntry` 的装配代码。
+- 更新 `WORKLOG.md`。
+
+## MVP-03.3 禁止范围
+
+- 不改变当前玩法数值。
+- 不新增完整重建系统。
+- 不新增占领进度。
+- 不新增资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不扩大 K / L 测试快捷键为正式功能。
+- 不修改 `ProjectSettings`。
+- 不提交 Unity 生成目录。
+
+## MVP-03.3 验收标准
+
+- `GameEntry` 中不再包含 `SpawnRuin` 的具体实现。
+- 废墟生成逻辑位于 `Buildings/` 下清晰命名的小组件/小服务中。
+- 单个建筑死亡仍只生成一个废墟。
+- 阵营清场仍能让失败方所有存活建筑变废墟、士兵立即死亡。
+- K / L 测试快捷键仍可触发双方大本营清场。
+- Console 无明显错误。
+- 不修改 `ProjectSettings`，除非先说明理由并等待确认。
+- 不提交 Unity 生成目录。
+
+## 历史要求：MVP-03.1 建筑废墟与废墟巡逻
 
 ```text
 建筑被击败后进入废墟状态；士兵可以围绕废墟转圈巡逻。
