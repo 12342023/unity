@@ -1511,4 +1511,17 @@ MVP-02.1 核心行为通过，但进入第三阶段前需要做 MVP-02.1a 小修
 
 GitHub 上传状态：
 
-- 本次 QA 反馈文档待提交并推送。
+- 已提交并推送本次 QA 反馈文档。
+
+提交记录：
+
+```text
+333a4d4 docs: record mvp-02.1 play mode polish
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   4baa3ad..333a4d4  main -> main
+```
