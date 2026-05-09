@@ -90,10 +90,10 @@
 Claude 最新提交：
 
 ```text
-bb7ea8b refactor: move ruin spawning from GameEntry to BuildingDeathHandler
+9bc149b feat: building identity data and ruin metadata for future reconstruction
 ```
 
-Codex Review 结论：MVP-03.3 代码审查通过。允许进入 MVP-03.4。
+Codex Review 结论：MVP-03.4 代码审查通过。允许进入 MVP-03.5。
 
 已确认修复：
 
@@ -113,7 +113,45 @@ Codex Review 结论：MVP-03.3 代码审查通过。允许进入 MVP-03.4。
 + K / L Play Mode 测试快捷键已添加，便于验证双方大本营清场
 + SpawnRuin 已从 GameEntry 移入 Buildings/BuildingDeathHandler.cs
 + BuildingDeathHandler.cs.meta 已提交
++ 建筑身份数据 BuildingIdentity 已补充
++ 废墟来源元数据 sourcePlotId / sourceBuildingType / originalFaction 已补充
 ```
+
+### MVP-03.5 废墟可重建判定数据层
+
+目标：
+
+- 不做完整重建系统。
+- 不做 UI。
+- 只给 Ruin 增加“是否可重建 / 可重建成什么”的最小判定数据和方法。
+
+允许：
+
+- 扩展 `RuinComponent`，新增简单方法，例如 `CanRebuildFor(Faction faction)`、`GetRebuildBuildingType()`。
+- 规则先保持最小：
+  - 有 `sourcePlotId` 才可重建。
+  - `sourceBuildingType` 决定可重建类型。
+  - `originalFaction` 只作为来源记录，不在本任务里做复杂归属规则。
+- 可以新增一个小的数据结构 / enum，但优先保持简单。
+
+必须保持：
+
+- 当前玩法表现不变。
+- 建筑死亡后仍生成废墟。
+- 士兵击败建筑后仍围绕废墟巡逻。
+- 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
+- K / L 测试快捷键仍可验证双方大本营清场。
+- 单个建筑死亡只生成一个废墟。
+
+禁止：
+
+- 不做重建按钮。
+- 不真正生成新建筑。
+- 不做占领进度。
+- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不修改 `ProjectSettings`。
+- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+- 不提交 Unity 生成目录。
 
 ### MVP-03.4 建筑身份数据与废墟元数据
 

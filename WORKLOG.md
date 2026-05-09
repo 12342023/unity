@@ -2564,3 +2564,64 @@ git add kingbattle/Assets/Scripts/Buildings/BuildingIdentity.cs \
 git commit -m "feat: building identity data and ruin metadata for future reconstruction"
 git push origin main
 ```
+
+### MVP-03.4 Codex Review：通过并发布 MVP-03.5
+
+操作人：Codex
+
+审查提交：
+
+```text
+9bc149b feat: building identity data and ruin metadata for future reconstruction
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/BuildingIdentity.cs`
+- `kingbattle/Assets/Scripts/Buildings/BuildingIdentity.cs.meta`
+- `kingbattle/Assets/Scripts/Buildings/RuinComponent.cs`
+- `kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.4 代码审查通过
+```
+
+已确认：
+
+1. `BuildingIdentity` 已记录 `plotId`、`buildingType`、`faction`。
+2. `BuildingIdentity.cs.meta` 已提交。
+3. `RuinComponent` 已记录 `sourcePlotId`、`sourceBuildingType`、`originalFaction`。
+4. `BuildingDeathHandler` 生成 Ruin 时会传递建筑身份数据。
+5. 未实现重建、资源、UI 或占领进度，范围正确。
+
+新发布任务：
+
+```text
+MVP-03.5 废墟可重建判定数据层
+```
+
+给 Claude 的任务边界：
+
+```diff
++ 扩展 RuinComponent，新增 CanRebuildFor(Faction faction) / GetRebuildBuildingType() 或同等简单方法
++ 有 sourcePlotId 才可重建
++ sourceBuildingType 决定可重建类型
++ originalFaction 只作为来源记录
++ 保持当前玩法表现不变
+- 不做重建按钮
+- 不真正生成新建筑
+- 不做占领进度、资源、升级、连地、区域奖励、传送阵、AI 或 UI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
+
+GitHub 上传状态：
+
+- 本次 Review 与任务发布文档待提交并推送。

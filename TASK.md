@@ -126,18 +126,18 @@ MVP-02.1 / MVP-02.1a 已完成核心收尾。
 
 ## 当前状态
 
-### MVP-03.4 任务发布：建筑身份数据与废墟元数据
+### MVP-03.5 任务发布：废墟可重建判定数据层
 
 Claude 最新提交：
 
 ```text
-bb7ea8b refactor: move ruin spawning from GameEntry to BuildingDeathHandler
+9bc149b feat: building identity data and ruin metadata for future reconstruction
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.3 代码审查通过；允许进入 MVP-03.4
+MVP-03.4 代码审查通过；允许进入 MVP-03.5
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,7 +150,7 @@ MVP-03.3 代码审查通过；允许进入 MVP-03.4
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ MVP-03.4：为建筑和废墟补充最小身份数据
+- ⏳ MVP-03.5：为废墟增加可重建判定数据层
 - ⏳ Claude 完成后，Codex 再 Review
 
 已处理：
@@ -169,6 +169,49 @@ MVP-03.3 代码审查通过；允许进入 MVP-03.4
 - ✅ K / L Play Mode 测试快捷键已添加，便于验证双方大本营清场
 - ✅ `SpawnRuin` 已从 `GameEntry` 移入 `Buildings/BuildingDeathHandler.cs`
 - ✅ `BuildingDeathHandler.cs.meta` 已提交
+- ✅ 建筑身份数据 `BuildingIdentity` 已补充
+- ✅ 废墟来源元数据 `sourcePlotId / sourceBuildingType / originalFaction` 已补充
+
+## 新发布要求：MVP-03.5 废墟可重建判定数据层
+
+```text
+不做完整重建系统，只给废墟增加“是否可重建 / 可重建成什么”的最小判定能力。
+```
+
+## MVP-03.5 目标
+
+- `RuinComponent` 能表达未来是否可重建。
+- `RuinComponent` 能返回未来可重建的建筑类型。
+- 当前玩法表现保持不变。
+
+## MVP-03.5 允许范围
+
+- 扩展 `RuinComponent`，新增简单方法，例如：
+  - `CanRebuildFor(Faction faction)`
+  - `GetRebuildBuildingType()`
+- 规则保持最小：
+  - 有 `sourcePlotId` 才可重建。
+  - `sourceBuildingType` 决定可重建类型。
+  - `originalFaction` 只作为来源记录，不在本任务里做复杂归属规则。
+- 必要时新增小 enum / 小数据结构，但优先保持简单。
+- 更新 `WORKLOG.md`。
+
+## MVP-03.5 禁止范围
+
+- 不做重建按钮。
+- 不真正生成新建筑。
+- 不做占领进度。
+- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不改变当前战斗、巡逻、清场表现。
+- 不修改 `ProjectSettings`。
+- 不提交 Unity 生成目录。
+
+## MVP-03.5 验收标准
+
+- `RuinComponent` 能判断是否具备重建所需的最小来源数据。
+- `RuinComponent` 能返回来源建筑类型作为未来重建类型。
+- 建筑死亡、K/L 清场、士兵围绕废墟巡逻行为不变。
+- Console 无明显错误。
 
 ## 新发布要求：MVP-03.4 建筑身份数据与废墟元数据
 
