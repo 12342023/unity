@@ -2987,3 +2987,20 @@ MVP-03.8 废墟重建最小服务
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 Review 与任务发布文档。
+
+提交记录：
+
+```text
+2f598bc docs: review mvp-03.7 and release mvp-03.8
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   04adcc7..2f598bc  main -> main
+```
