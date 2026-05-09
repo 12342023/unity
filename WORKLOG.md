@@ -1970,3 +1970,84 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    852c70c..984a33b  main -> main
 ```
+
+### MVP-03.1 修复：null target 只 Deaggro，不传位置
+
+操作人：Claude
+
+Codex Review 指出的问题已修复。
+
+**问题：** `target == null || target.GetComponent<UnitCombat>() == null` 把 null 也当成建筑，导致目标被其他单位杀死后（引用变 null），士兵可能围绕自己脚下巡逻。
+
+**修复：**
+1. 新增 `GetDefeatedBuildingPos(HealthComponent)` 小 helper：
+   - `defeatedTarget == null` → return null（只 Deaggro)
+   - `defeatedTarget 是单位` → return null（只 Deaggro)
+   - `defeatedTarget 是建筑` → return position（Deaggro + 移 patrol center)
+2. 三处调用（UpdateAttack x2, UpdateChase x1）统一使用此 helper
+
+修改文件：仅 `Assets/Scripts/Combat/UnitCombat.cs`
+- 新增 `GetDefeatedBuildingPos()` helper（8 行）
+- `UpdateAttack()` 顶部死亡检测、TakeDamage 后检测 → 使用 helper
+- `UpdateChase()` 死亡检测 → 使用 helper
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. ✅ 蓝兵击败 EnemyBase Barracks（建筑）→ 废墟出现 → 蓝兵围绕废墟转圈
+2. ✅ 蓝兵红兵对战 → 红兵死亡 → 蓝兵走回原巡逻区，不在脚下转圈
+3. ✅ 蓝兵波次推进 → 目标被 Tower 先击杀 → 蓝兵到空位后直接走回巡逻区，不围脚下转圈
+4. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs WORKLOG.md TASK.md
+git commit -m "fix: GetDefeatedBuildingPos helper, null target never shifts patrol centre"
+git push origin main
+```
+
+### MVP-03.2 需求补充：大本营击败后的阵营清场
+
+操作人：Codex
+
+用户新增要求：
+
+```text
+对方大本营被攻占后，对方所有建筑成为废墟，所有兵立即死亡。
+```
+
+任务解释：
+
+1. 当前阶段没有占领进度系统，因此先把“大本营血量归零 / 进入废墟”视为“大本营被攻占”。
+2. 当前 `PlayerBase` / `EnemyBase` 的 Barracks 视为双方大本营。
+3. 任一方大本营被击败后，该阵营判定失败。
+4. 失败阵营所有仍存活建筑立即转为废墟。
+5. 失败阵营所有仍存活单位立即死亡 / 销毁。
+
+给 Claude 的实现边界：
+
+```diff
++ 先修复 MVP-03.1 的 null target 分支
++ 大本营被击败后触发阵营清场
++ 失败阵营所有建筑变成废墟
++ 失败阵营所有士兵立即死亡 / 销毁
++ 已经生成废墟的建筑不要重复生成废墟
++ 废墟仍无攻击、无出兵、无 HealthComponent
++ 可新增 Buildings/FactionDefeatHandler.cs 或同等小组件
+- 不实现占领进度
+- 不实现胜负 UI
+- 不实现重建、资源、升级、连地、区域奖励、传送阵或 AI
+- 不修改 ProjectSettings
+```
+
+文档更新：
+
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+GitHub 上传状态：
+
+- 本次需求补充文档待提交并推送。

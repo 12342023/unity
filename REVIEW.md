@@ -123,6 +123,18 @@ bool isBuilding = target == null || target.GetComponent<UnitCombat>() == null;
 - 保持建筑死亡生成废墟。
 - 保持普通单位死亡不改变 patrol center。
 
+新增用户要求：
+对方大本营被攻占后，对方所有建筑成为废墟，所有兵立即死亡。
+
+当前阶段还没有占领进度系统，所以请先按这个语义实现：
+- 大本营血量归零 / 进入废墟 = 大本营被攻占。
+- 当前 PlayerBase / EnemyBase 的 Barracks 视为双方大本营。
+- 任一方大本营被击败后，该阵营所有仍存活建筑立即转为废墟。
+- 该阵营所有仍存活士兵立即死亡 / 销毁。
+- 已经生成废墟的建筑不要重复生成第二个废墟。
+- 废墟仍无攻击、无出兵、无 HealthComponent。
+- 可以新增小组件，例如 Buildings/FactionDefeatHandler.cs；GameEntry 只负责装配，不要继续堆业务逻辑。
+
 不要实现重建、占领进度、资源、升级、连地、区域奖励、传送阵、AI 或 UI。
 
 完成后更新 WORKLOG.md，说明修改文件、Play Mode 验证步骤、是否修改场景/ProjectSettings，并 commit / push。
