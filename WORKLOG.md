@@ -2050,4 +2050,17 @@ git push origin main
 
 GitHub 上传状态：
 
-- 本次需求补充文档待提交并推送。
+- 已提交并推送本次需求补充文档。
+
+提交记录：
+
+```text
+5c07dd6 docs: add base defeat cleanup requirement
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   c23ffbd..5c07dd6  main -> main
+```
