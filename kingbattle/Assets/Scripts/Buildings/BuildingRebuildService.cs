@@ -32,6 +32,12 @@ namespace Buildings
                 return null;
             }
 
+            if (mapData == null)
+            {
+                Debug.LogWarning("[BuildingRebuildService] MapData is null, cannot rebuild.");
+                return null;
+            }
+
             if (!ruin.CanRebuildFor(faction))
             {
                 Debug.LogWarning("[BuildingRebuildService] Ruin cannot be rebuilt (no sourcePlotId).");

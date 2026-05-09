@@ -3123,3 +3123,31 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    6d517e6..7037618  main -> main
 ```
+
+### MVP-03.8 修复：mapData 空值防御
+
+操作人：Claude
+
+Codex Review 阻塞项已修复。
+
+**修复：** `BuildingRebuildService.Rebuild()` 中新增 mapData 空值检查：
+```csharp
+if (mapData == null)
+{
+    Debug.LogWarning("[BuildingRebuildService] MapData is null, cannot rebuild.");
+    return null;
+}
+```
+位置在 ruin null 检查之后、CanRebuildFor 检查之前。
+
+**修改文件：** 仅 `Assets/Scripts/Buildings/BuildingRebuildService.cs`
+
+**验证：** R 测试快捷键不变；传入 null mapData 时安全返回 null，Console 显示 Warning。
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs WORKLOG.md
+git commit -m "fix: add mapData null guard in BuildingRebuildService.Rebuild"
+git push origin main
+```
