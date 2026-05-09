@@ -1,4 +1,5 @@
 using Core;
+using Map;
 using UnityEngine;
 
 namespace Buildings
@@ -44,6 +45,17 @@ namespace Buildings
         public BuildingType GetRebuildBuildingType()
         {
             return sourceBuildingType;
+        }
+
+        /// <summary>Returns true if this ruin was originally a main-base plot.
+        /// Main base ruins are not rebuildable via the normal service —
+        /// they may become strategic-据点 (rally / spawn point) in the future.</summary>
+        public bool IsMainBaseRuin(MapData mapData)
+        {
+            if (string.IsNullOrEmpty(sourcePlotId) || mapData == null)
+                return false;
+            var plot = mapData.GetPlot(sourcePlotId);
+            return plot != null && plot.isMainBase;
         }
     }
 }

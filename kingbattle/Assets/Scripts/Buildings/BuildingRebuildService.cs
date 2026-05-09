@@ -44,6 +44,13 @@ namespace Buildings
                 return null;
             }
 
+            // Main base ruins cannot be rebuilt via the normal service
+            if (ruin.IsMainBaseRuin(mapData))
+            {
+                Debug.LogWarning($"[BuildingRebuildService] Main base ruin at {ruin.sourcePlotId} cannot be rebuilt.");
+                return null;
+            }
+
             var plotId = ruin.sourcePlotId;
             var buildingType = ruin.GetRebuildBuildingType();
 

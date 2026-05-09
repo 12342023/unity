@@ -3227,3 +3227,69 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    32bb717..09dcc71  main -> main
 ```
+
+### MVP-03.9 大本营废墟特殊规则
+
+操作人：Claude
+
+已完成目标：大本营废墟不能通过普通 BuildingRebuildService 重建。
+
+修改 2 个文件：
+- `Assets/Scripts/Buildings/RuinComponent.cs` — 新增 `IsMainBaseRuin(MapData)` 方法
+  - 通过 `mapData.GetPlot(sourcePlotId).isMainBase` 判断
+  - 预留"可聚兵 / 可派兵战略据点"数据层接口
+- `Assets/Scripts/Buildings/BuildingRebuildService.cs` — 新增主基地检查
+  - CanRebuildFor 之后、BuildingFactory 调用之前
+  - `if (ruin.IsMainBaseRuin(mapData))` → LogWarning → return null
+  - 不销毁大本营废墟
+
+验证步骤（Play Mode）：
+1. Play → 按 K → EnemyBase 废墟 + EnemyOutpost 废墟
+2. 按 R → 跳过 EnemyBase（isMainBase），重建 EnemyOutpost
+3. 再按 R → "no ruins found"（只剩 EnemyBase 不可重建的废墟）
+4. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/RuinComponent.cs \
+        kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: main base ruins cannot be rebuilt by normal rebuild service"
+git push origin main
+```
+
+### MVP-03.9 Unity 编译热修：补充 MapData namespace
+
+操作人：Codex
+
+Unity 报错：
+
+```text
+Assets/Scripts/Buildings/RuinComponent.cs(52,36): error CS0246:
+The type or namespace name 'MapData' could not be found
+```
+
+原因：
+
+- `RuinComponent.IsMainBaseRuin(MapData mapData)` 使用了 `MapData`。
+- `MapData` 位于 `Map` namespace。
+- `RuinComponent.cs` 顶部缺少 `using Map;`。
+
+修复：
+
+```diff
++ using Map;
+```
+
+修改文件：
+
+- `Assets/Scripts/Buildings/RuinComponent.cs`
+- `WORKLOG.md`
+
+说明：
+
+- 这是编译热修，不改变 MVP-03.9 玩法逻辑。
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
