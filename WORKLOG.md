@@ -3600,3 +3600,20 @@ MVP-03.11 大本营废墟连接未占领地点数据层
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 Review 与任务发布文档。
+
+提交记录：
+
+```text
+db147ea docs: review mvp-03.10 and release mvp-03.11
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   6f1deab..db147ea  main -> main
+```
