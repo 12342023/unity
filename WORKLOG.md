@@ -3475,3 +3475,21 @@ MVP-03.10 暂未通过
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 Review 与修复任务文档。
+- Claude 当前 MVP-03.10 代码改动仍未由 Codex 提交，等待修复后再 Review。
+
+提交记录：
+
+```text
+ebf3846 docs: review mvp-03.10 R shortcut blocker
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   bbaa67e..ebf3846  main -> main
+```
