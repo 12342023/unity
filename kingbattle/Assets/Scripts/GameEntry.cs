@@ -26,6 +26,11 @@ public class GameEntry : MonoBehaviour
     private MapData mapData;
     private MapRenderer mapRenderer;
 
+    // Tracks active U capture handlers so re-pressing U removes old handlers
+    // before the dispatched units reach their destination.
+    private readonly System.Collections.Generic.Dictionary<UnitCombat, System.Action> uCaptureHandlers
+        = new System.Collections.Generic.Dictionary<UnitCombat, System.Action>();
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
     {
@@ -211,11 +216,18 @@ public class GameEntry : MonoBehaviour
                             if (d > 5f) continue; // only nearby soldiers
                             u.ClearPushPath();
                             u.GetComponent<UnitMovement>()?.Stop();
-                            // One-shot handler: self-unsubscribes after first fire
+                            // Remove any old U capture handler for this unit
+                            if (uCaptureHandlers.TryGetValue(u, out var oldHandler))
+                            {
+                                u.OnPushDestinationReached -= oldHandler;
+                                uCaptureHandlers.Remove(u);
+                            }
+                            // One-shot handler: self-unsubscribes + removes from dict
                             System.Action localHandler = null;
                             localHandler = () =>
                             {
                                 u.OnPushDestinationReached -= localHandler;
+                                uCaptureHandlers.Remove(u);
                                 if (!captureOnce)
                                 {
                                     captureOnce = true;
@@ -223,6 +235,7 @@ public class GameEntry : MonoBehaviour
                                         targetPlotId, mapData, mapRenderer, Faction.Player);
                                 }
                             };
+                            uCaptureHandlers[u] = localHandler;
                             u.OnPushDestinationReached += localHandler;
                             u.SetPushPath(new List<Vector3>(waypoints));
                             count++;

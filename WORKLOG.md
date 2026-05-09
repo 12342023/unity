@@ -4156,3 +4156,63 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    224db1d..5d757d1  main -> main
 ```
+
+### MVP-03.13 收口：handler 字典 + 修正验证
+
+操作人：Claude
+
+两个问题已修复：
+
+**Fix 1 — 重复按 U 的 handler 残留**
+
+新增 `uCaptureHandlers` 字典跟踪当前活跃的 U capture handler：
+```csharp
+private readonly Dictionary<UnitCombat, System.Action> uCaptureHandlers = new();
+```
+注册新 U handler 前移除旧 handler：
+```csharp
+if (uCaptureHandlers.TryGetValue(u, out var oldHandler))
+{
+    u.OnPushDestinationReached -= oldHandler;
+    uCaptureHandlers.Remove(u);
+}
+```
+handler 触发时从字典移除：
+```csharp
+localHandler = () => {
+    u.OnPushDestinationReached -= localHandler;
+    uCaptureHandlers.Remove(u);  // ← cleanup from dict too
+    if (!captureOnce) { ... }
+};
+```
+
+**Fix 2 — WORKLOG 验证修正**
+
+Crossroads 被占领后是 Player，不再是 Neutral。
+- 再次 **Y**：`GetConnectableNeutralPlots` 不返回 Crossroads（非 Neutral），显示 "has no neutral neighbours"
+- 再次 **U**：同样 `GetConnectableNeutralPlots` 为空，输出 "no connectable neutral plots"，不会派兵
+
+修改文件：仅 `Assets/Scripts/GameEntry.cs`（新增字典 + handler 替换逻辑）
+
+Play Mode 验证全流程：
+1. **Play** → 蓝兵巡逻
+2. **K** → EnemyBase 废墟，红方全灭
+3. **Y** → "EnemyBase can connect to: Crossroads"
+4. **T** → 蓝兵聚到 EnemyBase
+5. **U** → 蓝兵走向 Crossroads
+6. 蓝兵到达 → Crossroads 变蓝，"Crossroads captured by Player!"
+7. **Y** → "EnemyBase has no neutral neighbours" ✅（Crossroads 已不是 Neutral）
+8. **U** → "EnemyBase has no connectable neutral plots" ✅（不会派兵）
+9. **R** → 跳过 EnemyBase，重建 EnemyOutpost ✅
+10. **L** → 蓝方全灭 ✅
+11. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/GameEntry.cs WORKLOG.md TASK.md
+git commit -m "fix: uCaptureHandlers dict prevents stale handler on re-press U"
+git push origin main
+```
