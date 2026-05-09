@@ -2,23 +2,68 @@
 
 ## 当前任务
 
-MVP-03.10 小修：修复 R 测试快捷键不能完成的问题。
+发布 MVP-03.11：大本营废墟连接未占领地点数据层。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
-## 问题来源
+## 项目定位
 
-用户反馈：
+这是一个 Unity 小游戏项目，当前主工程位于：
 
 ```text
-现在出现错误了，R键不能完成
+kingbattle/
 ```
 
-Codex 检查结论：
+项目定位：
 
-- `BuildingRebuildService` 拒绝重建 main base ruin 是正确规则。
-- 但 `GameEntry` 的 R 键只尝试 `ruins[0]`。
-- 当第一个废墟是 EnemyBase / PlayerBase 大本营废墟时，R 会直接失败，不会继续尝试后面的普通废墟。
+```text
+低操作、高战略、自动战争 RTS
+```
+
+后续规划包括：
+
+- 微信小程序移植
+- macOS 移植
+- Android 移植
+
+当前阶段优先保持 Unity 工程结构清晰，不把未来平台差异散落在业务逻辑中。
+
+## 最新 Review 结论
+
+MVP-03.10 最新提交：
+
+```text
+6f1deab feat: main-base ruin rally and rebuildable ruin scan
+```
+
+Codex Review 结论：
+
+```text
+MVP-03.10 代码审查通过；允许进入 MVP-03.11
+```
+
+## 用户规则
+
+用户要求：
+
+```text
+最后的敌方大本营不能重建，但是可以聚兵，也可以连接别的未占领的地方可以派兵。
+```
+
+已经完成：
+
+- 大本营废墟不能通过普通 `BuildingRebuildService` 重建。
+- 大本营废墟可以作为聚兵点。
+- R 会跳过大本营废墟，继续重建普通废墟。
+
+本轮只处理：
+
+- 大本营废墟可以连接哪些未占领地点的数据查询。
+
+暂不处理：
+
+- 正式派兵系统。
+- 正式 UI。
 
 ## 当前工作区注意事项
 
@@ -28,34 +73,53 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 
 该文件仍是未跟踪 Unity Editor 生成文件。除非用户明确批准，否则不要提交。
 
-## 允许范围
+## MVP-03.11 目标
 
-- 修改 `kingbattle/Assets/Scripts/GameEntry.cs` 的 R 测试快捷键逻辑。
-- R 键遍历所有 `RuinComponent`。
-- 跳过 `ruin.IsMainBaseRuin(mapData) == true`。
-- 对第一个普通可重建废墟调用 `BuildingRebuildService.Rebuild(...)`。
-- 成功后停止遍历并输出成功日志。
-- 没有普通可重建废墟时输出清晰日志。
-- 保持 T 聚兵逻辑不变。
+为 main base ruin 提供最小“可连接未占领地点”数据层。
+
+```text
+MainBase ruin -> neighboring neutral plots
+```
+
+## MVP-03.11 允许范围
+
+- 修改 `RuinComponent.cs`，新增最小查询方法，例如：
+
+```csharp
+public IReadOnlyList<string> GetConnectableNeutralPlots(MapData mapData)
+```
+
+- 方法规则：
+  - 如果不是 `CanUseAsRallyPoint(mapData)`，返回空列表。
+  - 使用 `MapData.GetNeighbors(sourcePlotId)` 获取相邻 plot。
+  - 只返回 `plot.faction == Faction.Neutral` 的邻居。
+- 可以使用 `List<string>` 实现，返回 `IReadOnlyList<string>`。
+- 可以在 `GameEntry` 增加临时测试快捷键，例如 `Y`。
+- `Y` 的行为：
+  - 找到第一个 main base ruin。
+  - 打印它可连接的未占领地点列表。
+  - 不派兵，不改变归属。
+- 保持 `K` / `L` / `R` / `T` 行为不变。
 - 更新 `WORKLOG.md`。
 
-## 禁止范围
+## MVP-03.11 禁止范围
 
-- 不允许让大本营废墟被 R 重建。
-- 不做正式按钮或 UI。
-- 不做连接未占领地正式系统。
+- 不做正式连接 UI。
 - 不做正式派兵系统。
+- 不改变 plot 归属。
 - 不做资源、占领进度、升级、区域奖励、传送阵、AI。
 - 不修改 `ProjectSettings`。
 - 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
 - 不提交 `Library/`、`Logs/`、`UserSettings/`。
 
-## 验收标准
+## MVP-03.11 验收标准
 
-- 按 K 后出现 EnemyBase + EnemyOutpost 废墟。
-- 按 R 时，EnemyBase 废墟被跳过，不被销毁、不被重建。
-- EnemyOutpost 等普通废墟可以被 R 重建。
-- 如果只剩大本营废墟，R 输出 no rebuildable ruins，而不是反复 rebuild failed。
-- T 聚兵功能保持可用。
+- 按 K 后出现 EnemyBase main base ruin。
+- 按 Y 后能在 Console 看到 EnemyBase 相邻且未占领的地点列表。
+- 当前地图上 EnemyBase 的相邻点包括 `Crossroads` 和 `EnemyOutpost`；只有 `Faction.Neutral` 的点应被列出。
+- Y 不派兵，不改变归属。
+- R 仍跳过大本营废墟，重建普通废墟。
+- T 仍能聚兵到大本营废墟。
 - K / L 清场行为不变。
 - Console 无明显错误。
+- 仍未修改或提交 `ProjectSettings`。

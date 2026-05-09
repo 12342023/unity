@@ -3532,3 +3532,71 @@ git add kingbattle/Assets/Scripts/GameEntry.cs WORKLOG.md
 git commit -m "fix: R iterates all ruins, skips main base"
 git push origin main
 ```
+
+### MVP-03.10 Codex Review：通过并发布 MVP-03.11
+
+操作人：Codex
+
+审查提交：
+
+```text
+6f1deab feat: main-base ruin rally and rebuildable ruin scan
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `kingbattle/Assets/Scripts/Buildings/RuinComponent.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.10 代码审查通过
+```
+
+已确认：
+
+1. R 会遍历所有废墟并跳过 main base ruin。
+2. R 会重建第一个普通可重建废墟。
+3. 如果没有普通可重建废墟，R 输出 `no rebuildable ruins`。
+4. T 会将当前存活 Player 士兵聚到 main base ruin 周围巡逻。
+5. 本轮未引入正式 UI、资源、占领、完整派兵系统、区域奖励、传送阵或 AI。
+6. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+代码上传状态：
+
+```text
+6f1deab feat: main-base ruin rally and rebuildable ruin scan
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   5ffcf6a..6f1deab  main -> main
+```
+
+新发布任务：
+
+```text
+MVP-03.11 大本营废墟连接未占领地点数据层
+```
+
+任务边界：
+
+```diff
++ RuinComponent 增加 GetConnectableNeutralPlots(MapData)
++ 使用 MapData.GetNeighbors(sourcePlotId)
++ 只返回 Faction.Neutral 的邻居 plotId
++ GameEntry 增加 Y 临时测试快捷键打印结果
+- 不做正式连接 UI
+- 不做正式派兵
+- 不改变 plot 归属
+- 不做资源、占领、升级、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```

@@ -4,47 +4,54 @@
 
 项目正在第三阶段早期：摧毁与重建 / 战略据点。
 
-当前应先修复 R 测试入口，再继续推进聚兵点或派兵系统。
+已经完成：
 
-## 当前正式任务：MVP-03.10 R 测试入口小修
+- 建筑被击败后变成废墟。
+- 士兵可以围绕废墟巡逻。
+- 大本营废墟不能走普通重建。
+- 大本营废墟可以作为聚兵点。
+- R 已能跳过大本营废墟，重建普通废墟。
+
+## 当前正式任务：MVP-03.11 连接未占领地点数据层
 
 目标：
 
 ```text
-R 键跳过大本营废墟，重建第一个普通可重建废墟。
+main base ruin 能查询相邻且未占领的地点。
 ```
 
 实现方向：
 
 ```diff
-+ R 遍历所有 RuinComponent
-+ 跳过 main base ruin
-+ 重建第一个普通可重建废墟
-+ 没有普通可重建废墟时输出 no rebuildable ruins
-- 不允许 R 重建 EnemyBase / PlayerBase 废墟
-- 不做正式 UI
-- 不做派兵系统
++ RuinComponent 增加 GetConnectableNeutralPlots(MapData)
++ 使用 MapData.GetNeighbors(sourcePlotId)
++ 只返回 Faction.Neutral 的邻居 plotId
++ GameEntry 增加 Y 临时测试快捷键打印结果
+- 不做正式连接 UI
+- 不做正式派兵
+- 不改变 plot 归属
 - 不修改 ProjectSettings
 ```
 
-## 修复通过后的建议顺序
+## MVP-03.11 后的建议顺序
 
-### MVP-03.10 Review
+### MVP-03.12 临时派兵测试入口
 
-R 小修完成后，Codex 再 Review 当前 MVP-03.10：
+连接数据稳定后，再做临时派兵验证：
 
-- `CanUseAsRallyPoint`
-- T 聚兵
-- R/K/L 是否仍正常
+- 从 main base ruin 获取第一个可连接 neutral plot。
+- 将聚集在 main base ruin 附近的 Player 士兵沿道路派往该 plot。
+- 仍不做正式 UI、资源或 AI。
 
-### MVP-03.11 未占领地点连接数据层
+### MVP-03.13 占领与归属最小规则
 
-聚兵点稳定后，再处理“连接别的未占领地点”：
+派兵测试稳定后，再考虑最小占领规则：
 
-- 使用 `MapData.GetNeighbors(plotId)`。
-- 判断邻居 plot 是否 `Faction.Neutral`。
-- 在 main base ruin 上提供可连接目标查询方法。
-- 不做正式 UI，只先做数据层。
+- 单位到达未占领地点后是否改变归属。
+- 是否需要停留时间。
+- 是否允许敌方反夺。
+
+资源、升级、区域奖励、传送阵、AI 继续后置。
 
 ## 长期提醒
 

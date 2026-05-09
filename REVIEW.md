@@ -2,107 +2,85 @@
 
 ## Review 状态
 
-Codex 已检查 Claude 当前 MVP-03.10 本地改动：
+Codex 已审查并上传 MVP-03.10 修复与聚兵点代码：
 
 ```text
-RuinComponent.CanUseAsRallyPoint(MapData)
-GameEntry T 聚兵测试快捷键
+6f1deab feat: main-base ruin rally and rebuildable ruin scan
 ```
 
-结论：**MVP-03.10 暂未通过，需要先修 R 测试入口**。
+结论：**MVP-03.10 代码审查通过**。
 
-说明：T 聚兵方向基本符合任务，但用户反馈“R 键不能完成”。从 Unity 日志和代码看，原因是 `GameEntry` 的 R 键仍然只尝试 `ruins[0]`。当 `ruins[0]` 是大本营废墟时，`BuildingRebuildService` 会按规则拒绝重建，然后 R 直接失败，不会继续尝试后面的普通废墟。
+说明：`R` 测试入口已经不再依赖 `ruins[0]`，会遍历所有废墟并跳过 main base ruin；`T` 临时测试入口可以把 Player 士兵聚到大本营废墟周围巡逻。本轮没有引入正式 UI、资源、占领、完整连地、区域奖励、传送阵或 AI。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **FAIL**
+Gate: **PASS**
 
 Findings:
 
-### [P1] R 测试入口遇到 main base ruin 后不继续查找普通废墟
-
-File:
-
 ```text
-kingbattle/Assets/Scripts/GameEntry.cs:77
+无阻塞问题。
 ```
 
-Problem:
+### 已确认
 
-当前 R 键逻辑：
+- `GameEntry` 的 R 键会遍历所有 `RuinComponent`。
+- R 会跳过 `ruin.IsMainBaseRuin(mapData) == true` 的大本营废墟。
+- R 会重建第一个普通可重建废墟。
+- 如果没有普通可重建废墟，R 输出 `no rebuildable ruins`。
+- `RuinComponent.CanUseAsRallyPoint(MapData)` 已新增，当前 main base ruin 返回 true。
+- `GameEntry` 的 T 键会找到 main base ruin，并让存活 Player 士兵围绕该废墟巡逻。
+- 多个士兵使用错开的巡逻角度。
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
-```csharp
-var ruins = FindObjectsByType<RuinComponent>(FindObjectsSortMode.None);
-if (ruins.Length > 0)
-{
-    var result = BuildingRebuildService.Rebuild(ruins[0], mapData, Faction.Player);
-    ...
-}
-```
+## 残留注意事项
 
-这会依赖 Unity 返回顺序。现在 main base ruin 不能重建是正确规则，但 R 键如果先拿到 EnemyBase / PlayerBase 废墟，就会一直失败：
+### T 仍是临时测试入口
 
-```text
-[BuildingRebuildService] Main base ruin at EnemyBase cannot be rebuilt.
-[GameEntry] Test shortcut R: rebuild failed (no valid ruin).
-```
+T 目前直接扫描所有 Player `UnitCombat` 并设置巡逻点，这适合作为 Play Mode 验证入口，但不应视为正式派兵系统。下一步应先做“可连接未占领地点”的数据层，再做正式/临时派兵闭环。
 
-用户看到的就是“R 键不能完成”。
-
-Fix:
-
-R 键应遍历所有废墟，尝试重建第一个可重建的普通废墟：
-
-```diff
-- 只调用 BuildingRebuildService.Rebuild(ruins[0], ...)
-+ foreach (var ruin in ruins)
-+     if (ruin.IsMainBaseRuin(mapData)) continue;
-+     var result = BuildingRebuildService.Rebuild(ruin, mapData, Faction.Player);
-+     if (result != null) break;
-+ 如果没有成功重建任何废墟，再输出 no rebuildable ruins
-```
-
-注意：
-
-- 不要允许 main base ruin 被 R 重建。
-- 不要销毁 main base ruin。
-- 不要改正式 UI 或资源系统。
-
-## 已通过部分
-
-- `RuinComponent.CanUseAsRallyPoint(MapData)` 的方向符合 MVP-03.10。
-- T 键聚兵方向符合任务边界。
-- 没有看到新的 `ProjectSettings` 应提交内容。
-
-## 需要 Claude 修复
+## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.10 暂未通过。
+Codex Review：MVP-03.10 代码审查通过。
 
-用户反馈：R 键不能完成。
+进入 MVP-03.11：大本营废墟连接未占领地点数据层。
 
-原因：
-- GameEntry 的 R 键当前只尝试 ruins[0]。
-- 如果第一个废墟是 EnemyBase / PlayerBase 这种 main base ruin，BuildingRebuildService 会正确拒绝重建。
-- 但 R 键没有继续尝试后面的普通废墟，所以用户看到 R 一直失败。
+用户规则继续保持：
+- 最后的敌方大本营不能重建。
+- 它可以作为聚兵点。
+- 它可以连接别的未占领地点，后续可从这里派兵。
 
-请修复：
-- 修改 GameEntry 的 R 测试快捷键。
-- R 应遍历所有 RuinComponent。
-- 跳过 ruin.IsMainBaseRuin(mapData) == true 的废墟。
-- 对第一个普通可重建废墟调用 BuildingRebuildService.Rebuild(...).
-- 一旦重建成功就停止遍历并输出 rebuild OK。
-- 如果没有任何普通可重建废墟，输出 no rebuildable ruins。
+本轮目标：
+- 不做正式 UI。
+- 不做正式派兵系统。
+- 不做资源、占领进度、升级、区域奖励、传送阵或 AI。
+- 只给 main base ruin 增加“可连接哪些未占领地点”的最小数据查询能力。
+
+允许：
+- 在 RuinComponent 新增方法，例如 GetConnectableNeutralPlots(MapData mapData)。
+- 该方法只在 CanUseAsRallyPoint(mapData) 为 true 时返回结果。
+- 使用 MapData.GetNeighbors(sourcePlotId) 查找相邻 plot。
+- 只返回 faction == Faction.Neutral 的邻居 plotId。
+- 可以返回 IReadOnlyList<string> / List<string>，保持简单。
+- 可以在 GameEntry 增加临时测试快捷键，例如 Y，打印 main base ruin 可连接的未占领地点列表。
+- 保持 K / L / R / T 行为不变。
 
 必须保持：
-- EnemyBase / PlayerBase 大本营废墟仍不能被 R 重建。
-- 普通非大本营废墟仍可被 R 重建。
-- T 聚兵功能保持不变。
-- K / L 清场行为不变。
+- 大本营废墟仍不能被 R 重建。
+- T 仍能聚兵到大本营废墟。
+- Y 只打印/验证连接数据，不派兵。
+- Console 无明显错误。
+
+禁止：
+- 不做正式连接 UI。
+- 不做正式派兵。
+- 不改变 plot 归属。
+- 不做资源、占领、升级、区域奖励、传送阵、AI。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
 
-完成后更新 WORKLOG.md，说明 R/K/T/L Play Mode 验证，并 commit / push。
+完成后更新 WORKLOG.md，说明修改文件、Y/R/T/K/L Play Mode 验证步骤、是否修改 ProjectSettings，并 commit / push。
 ```
