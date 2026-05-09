@@ -23,7 +23,8 @@ public class GameEntry : MonoBehaviour
     // Test-shortcut references
     private HealthComponent playerBaseHealth;
     private HealthComponent enemyBaseHealth;
-    private MapData mapData; // kept for test shortcuts (R = rebuild)
+    private MapData mapData;
+    private MapRenderer mapRenderer;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
@@ -40,8 +41,8 @@ public class GameEntry : MonoBehaviour
 
         // ── Render map visuals ──
         var rendererObj = new GameObject("MapRenderer");
-        var renderer = rendererObj.AddComponent<MapRenderer>();
-        renderer.Initialize(mapData);
+        mapRenderer = rendererObj.AddComponent<MapRenderer>();
+        mapRenderer.Initialize(mapData);
 
         // ── Create buildings ──
         SetupBuildings(mapData);
@@ -200,6 +201,7 @@ public class GameEntry : MonoBehaviour
                         // Find Player soldiers near the ruin
                         Vector3 ruinPos = rallyRuin.transform.position;
                         int count = 0;
+                        bool captureOnce = false;
                         foreach (var u in FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
                         {
                             if (u.faction != Faction.Player) continue;
@@ -208,6 +210,15 @@ public class GameEntry : MonoBehaviour
                             if (d > 5f) continue; // only nearby soldiers
                             u.ClearPushPath();
                             u.GetComponent<UnitMovement>()?.Stop();
+                            u.OnPushDestinationReached += () =>
+                            {
+                                if (!captureOnce)
+                                {
+                                    captureOnce = true;
+                                    PlotCaptureService.TryCapture(
+                                        targetPlotId, mapData, mapRenderer, Faction.Player);
+                                }
+                            };
                             u.SetPushPath(new List<Vector3>(waypoints));
                             count++;
                         }

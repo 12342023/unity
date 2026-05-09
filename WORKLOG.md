@@ -3912,3 +3912,54 @@ ddb3ef3 docs: review mvp-03.12 and release mvp-03.13
 To https://github.com/12342023/unity.git
    757a529..ddb3ef3  main -> main
 ```
+
+### MVP-03.13 Neutral plot 最小占领与颜色刷新
+
+操作人：Claude
+
+已完成目标：U 派出的 Player 士兵到达目标后触发一次占领，地块颜色刷新为 Player 色。
+
+新增 1 个文件：
+- `Assets/Scripts/Combat/PlotCaptureService.cs` — 最小占领服务
+  - `TryCapture(plotId, mapData, mapRenderer, faction)` 核心方法
+  - 只允许 Neutral → capturingFaction
+  - 通过 `capturedPlots` HashSet 防止重复占领
+  - 成功后 `plot.faction = capturingFaction` + `mapRenderer.RefreshPlotColor()`
+
+修改 2 个文件：
+- `Assets/Scripts/Map/MapRenderer.cs` — 新增 `RefreshPlotColor(string plotId, MapData)` 方法
+  - `transform.Find($"Plot_{plotId}")` 找到地块 GameObject
+  - 获取 SpriteRenderer 并设置为 `FactionToColor(plot.faction)`
+- `Assets/Scripts/GameEntry.cs` — U 快捷键增加占领钩子
+  - 新增 `mapRenderer` 字段并在 Start 中保存引用
+  - U 派兵时为每个单位订阅 `OnPushDestinationReached`
+  - 回调中调用 `PlotCaptureService.TryCapture(targetPlotId, mapData, mapRenderer, Faction.Player)`
+  - 用 `captureOnce` 局部变量确保只有第一个到达的单位触发占领
+
+Play Mode 验证全表：
+1. Play → 等蓝兵生成
+2. **K** → EnemyBase 变废墟，红方全灭
+3. **Y** → "EnemyBase can connect to: Crossroads"
+4. **T** → 蓝兵聚到 EnemyBase 巡逻
+5. **U** → 蓝兵沿道路走向 Crossroads
+6. 蓝兵到达 Crossroads → Console "Crossroads captured by Player!"
+   → Crossroads 地块从灰色变为蓝色 ✅
+7. 再次 **U** → 蓝兵再次走向 Crossroads（但 `capturedPlots` 阻止二次占领）
+8. Console 显示 "Crossroads already captured, skip" ✅
+9. **R** → 跳过 EnemyBase，重建 EnemyOutpost ✅
+10. **L** → 摧毁 PlayerBase → 蓝方全灭 ✅
+11. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs \
+        kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs.meta \
+        kingbattle/Assets/Scripts/Map/MapRenderer.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: PlotCaptureService + MapRenderer.RefreshPlotColor, U triggers capture"
+git push origin main
+```

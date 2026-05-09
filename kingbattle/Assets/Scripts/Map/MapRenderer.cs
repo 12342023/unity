@@ -152,6 +152,27 @@ namespace Map
             lr.textureMode = LineTextureMode.Tile;
         }
 
+        // ── Runtime plot colour refresh (used after capture) ─────────
+
+        /// <summary>Refresh a single plot's visual colour to match its
+        /// current faction (called after plot capture).</summary>
+        public void RefreshPlotColor(string plotId, MapData mapData)
+        {
+            var plot = mapData?.GetPlot(plotId);
+            if (plot == null) return;
+
+            var go = transform.Find($"Plot_{plotId}");
+            if (go == null)
+            {
+                Debug.LogWarning($"[MapRenderer] Plot GameObject 'Plot_{plotId}' not found.");
+                return;
+            }
+
+            var sr = go.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.color = FactionToColor(plot.faction);
+        }
+
         // ── Helpers ─────────────────────────────────────────────────────
 
         private Color FactionToColor(Faction f) => f switch
