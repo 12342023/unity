@@ -3629,8 +3629,8 @@ db147ea docs: review mvp-03.10 and release mvp-03.11
 
 验证步骤（Play Mode）：
 1. Play → 按 K → EnemyBase 变废墟（红方全灭）
-2. 按 Y → Console 输出 "EnemyBase can connect to: Farmland" ✅
-   （EnemyBase 的邻居包括 Crossroads、EnemyOutpost、Farmland，其中 Farmland 为 Neutral）
+2. 按 Y → Console 输出 "EnemyBase can connect to: Crossroads" ✅
+   （EnemyBase 的邻居包括 Crossroads、EnemyOutpost，其中 Crossroads 为 Neutral）
 3. 按 T → 蓝兵聚到 EnemyBase 巡逻 ✅
 4. 按 R → 跳过 EnemyBase，重建 EnemyOutpost ✅
 5. K / L 不变 ✅
@@ -3653,4 +3653,68 @@ git push origin main
 ```text
 To https://github.com/12342023/unity.git
    6f1deab..db147ea  main -> main
+```
+
+### MVP-03.11 Codex Review：通过并发布 MVP-03.12
+
+操作人：Codex
+
+审查提交：
+
+```text
+2424573 feat: GetConnectableNeutralPlots on main-base ruin, Y shortcut prints them
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/RuinComponent.cs`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.11 代码审查通过
+```
+
+已确认：
+
+1. `GetConnectableNeutralPlots(mapData)` 只对 main base rally ruin 返回结果。
+2. 查询使用 `MapData.GetNeighbors(sourcePlotId)`。
+3. 只返回 `Faction.Neutral` 的邻居 plotId。
+4. Y 只打印连接数据，不派兵，不改变归属。
+5. Unity 日志显示 `EnemyBase can connect to: Crossroads`，符合当前地图。
+6. 本轮未引入正式 UI、资源、占领、升级、区域奖励、传送阵或 AI。
+7. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+文档更正：
+
+- Claude WORKLOG 原先写 EnemyBase 可连接 Farmland。
+- 当前地图里 EnemyBase 邻居是 Crossroads 和 EnemyOutpost，其中 Crossroads 为 Neutral。
+- 已在 WORKLOG 中更正为 Crossroads。
+
+新发布任务：
+
+```text
+MVP-03.12 大本营废墟临时派兵测试入口
+```
+
+任务边界：
+
+```diff
++ GameEntry 增加 U 临时测试快捷键
++ U 找 main base ruin
++ U 取 GetConnectableNeutralPlots(mapData) 的第一个目标
++ U 找靠近 ruin 的 Player 士兵
++ U 使用 RoadPathFinder.FindPath 生成路径
++ U 调用 UnitCombat.SetPushPath 派兵
+- 不做正式 UI
+- 不改变 plot 归属
+- 不做占领进度
+- 不做资源、升级、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```

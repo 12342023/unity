@@ -11,37 +11,32 @@
 - 大本营废墟不能走普通重建。
 - 大本营废墟可以作为聚兵点。
 - R 已能跳过大本营废墟，重建普通废墟。
+- Y 已能查询 main base ruin 相邻 Neutral 地点。
 
-## 当前正式任务：MVP-03.11 连接未占领地点数据层
+## 当前正式任务：MVP-03.12 临时派兵测试入口
 
 目标：
 
 ```text
-main base ruin 能查询相邻且未占领的地点。
+从 main base ruin 派附近 Player 士兵前往第一个可连接 Neutral plot。
 ```
 
 实现方向：
 
 ```diff
-+ RuinComponent 增加 GetConnectableNeutralPlots(MapData)
-+ 使用 MapData.GetNeighbors(sourcePlotId)
-+ 只返回 Faction.Neutral 的邻居 plotId
-+ GameEntry 增加 Y 临时测试快捷键打印结果
-- 不做正式连接 UI
-- 不做正式派兵
++ GameEntry 增加 U 临时测试快捷键
++ U 找 main base ruin
++ U 取 GetConnectableNeutralPlots(mapData) 的第一个目标
++ U 找靠近 ruin 的 Player 士兵
++ U 使用 RoadPathFinder.FindPath 生成路径
++ U 调用 UnitCombat.SetPushPath 派兵
+- 不做正式 UI
 - 不改变 plot 归属
+- 不做占领进度
 - 不修改 ProjectSettings
 ```
 
-## MVP-03.11 后的建议顺序
-
-### MVP-03.12 临时派兵测试入口
-
-连接数据稳定后，再做临时派兵验证：
-
-- 从 main base ruin 获取第一个可连接 neutral plot。
-- 将聚集在 main base ruin 附近的 Player 士兵沿道路派往该 plot。
-- 仍不做正式 UI、资源或 AI。
+## MVP-03.12 后的建议顺序
 
 ### MVP-03.13 占领与归属最小规则
 
@@ -50,6 +45,10 @@ main base ruin 能查询相邻且未占领的地点。
 - 单位到达未占领地点后是否改变归属。
 - 是否需要停留时间。
 - 是否允许敌方反夺。
+
+### MVP-03.14 派兵边界整理
+
+如果 U 测试入口变复杂，应把派兵逻辑从 `GameEntry` 下沉到小服务，例如 `StrategicDispatchService`。
 
 资源、升级、区域奖励、传送阵、AI 继续后置。
 
