@@ -2395,4 +2395,17 @@ kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta
 
 GitHub 上传状态：
 
-- 本次 Review 文档待提交并推送。
+- 已提交并推送本次 Review 文档。
+
+提交记录：
+
+```text
+e0d6574 docs: review mvp-03.3 missing meta
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   d445c2b..e0d6574  main -> main
+```
