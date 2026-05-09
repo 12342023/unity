@@ -90,10 +90,10 @@
 Claude 已提交最新修复：
 
 ```text
-3df2ced feat: building ruins with patrol around ruins after defeat
+852c70c fix: only buildings trigger patrol-center shift on death
 ```
 
-Codex Review 结论：MVP-03.1 暂不通过。建筑死亡生成废墟方向正确，但普通单位死亡也会改变 patrol center。
+Codex Review 结论：MVP-03.1 仍暂不通过。非空目标的建筑/单位区分方向正确，但 `target == null` / `chaseTarget == null` 仍会被当成建筑，并把 patrol center 切到当前士兵脚下。
 
 已确认修复：
 
@@ -107,6 +107,7 @@ Codex Review 结论：MVP-03.1 暂不通过。建筑死亡生成废墟方向正�
 + HealthComponent 保留单位原色作为满血颜色
 + Deaggro 清理残留 pushPath，击败敌方大本营后不再短暂折返
 + 建筑死亡后已能生成可见废墟
++ 非空目标场景下，普通单位死亡不再把死亡点传给 Deaggro
 ```
 
 ### MVP-03.1 建筑废墟与废墟巡逻
@@ -124,6 +125,7 @@ Codex Review 结论：MVP-03.1 暂不通过。建筑死亡生成废墟方向正�
 - 士兵打败建筑后，以废墟为 patrol center 转圈
 - 普通单位死亡逻辑保持原样，不变成废墟
 - 普通单位死亡时，士兵不能把 patrol center 切到单位死亡点
+- target == null / chaseTarget == null 时不能被当成建筑，只能普通 Deaggro
 - 废墟逻辑放在 `Buildings/` 或清晰小组件中，不新增大型 `GameManager`
 - 可使用 `HealthComponent.OnDeath`，但不要破坏单位死亡逻辑
 

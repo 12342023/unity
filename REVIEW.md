@@ -5,76 +5,70 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-3df2ced feat: building ruins with patrol around ruins after defeat
+852c70c fix: only buildings trigger patrol-center shift on death
 ```
 
 结论：**MVP-03.1 暂不通过**。
 
-说明：废墟生成方向基本正确，建筑死亡后会生成可见 Ruin；但 `UnitCombat` 当前把“任何死亡目标”的位置都当成废墟巡逻中心。这样士兵打死普通敌方单位时，也可能围着单位死亡点转圈，违反 MVP-03.1 验收标准“普通单位死亡仍直接销毁，不变成废墟”。
+说明：Claude 已修复“非空目标”场景下的建筑/单位区分，普通单位死亡时不会再传入单位死亡点。但当前实现仍把 `target == null` / `chaseTarget == null` 当成建筑处理，并传入 `transform.position`。在 Unity 中目标被其他士兵击杀并销毁后，引用可能在下一帧变成 null，这时当前士兵会把 patrol center 切到自己脚下。MVP-03.1 仍需再收一次边界。
 
 ## CODEX PROJECT REVIEW
 
 Gate: **FAIL**
 
-### 已通过：[P2] 建筑死亡后生成可见废墟
-
-Files:
-
-```text
-kingbattle/Assets/Scripts/GameEntry.cs
-kingbattle/Assets/Scripts/Buildings/RuinComponent.cs
-```
-
-Review:
-
-`CreateBuilding()` 通过 `HealthComponent.OnDeath` 注册 `SpawnRuin()`，建筑死亡后会在原位置生成 Ruin GameObject。Ruin 只有 `SpriteRenderer`、`BoxCollider2D`、`RuinComponent`，没有 `TowerAttack`、`BarracksSpawner`、`HealthComponent`，因此不会继续攻击、出兵或被当成战斗目标。
-
-这一点符合 MVP-03.1 的最小目标。
-
-### [P1] 普通单位死亡也会把巡逻中心切到死亡点
+### 已通过：[P2] 非空目标的建筑/单位区分方向正确
 
 File:
 
 ```text
-kingbattle/Assets/Scripts/Combat/UnitCombat.cs:205
+kingbattle/Assets/Scripts/Combat/UnitCombat.cs
+```
+
+Review:
+
+Claude 使用 `GetComponent<UnitCombat>() == null` 区分建筑，这符合当前项目结构：单位有 `UnitCombat`，建筑没有。对 `target.IsDead` 且 `target` 仍存在的情况，建筑会 `Deaggro(deathPos)`，普通单位会 `Deaggro()`。
+
+这个方向正确。
+
+### [P1] null 目标仍被当成建筑，导致巡逻中心切到自己脚下
+
+File:
+
+```text
+kingbattle/Assets/Scripts/Combat/UnitCombat.cs:175
+kingbattle/Assets/Scripts/Combat/UnitCombat.cs:219
 ```
 
 Problem:
 
-`UpdateAttack()` 当前在任何 `target.IsDead` 情况下都会传入死亡位置：
+当前判断是：
 
 ```csharp
-Vector3 deathPos = target.transform.position;
+bool isBuilding = target == null || target.GetComponent<UnitCombat>() == null;
+```
+
+当 `target == null` 或 `chaseTarget == null` 时，`isBuilding` 会变成 true，随后代码会使用当前士兵位置作为 `deathPos`：
+
+```csharp
+Vector3 deathPos = target != null ? target.transform.position : transform.position;
 Deaggro(deathPos);
 ```
 
-`Deaggro(defeatedPos)` 又会无条件把 patrol center 改成这个位置：
-
-```csharp
-if (defeatedPos.HasValue && patrol != null)
-{
-    Vector3 center = new Vector3(defeatedPos.Value.x, defeatedPos.Value.y, -0.2f);
-    homePosition = center;
-    patrol.Setup(center, 0.9f, 0f);
-}
-```
-
-但 `target` 可能是敌方单位，也可能是敌方建筑。普通单位没有废墟，也不应该成为新的巡逻中心。
+这不符合“只有建筑死亡才切换 patrol center”。null 目标不能证明它是建筑；更安全的默认行为应该是 `Deaggro()`，不改变巡逻中心。
 
 Impact:
 
-士兵在路上打死敌方 Soldier 后，可能开始围绕那个单位死亡点转圈，而不是继续原本 rally/patrol 逻辑。这会破坏波次推进和废墟巡逻的语义：只有建筑被击败后才应该产生废墟巡逻。
+多名士兵围攻同一个目标时，击杀者可能在本帧看到 `target.IsDead`，但其他正在追击/攻击同一目标的士兵可能在下一帧只看到目标引用变成 null。这些士兵会围绕自己当前位置巡逻，而不是保持原巡逻中心或明确围绕废墟。这会造成战场上多个小巡逻中心，视觉上像单位突然散开停留。
 
 Fix:
 
 请 Claude 做最小修复：
 
 ```diff
-+ 只有被击败目标是建筑时，才把 patrol center 切到 defeatedPos
-+ 判断方式可用 target.GetComponent<UnitCombat>() == null 作为当前项目里的建筑/单位区分
-+ 或新增清晰的小标记组件，但不要重构整体战斗系统
-+ 普通单位死亡时只 Deaggro，不传 defeatedPos，不改变 patrol center
-+ 保持 Ruin 生成逻辑只对建筑生效
++ target == null 或 chaseTarget == null 时，只调用 Deaggro()
++ 只有 target/chaseTarget 非空，并且 GetComponent<UnitCombat>() == null 时，才 Deaggro(deathPos)
++ 不要用 target == null || ... 判断建筑
++ 可抽一个很小的 helper 减少三处分支重复，但不要重构战斗系统
 ```
 
 ### [P2] 废墟逻辑放在 GameEntry，后续应下沉到建筑组件
@@ -110,17 +104,24 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.1 暂不通过。
+Codex Review：MVP-03.1 仍暂不通过，但问题已经缩小。
 
 问题：
-你现在在 UnitCombat 里对任何 target.IsDead 都调用 Deaggro(deathPos)，然后 Deaggro 会把 patrol center 切到 defeatedPos。这样士兵打死普通敌方单位时，也会围着普通单位死亡点转圈。
+你已经用 GetComponent<UnitCombat>() == null 区分建筑/单位，这个方向正确。
+但现在代码把 target == null / chaseTarget == null 也当成建筑：
+
+bool isBuilding = target == null || target.GetComponent<UnitCombat>() == null;
+
+然后在 target 为 null 时使用 transform.position 调用 Deaggro(deathPos)。
+这会导致目标被其他士兵击杀并销毁后，当前士兵把 patrol center 切到自己脚下。
 
 请只修这个问题：
-- 只有被击败目标是建筑时，才把 patrol center 切到目标死亡位置 / 废墟位置。
-- 普通单位死亡时，只 Deaggro，不改变 patrol center。
-- 当前项目里可以用 target.GetComponent<UnitCombat>() == null 判断建筑，或用一个很小的标记组件，但不要重构战斗系统。
-- 保持建筑死亡后生成废墟。
-- 保持废墟无攻击、无出兵、无 HealthComponent。
+- target == null 或 chaseTarget == null 时，只 Deaggro()，不要传 defeatedPos。
+- 只有 target/chaseTarget 非空，并且 GetComponent<UnitCombat>() == null 时，才 Deaggro(deathPos)。
+- 不要用 target == null || ... 判断建筑。
+- 可以抽一个很小 helper，例如 TryGetDefeatedBuildingPosition，但不要重构战斗系统。
+- 保持建筑死亡生成废墟。
+- 保持普通单位死亡不改变 patrol center。
 
 不要实现重建、占领进度、资源、升级、连地、区域奖励、传送阵、AI 或 UI。
 

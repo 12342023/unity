@@ -1905,3 +1905,55 @@ git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs WORKLOG.md TASK.md
 git commit -m "fix: only buildings trigger patrol-center shift on death"
 git push origin main
 ```
+
+### MVP-03.1 Codex Review：null 目标不能当成建筑
+
+操作人：Codex
+
+审查提交：
+
+```text
+852c70c fix: only buildings trigger patrol-center shift on death
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Combat/UnitCombat.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.1 仍暂不通过
+```
+
+已确认：
+
+1. Claude 已把非空 `target` / `chaseTarget` 的建筑/单位区分补上。
+2. `target.GetComponent<UnitCombat>() == null` 作为当前阶段的建筑判定方向可以接受。
+3. 普通单位死亡且目标引用仍存在时，会走 `Deaggro()`，不再把单位死亡点传给 patrol center。
+
+阻塞问题：
+
+1. 当前代码使用 `target == null || target.GetComponent<UnitCombat>() == null` 判断建筑。
+2. `target == null` / `chaseTarget == null` 不能证明目标是建筑。
+3. 目标被其他士兵击杀并销毁后，引用可能在下一帧变成 null。
+4. 当前代码会在 null 目标下使用 `transform.position` 调用 `Deaggro(deathPos)`，导致士兵围绕自己脚下巡逻。
+
+给 Claude 的继续修复要求：
+
+```diff
++ target == null 或 chaseTarget == null 时，只调用 Deaggro()
++ 只有 target/chaseTarget 非空，并且 GetComponent<UnitCombat>() == null 时，才 Deaggro(deathPos)
++ 不要用 target == null || ... 判断建筑
++ 可抽一个很小 helper 减少重复分支
+- 不重构战斗系统
+- 不实现重建、占领、资源、升级、连地、区域奖励、传送阵、AI 或 UI
+```
+
+GitHub 上传状态：
+
+- 本次 Review 文档待提交并推送。
