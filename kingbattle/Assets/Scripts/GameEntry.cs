@@ -37,6 +37,7 @@ public class GameEntry : MonoBehaviour
     {
         // ── Build fixed map data ──
         mapData = MapData.CreateFixedMap();
+        PlotCaptureService.Reset(); // fresh capture state per game
         Debug.Log($"[GameEntry] Map loaded: {mapData.Plots.Count} plots, {mapData.Roads.Count} roads.");
 
         // ── Render map visuals ──
@@ -210,8 +211,11 @@ public class GameEntry : MonoBehaviour
                             if (d > 5f) continue; // only nearby soldiers
                             u.ClearPushPath();
                             u.GetComponent<UnitMovement>()?.Stop();
-                            u.OnPushDestinationReached += () =>
+                            // One-shot handler: self-unsubscribes after first fire
+                            System.Action localHandler = null;
+                            localHandler = () =>
                             {
+                                u.OnPushDestinationReached -= localHandler;
                                 if (!captureOnce)
                                 {
                                     captureOnce = true;
@@ -219,6 +223,7 @@ public class GameEntry : MonoBehaviour
                                         targetPlotId, mapData, mapRenderer, Faction.Player);
                                 }
                             };
+                            u.OnPushDestinationReached += localHandler;
                             u.SetPushPath(new List<Vector3>(waypoints));
                             count++;
                         }

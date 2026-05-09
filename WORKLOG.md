@@ -4037,3 +4037,55 @@ dafd2fe docs: review mvp-03.13 capture blockers
 To https://github.com/12342023/unity.git
    2e19281..dafd2fe  main -> main
 ```
+
+### MVP-03.13 小修：占领边界 + 回调生命周期
+
+操作人：Claude
+
+Codex Review 指出的 5 个问题已全部修复：
+
+**Fix 1 — Reset on game start**
+`GameEntry.Start()`: `PlotCaptureService.Reset()` 在 `CreateFixedMap()` 后调用
+
+**Fix 2 — Only Player can capture**
+`PlotCaptureService.TryCapture()` 顶部增加 `if (capturingFaction != Faction.Player) return false`
+
+**Fix 3 — Reject main base**
+`PlotCaptureService.TryCapture()` 中 `plot.faction != Neutral` 之后增加 `if (plot.isMainBase) return false`
+
+**Fix 4 — One-shot handler**
+U 派兵循环中，`OnPushDestinationReached` 改为 self-unsubscribing lambda：
+```csharp
+System.Action localHandler = null;
+localHandler = () => {
+    u.OnPushDestinationReached -= localHandler;  // unsubscribe first
+    if (!captureOnce) { captureOnce = true; TryCapture(...); }
+};
+u.OnPushDestinationReached += localHandler;
+```
+
+**Fix 5 — WORKLOG 描述修正**
+二次 U 时 Crossroads 已被占领（不是 Neutral），`TryCapture` 返回 false 并 log "not neutral"。
+
+修改文件：
+- `Assets/Scripts/Combat/PlotCaptureService.cs` — 增加 Player-only + isMainBase 守卫
+- `Assets/Scripts/GameEntry.cs` — Reset() + one-shot handler
+
+Play Mode 验证：
+1. Play → K → Y → T → U → 蓝兵到 Crossroads 触发占领（灰变蓝）
+2. 再次 U → 蓝兵走向 Crossroads，到达后 handler 自销毁 → TryCapture 因 "not neutral" 拒绝 → Console 无错误
+3. R → 跳过 EnemyBase 重建 EnemyOutpost
+4. L → 蓝方全灭
+5. 重新 Play → Reset() 已清空 capturedPlots，占领可再次触发
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "fix: capture guards (Player-only, no main base, Reset, one-shot handler)"
+git push origin main
+```
