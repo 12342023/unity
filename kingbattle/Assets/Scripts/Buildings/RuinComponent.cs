@@ -47,6 +47,14 @@ namespace Buildings
             return sourceBuildingType;
         }
 
+        /// <summary>Returns true if this ruin can be used as a rally point
+        /// (聚兵点). Main base ruins are candidates — they are the last
+        /// strategic foothold of a defeated faction.</summary>
+        public bool CanUseAsRallyPoint(MapData mapData)
+        {
+            return IsMainBaseRuin(mapData);
+        }
+
         /// <summary>Returns true if this ruin was originally a main-base plot.
         /// Main base ruins are not rebuildable via the normal service —
         /// they may become strategic-据点 (rally / spawn point) in the future.</summary>

@@ -3493,3 +3493,42 @@ ebf3846 docs: review mvp-03.10 R shortcut blocker
 To https://github.com/12342023/unity.git
    bbaa67e..ebf3846  main -> main
 ```
+
+### MVP-03.10 修复：R 遍历所有废墟跳过主基地
+
+操作人：Claude
+
+Codex Review 阻塞项已修复。
+
+**问题：** R 键只尝试 `ruins[0]`。如果第一个废墟是 main base，`BuildingRebuildService` 拒绝但 R 不再尝试后面的普通废墟，用户看到 R 一直失败。
+
+**修复：** R 快捷键改为遍历所有 `RuinComponent`，跳过 `IsMainBaseRuin` 的废墟，对第一个普通可重建废墟调用 `BuildingRebuildService.Rebuild`，成功后停止。
+
+```csharp
+foreach (var r in ruins)
+{
+    if (r.IsMainBaseRuin(mapData)) continue;
+    var result = BuildingRebuildService.Rebuild(r, mapData, Faction.Player);
+    if (result != null) { rebuilt = true; break; }
+}
+if (!rebuilt) Debug.Log("no rebuildable ruins.");
+```
+
+修改文件：仅 `Assets/Scripts/GameEntry.cs` (R 快捷键逻辑)
+
+验证步骤（Play Mode）：
+1. 按 K → EnemyBase 废墟 + EnemyOutpost 废墟
+2. 按 R → 跳过 EnemyBase（isMainBase），重建 EnemyOutpost → OK ✅
+3. 再按 R → "no rebuildable ruins"（只剩不可重建的 EnemyBase 废墟）✅
+4. T / K / L 行为不变 ✅
+5. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/GameEntry.cs WORKLOG.md
+git commit -m "fix: R iterates all ruins, skips main base"
+git push origin main
+```

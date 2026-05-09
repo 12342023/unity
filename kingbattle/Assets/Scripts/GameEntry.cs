@@ -71,21 +71,65 @@ public class GameEntry : MonoBehaviour
             playerBaseHealth.TakeDamage(playerBaseHealth.CurrentHealth);
         }
 
-        // R = rebuild the first available ruin for Player (test MVP-03.8)
+        // R = rebuild the first rebuildable ruin (skips main base ruins)
         if (Input.GetKeyDown(KeyCode.R) && mapData != null)
         {
             var ruins = FindObjectsByType<RuinComponent>(FindObjectsSortMode.None);
-            if (ruins.Length > 0)
+            bool rebuilt = false;
+            foreach (var r in ruins)
             {
-                var result = BuildingRebuildService.Rebuild(ruins[0], mapData, Faction.Player);
+                if (r.IsMainBaseRuin(mapData)) continue; // skip main base
+                var result = BuildingRebuildService.Rebuild(r, mapData, Faction.Player);
                 if (result != null)
+                {
                     Debug.Log("[GameEntry] Test shortcut R: rebuild OK.");
-                else
-                    Debug.Log("[GameEntry] Test shortcut R: rebuild failed (no valid ruin).");
+                    rebuilt = true;
+                    break;
+                }
+            }
+            if (!rebuilt)
+                Debug.Log("[GameEntry] Test shortcut R: no rebuildable ruins.");
+        }
+
+        // T = rally all Player soldiers to the first main-base ruin (test MVP-03.10)
+        if (Input.GetKeyDown(KeyCode.T) && mapData != null)
+        {
+            var ruins = FindObjectsByType<RuinComponent>(FindObjectsSortMode.None);
+            RuinComponent rallyRuin = null;
+            foreach (var r in ruins)
+            {
+                if (r.CanUseAsRallyPoint(mapData))
+                {
+                    rallyRuin = r;
+                    break;
+                }
+            }
+            if (rallyRuin == null)
+            {
+                Debug.Log("[GameEntry] Test shortcut T: no main-base ruin found.");
             }
             else
             {
-                Debug.Log("[GameEntry] Test shortcut R: no ruins found.");
+                Vector3 rallyPos = rallyRuin.transform.position;
+                int count = 0;
+                var units = FindObjectsByType<UnitCombat>(FindObjectsSortMode.None);
+                foreach (var u in units)
+                {
+                    if (u.faction != Faction.Player) continue;
+                    if (u.GetComponent<HealthComponent>().IsDead) continue;
+
+                    // Clear any active orders
+                    u.ClearPushPath();
+                    u.GetComponent<UnitMovement>()?.Stop();
+
+                    // Set patrol around the ruin with staggered angle
+                    var patrol = u.GetComponent<UnitPatrol>();
+                    if (patrol != null)
+                        patrol.Setup(new Vector3(rallyPos.x, rallyPos.y, -0.2f), 0.9f, (count % 12) * 30f);
+
+                    count++;
+                }
+                Debug.Log($"[GameEntry] Test shortcut T: rallied {count} soldiers to main-base ruin.");
             }
         }
     }
