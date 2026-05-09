@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Buildings;
 using Combat;
 using Core;
@@ -155,6 +156,65 @@ public class GameEntry : MonoBehaviour
             }
             if (!found)
                 Debug.Log("[GameEntry] Test shortcut Y: no main-base ruin found.");
+        }
+
+        // U = dispatch nearby Player soldiers from main-base ruin to first
+        //     connectable neutral plot (test MVP-03.12)
+        if (Input.GetKeyDown(KeyCode.U) && mapData != null)
+        {
+            // Find first main-base ruin
+            RuinComponent rallyRuin = null;
+            foreach (var r in FindObjectsByType<RuinComponent>(FindObjectsSortMode.None))
+            {
+                if (r.CanUseAsRallyPoint(mapData)) { rallyRuin = r; break; }
+            }
+            if (rallyRuin == null)
+            {
+                Debug.Log("[GameEntry] Test shortcut U: no main-base ruin.");
+            }
+            else
+            {
+                var plots = rallyRuin.GetConnectableNeutralPlots(mapData);
+                if (plots.Count == 0)
+                {
+                    Debug.Log($"[GameEntry] Test shortcut U: {rallyRuin.sourcePlotId} has no connectable neutral plots.");
+                }
+                else
+                {
+                    string targetPlotId = plots[0];
+                    // Find path from ruin's plot to target plot
+                    var pathIds = RoadPathFinder.FindPath(mapData, rallyRuin.sourcePlotId, targetPlotId);
+                    if (pathIds == null || pathIds.Count < 2)
+                    {
+                        Debug.Log($"[GameEntry] Test shortcut U: no road path to {targetPlotId}.");
+                    }
+                    else
+                    {
+                        var waypoints = new System.Collections.Generic.List<Vector3>();
+                        foreach (var id in pathIds)
+                        {
+                            var p = mapData.GetPlot(id);
+                            if (p != null)
+                                waypoints.Add(new Vector3(p.worldPosition.x, p.worldPosition.y, -0.2f));
+                        }
+                        // Find Player soldiers near the ruin
+                        Vector3 ruinPos = rallyRuin.transform.position;
+                        int count = 0;
+                        foreach (var u in FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
+                        {
+                            if (u.faction != Faction.Player) continue;
+                            if (u.GetComponent<HealthComponent>().IsDead) continue;
+                            float d = Vector3.Distance(u.transform.position, ruinPos);
+                            if (d > 5f) continue; // only nearby soldiers
+                            u.ClearPushPath();
+                            u.GetComponent<UnitMovement>()?.Stop();
+                            u.SetPushPath(new List<Vector3>(waypoints));
+                            count++;
+                        }
+                        Debug.Log($"[GameEntry] Test shortcut U: dispatched {count} soldiers to {targetPlotId} ({string.Join("->", pathIds)}).");
+                    }
+                }
+            }
         }
     }
 
