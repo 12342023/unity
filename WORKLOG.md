@@ -2495,4 +2495,17 @@ MVP-03.4 建筑身份数据与废墟元数据
 
 GitHub 上传状态：
 
-- 本次 Review 与任务发布文档待提交并推送。
+- 已提交并推送本次 Review 与任务发布文档。
+
+提交记录：
+
+```text
+1bdb18d docs: review mvp-03.3 and release mvp-03.4
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   bb7ea8b..1bdb18d  main -> main
+```
