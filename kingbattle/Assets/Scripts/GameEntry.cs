@@ -19,9 +19,10 @@ using UnityEngine;
 /// </summary>
 public class GameEntry : MonoBehaviour
 {
-    // Test-shortcut references for MVP-03.2 faction defeat verification
+    // Test-shortcut references
     private HealthComponent playerBaseHealth;
     private HealthComponent enemyBaseHealth;
+    private MapData mapData; // kept for test shortcuts (R = rebuild)
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
@@ -33,7 +34,7 @@ public class GameEntry : MonoBehaviour
     private void Start()
     {
         // ── Build fixed map data ──
-        var mapData = MapData.CreateFixedMap();
+        mapData = MapData.CreateFixedMap();
         Debug.Log($"[GameEntry] Map loaded: {mapData.Plots.Count} plots, {mapData.Roads.Count} roads.");
 
         // ── Render map visuals ──
@@ -68,6 +69,24 @@ public class GameEntry : MonoBehaviour
         {
             Debug.Log("[GameEntry] Test shortcut L: destroying PlayerBase...");
             playerBaseHealth.TakeDamage(playerBaseHealth.CurrentHealth);
+        }
+
+        // R = rebuild the first available ruin for Player (test MVP-03.8)
+        if (Input.GetKeyDown(KeyCode.R) && mapData != null)
+        {
+            var ruins = FindObjectsByType<RuinComponent>(FindObjectsSortMode.None);
+            if (ruins.Length > 0)
+            {
+                var result = BuildingRebuildService.Rebuild(ruins[0], mapData, Faction.Player);
+                if (result != null)
+                    Debug.Log("[GameEntry] Test shortcut R: rebuild OK.");
+                else
+                    Debug.Log("[GameEntry] Test shortcut R: rebuild failed (no valid ruin).");
+            }
+            else
+            {
+                Debug.Log("[GameEntry] Test shortcut R: no ruins found.");
+            }
         }
     }
 

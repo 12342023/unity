@@ -3004,3 +3004,55 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    04adcc7..2f598bc  main -> main
 ```
+
+### MVP-03.8 废墟重建最小服务 BuildingRebuildService
+
+操作人：Claude
+
+已完成目标：新增 `BuildingRebuildService`，输入 RuinComponent / MapData / Faction，
+使用 CanRebuildFor 和 GetRebuildBuildingType，通过 BuildingFactory 创建新建筑并销毁废墟。
+
+新增 1 个文件：
+- `Assets/Scripts/Buildings/BuildingRebuildService.cs` — 废墟重建服务
+  - `Rebuild(RuinComponent, MapData, Faction)` — 核心方法
+  - 验证 CanRebuildFor → 读取 sourcePlotId + GetRebuildBuildingType
+  → BuildingFactory.CreateBuilding → Destroy(ruin.gameObject)
+  - 返回新建的 GameObject，失败返回 null
+  - 新建筑自动注册到 BuildingRegistry
+
+修改 1 个文件：
+- `Assets/Scripts/GameEntry.cs` — 新增 R 测试快捷键
+  - 新增 `mapData` 字段
+  - R 键：找到第一个废墟，调用 `BuildingRebuildService.Rebuild()` 重建为 Player 阵营
+  - 纯测试入口，同 K/L 模式，不影响正式逻辑
+
+服务职责边界：
+```
+入参: RuinComponent + MapData + Faction
+  ↓  CanRebuildFor(Faction) 检查
+  ↓  GetRebuildBuildingType() → BuildingType
+  ↓  BuildingFactory.CreateBuilding(plotId, mapData, faction, type)
+  ↓    → 自动注册到 BuildingRegistry
+  ↓  Destroy(ruin.gameObject)
+返回: 新建建筑 GameObject
+```
+
+Play Mode 验证：
+1. Play → 按 K → EnemyBase 变废墟，红方 Tower 也变废墟
+2. 按 R → 第一个废墟（EnemyBase）被重建为 Player Barracks → 废墟消失
+3. 重建后的 Barracks 自动出兵（Player 阵营），Tower 不攻击它（同阵营）
+4. 再次按 R → 下一个废墟（EnemyOutpost Tower）被重建为 Player Tower
+5. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs \
+        kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs.meta \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: BuildingRebuildService - rebuild ruins via BuildingFactory"
+git push origin main
+```
