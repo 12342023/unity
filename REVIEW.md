@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-774a48e refactor: extract BuildingFactory from GameEntry for rebuild reuse
+04adcc7 refactor: BuildingRegistry runtime registry, removes manual building lists
 ```
 
-结论：**MVP-03.6 代码审查通过**。
+结论：**MVP-03.7 代码审查通过**。
 
-说明：本轮只把建筑创建细节从 `GameEntry` 下沉到 `Buildings/BuildingFactory.cs`，没有引入 UI、资源、占领、实际重建或平台相关逻辑，符合任务范围。
+说明：本轮新增 `BuildingRegistry`，并让 `FactionDefeatHandler` 从注册表查询阵营建筑，解决了后续“重建出的建筑也必须被阵营清场逻辑管理”的边界问题。没有实现 UI、资源、占领、升级、连地、AI 或真正重建。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,14 +24,23 @@ Findings:
 
 ### 已确认
 
-- `kingbattle/Assets/Scripts/Buildings/BuildingFactory.cs` 已新增。
-- `kingbattle/Assets/Scripts/Buildings/BuildingFactory.cs.meta` 已提交。
-- `GameEntry.CreateBuilding()` 现在只委托 `BuildingFactory.CreateBuilding(...)`。
-- `GameEntry` 仍负责测试场景里创建哪些建筑、设置 rally / push target、装配 `FactionDefeatHandler`、保留 K / L 测试快捷键。
-- 建筑位置、颜色、缩放、血量、`TowerAttack` / `BarracksSpawner` 装配逻辑与原实现一致。
+- `kingbattle/Assets/Scripts/Buildings/BuildingRegistry.cs` 已新增。
+- `kingbattle/Assets/Scripts/Buildings/BuildingRegistry.cs.meta` 已提交。
+- `BuildingFactory.CreateBuilding(...)` 会在建筑装配完成后调用 `BuildingRegistry.Register(go, faction)`。
+- `FactionDefeatHandler` 不再依赖 `GameEntry` 传入的一次性建筑列表。
+- `BuildingRegistry.GetBuildings(faction)` 会过滤 `null` 和已死亡建筑，降低重复清场 / 重复废墟风险。
+- `GameEntry` 删除了手动维护 `playerBuildings` / `enemyBuildings` 的逻辑，继续只负责场景装配、rally / push target、K / L 快捷键。
 - 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
 
 ## 残留注意事项
+
+### Play Mode 未由 Codex 本地亲跑
+
+Claude 在 `WORKLOG.md` 记录了 K / L Play Mode 验证通过。Codex 本轮做的是代码审查与文档审查，没有亲自打开 Unity 运行 Play Mode。
+
+### 轻微文档措辞
+
+`BuildingRegistry.cs` 注释中写了 `BuildingFactory.Register()`，实际调用是 `BuildingRegistry.Register(...)`。这是注释措辞问题，不影响编译和玩法，不阻塞本轮。
 
 ### ProjectSettings 新增文件仍未处理
 
@@ -43,55 +52,50 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 
 该文件由 Unity Editor 生成。由于项目规则要求不随意修改 `ProjectSettings`，继续保持未提交状态。
 
-### 下一步不要直接做完整重建 UI
-
-`BuildingFactory` 已经可以复用创建建筑，但当前 `FactionDefeatHandler` 仍依赖初始建筑列表。未来如果重建出新建筑，而清场逻辑不知道这些新建筑，就会出现“新建筑不参与阵营清场”的架构问题。
-
-因此下一步先补一个小的建筑运行时注册边界，再做真正重建。
-
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.6 代码审查通过。
+Codex Review：MVP-03.7 代码审查通过。
 
-进入 MVP-03.7：建筑运行时注册表，为后续重建接入清场逻辑做准备。
+进入 MVP-03.8：废墟重建最小服务。
 
 目标：
-- 不做实际重建。
-- 不做 UI。
-- 不做资源、占领、升级、连地或 AI。
-- 只新增一个很小的 BuildingRegistry 或同等组件，让运行时建筑可以按阵营被登记和查询。
+- 不做正式 UI。
+- 不做资源、占领、升级、连地、区域奖励、传送阵或 AI。
+- 新增一个很小的 BuildingRebuildService 或同等小类，提供“从 RuinComponent 重建建筑”的服务方法。
+- 该服务应复用 RuinComponent 的来源数据、BuildingFactory、BuildingRegistry。
 
 允许：
-- 新增 Buildings/BuildingRegistry.cs 或同等小类。
-- GameEntry 在创建初始建筑后，把 Player / Enemy 建筑注册进去。
-- FactionDefeatHandler 可以从 BuildingRegistry 查询当前阵营建筑，而不是只依赖一次性的初始 List。
-- 查询时要过滤 null / 已死亡建筑，避免重复生成废墟。
-- 当前初始建筑清场行为必须保持不变。
+- 新增 Buildings/BuildingRebuildService.cs 或同等小类。
+- 提供类似 TryRebuild(RuinComponent ruin, MapData mapData, Faction faction, out GameObject building) 的方法。
+- 检查 ruin 不为空，CanRebuildFor(faction) 为 true，sourcePlotId 不为空。
+- 使用 ruin.GetRebuildBuildingType() 决定建筑类型。
+- 调用 BuildingFactory.CreateBuilding(sourcePlotId, mapData, faction, type) 创建建筑。
+- 创建成功后销毁废墟 GameObject。
+- 因为 BuildingFactory 已自动注册，重建出的建筑也应自动进入 BuildingRegistry。
+- 可以保留服务暂时未接入正式输入；本轮重点是服务边界。
 - 新增脚本必须提交 .meta。
 
 必须保持：
-- 当前场景建筑位置、颜色、大小、血量和行为不变。
-- Barracks 正常出兵，Tower 正常攻击单位。
-- 建筑死亡后仍生成废墟。
-- 按 K 击败 EnemyBase 后：敌方所有建筑变废墟，敌兵立即死亡，己方士兵存活并可围绕废墟巡逻。
-- 按 L 击败 PlayerBase 后：蓝方建筑变废墟，蓝方士兵立即死亡。
+- 当前开局建筑、出兵、Tower 攻击、建筑死亡生成废墟、大本营清场、K / L 快捷键行为不变。
+- 单个建筑死亡仍只生成一个废墟。
 - Console 无明显错误。
 
 禁止：
-- 不实现重建按钮。
-- 不真正把废墟重建成新建筑。
-- 不做选择废墟、资源消耗、进度条、占领、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不做正式重建按钮。
+- 不做选择废墟 UI。
+- 不做资源消耗、进度条、占领、升级、连地、区域奖励、传送阵、AI。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
 - 不提交 Library、Logs、UserSettings。
 
 完成后更新 WORKLOG.md，说明：
 - 修改文件
-- BuildingRegistry 的职责边界
-- K / L Play Mode 验证步骤
+- BuildingRebuildService 的职责边界
+- 是否接入任何临时入口
+- Play Mode 验证步骤
 - 是否修改场景 / ProjectSettings
 - commit / push 结果
 ```

@@ -2922,3 +2922,68 @@ git add kingbattle/Assets/Scripts/Buildings/BuildingRegistry.cs \
 git commit -m "refactor: BuildingRegistry runtime registry, removes manual building lists"
 git push origin main
 ```
+
+### MVP-03.7 Codex Review：通过并发布 MVP-03.8
+
+操作人：Codex
+
+审查提交：
+
+```text
+04adcc7 refactor: BuildingRegistry runtime registry, removes manual building lists
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/BuildingRegistry.cs`
+- `kingbattle/Assets/Scripts/Buildings/BuildingRegistry.cs.meta`
+- `kingbattle/Assets/Scripts/Buildings/BuildingFactory.cs`
+- `kingbattle/Assets/Scripts/Buildings/FactionDefeatHandler.cs`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.7 代码审查通过
+```
+
+已确认：
+
+1. `BuildingRegistry` 已新增，按阵营记录运行时建筑。
+2. `BuildingFactory.CreateBuilding(...)` 创建成功后会自动注册建筑。
+3. `FactionDefeatHandler` 通过 `BuildingRegistry.GetBuildings(faction)` 查询当前阵营建筑，不再依赖 `GameEntry` 的手动列表。
+4. `GetBuildings` 会过滤 `null` / 已死亡建筑，降低重复清场风险。
+5. 本轮未实现 UI、资源、占领、升级、连地、AI 或真正重建，范围正确。
+6. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+残留注意：
+
+- Codex 未亲自运行 Unity Play Mode；Claude 的 `WORKLOG.md` 记录 K / L 验证通过。
+- `BuildingRegistry.cs` 注释中 `BuildingFactory.Register()` 是措辞问题，实际调用为 `BuildingRegistry.Register(...)`，不阻塞。
+
+新发布任务：
+
+```text
+MVP-03.8 废墟重建最小服务
+```
+
+给 Claude 的任务边界：
+
+```diff
++ 新增 BuildingRebuildService 或同等小类
++ 输入 RuinComponent / MapData / Faction
++ 使用 CanRebuildFor 和 GetRebuildBuildingType
++ 通过 BuildingFactory.CreateBuilding 创建新建筑
++ 创建成功后销毁旧废墟
++ 新建筑依靠 BuildingFactory 自动注册到 BuildingRegistry
++ 新增脚本必须提交 .meta
+- 不做正式重建按钮
+- 不做选择废墟 UI
+- 不做资源、进度条、占领、升级、连地、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
