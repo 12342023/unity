@@ -2,85 +2,107 @@
 
 ## Review 状态
 
-Codex 已审查 MVP-03.9 最新提交与 Unity 编译热修：
+Codex 已检查 Claude 当前 MVP-03.10 本地改动：
 
 ```text
-a2472bb fix: add Map namespace for main base ruin rule
+RuinComponent.CanUseAsRallyPoint(MapData)
+GameEntry T 聚兵测试快捷键
 ```
 
-结论：**MVP-03.9 代码审查通过**。
+结论：**MVP-03.10 暂未通过，需要先修 R 测试入口**。
 
-说明：大本营废墟已经不会通过普通 `BuildingRebuildService` 被重建；`RuinComponent` 的 `MapData` namespace 编译错误也已修复。本轮没有引入正式 UI、资源、占领、完整连地、区域奖励、传送阵或 AI。
+说明：T 聚兵方向基本符合任务，但用户反馈“R 键不能完成”。从 Unity 日志和代码看，原因是 `GameEntry` 的 R 键仍然只尝试 `ruins[0]`。当 `ruins[0]` 是大本营废墟时，`BuildingRebuildService` 会按规则拒绝重建，然后 R 直接失败，不会继续尝试后面的普通废墟。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **FAIL**
 
 Findings:
 
+### [P1] R 测试入口遇到 main base ruin 后不继续查找普通废墟
+
+File:
+
 ```text
-无阻塞问题。
+kingbattle/Assets/Scripts/GameEntry.cs:77
 ```
 
-### 已确认
+Problem:
 
-- `RuinComponent.cs` 已补充 `using Map;`，解决 Unity `CS0246 MapData could not be found`。
-- `RuinComponent.IsMainBaseRuin(MapData mapData)` 会通过 `mapData.GetPlot(sourcePlotId).isMainBase` 判断来源 plot 是否大本营。
-- `BuildingRebuildService.Rebuild(...)` 遇到 main base ruin 时会 `return null`。
-- Main base ruin 不会被销毁，也不会创建新建筑。
-- 普通非大本营废墟仍可通过服务重建。
-- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
+当前 R 键逻辑：
 
-## 残留注意事项
+```csharp
+var ruins = FindObjectsByType<RuinComponent>(FindObjectsSortMode.None);
+if (ruins.Length > 0)
+{
+    var result = BuildingRebuildService.Rebuild(ruins[0], mapData, Faction.Player);
+    ...
+}
+```
 
-### R 测试入口仍是临时入口
+这会依赖 Unity 返回顺序。现在 main base ruin 不能重建是正确规则，但 R 键如果先拿到 EnemyBase / PlayerBase 废墟，就会一直失败：
 
-`GameEntry` 当前 `R` 键只尝试 `FindObjectsByType<RuinComponent>(...)[0]`。如果第一个废墟是大本营废墟，服务会正确拒绝重建，但 `R` 不会自动尝试下一个普通废墟。
+```text
+[BuildingRebuildService] Main base ruin at EnemyBase cannot be rebuilt.
+[GameEntry] Test shortcut R: rebuild failed (no valid ruin).
+```
 
-这不阻塞 MVP-03.9，因为核心规则已落地；但后续调试入口不要依赖 Unity 返回顺序。
+用户看到的就是“R 键不能完成”。
 
-## 给 Claude 的下一条任务
+Fix:
+
+R 键应遍历所有废墟，尝试重建第一个可重建的普通废墟：
+
+```diff
+- 只调用 BuildingRebuildService.Rebuild(ruins[0], ...)
++ foreach (var ruin in ruins)
++     if (ruin.IsMainBaseRuin(mapData)) continue;
++     var result = BuildingRebuildService.Rebuild(ruin, mapData, Faction.Player);
++     if (result != null) break;
++ 如果没有成功重建任何废墟，再输出 no rebuildable ruins
+```
+
+注意：
+
+- 不要允许 main base ruin 被 R 重建。
+- 不要销毁 main base ruin。
+- 不要改正式 UI 或资源系统。
+
+## 已通过部分
+
+- `RuinComponent.CanUseAsRallyPoint(MapData)` 的方向符合 MVP-03.10。
+- T 键聚兵方向符合任务边界。
+- 没有看到新的 `ProjectSettings` 应提交内容。
+
+## 需要 Claude 修复
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.9 代码审查通过。
+Codex Review：MVP-03.10 暂未通过。
 
-进入 MVP-03.10：大本营废墟聚兵点最小原型。
+用户反馈：R 键不能完成。
 
-用户规则继续保持：
-- 最后的敌方大本营不能重建。
-- 但它可以作为聚兵点。
-- 后续还要能连接别的未占领地点并派兵。
+原因：
+- GameEntry 的 R 键当前只尝试 ruins[0]。
+- 如果第一个废墟是 EnemyBase / PlayerBase 这种 main base ruin，BuildingRebuildService 会正确拒绝重建。
+- 但 R 键没有继续尝试后面的普通废墟，所以用户看到 R 一直失败。
 
-本轮目标：
-- 不做正式 UI。
-- 不做资源、占领进度、升级、完整连地系统或 AI。
-- 只做“大本营废墟可以作为聚兵点”的最小可见验证。
-
-允许：
-- 在 RuinComponent 上新增最小数据层方法，例如 CanUseAsRallyPoint(MapData mapData)，main base ruin 返回 true。
-- 在 GameEntry 增加一个临时测试快捷键，例如 T。
-- T 的行为：找到第一个 main base ruin，把当前存活的 Player 士兵聚到该废墟周围巡逻。
-- 聚兵可以先复用 UnitPatrol.Setup(center, radius, staggerAngle)。
-- 可以对这些单位调用 UnitMovement.Stop() / UnitCombat.ClearPushPath()，避免旧路径继续影响聚兵测试。
-- 多个单位要用不同角度，避免完全重叠。
-- 保持 R/K/L 测试快捷键现有行为。
+请修复：
+- 修改 GameEntry 的 R 测试快捷键。
+- R 应遍历所有 RuinComponent。
+- 跳过 ruin.IsMainBaseRuin(mapData) == true 的废墟。
+- 对第一个普通可重建废墟调用 BuildingRebuildService.Rebuild(...).
+- 一旦重建成功就停止遍历并输出 rebuild OK。
+- 如果没有任何普通可重建废墟，输出 no rebuildable ruins。
 
 必须保持：
-- Main base ruin 仍不能被 R 重建。
-- 普通非大本营废墟仍可重建。
-- T 聚兵后，士兵围绕 main base ruin 巡逻。
+- EnemyBase / PlayerBase 大本营废墟仍不能被 R 重建。
+- 普通非大本营废墟仍可被 R 重建。
+- T 聚兵功能保持不变。
 - K / L 清场行为不变。
-- Console 无明显错误。
-
-禁止：
-- 不做正式按钮或 UI。
-- 不做连接未占领地的正式系统。
-- 不做正式派兵系统。
-- 不做资源、占领、升级、区域奖励、传送阵、AI。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
 
-完成后更新 WORKLOG.md，说明修改文件、T/R/K/L Play Mode 验证步骤、是否修改 ProjectSettings，并 commit / push。
+完成后更新 WORKLOG.md，说明 R/K/T/L Play Mode 验证，并 commit / push。
 ```
