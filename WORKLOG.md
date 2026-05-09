@@ -2284,4 +2284,17 @@ MVP-03.3 建筑死亡 / 废墟职责边界整理
 
 GitHub 上传状态：
 
-- 本次任务发布文档待提交并推送。
+- 已提交并推送本次任务发布文档。
+
+提交记录：
+
+```text
+a079f87 docs: release mvp-03.3 building death boundaries
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   eb62289..a079f87  main -> main
+```
