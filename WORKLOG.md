@@ -4139,3 +4139,20 @@ MVP-03.13 收口小修：U capture handler 替换与 WORKLOG 验证修正
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 MVP-03.13 handler cleanup Review 与收口任务文档。
+
+提交记录：
+
+```text
+5d757d1 docs: review mvp-03.13 handler cleanup
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   224db1d..5d757d1  main -> main
+```
