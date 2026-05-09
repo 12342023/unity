@@ -4020,3 +4020,20 @@ MVP-03.13 小修：占领边界与 U 到达回调生命周期
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 MVP-03.13 Review 与小修任务文档。
+
+提交记录：
+
+```text
+dafd2fe docs: review mvp-03.13 capture blockers
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   2e19281..dafd2fe  main -> main
+```
