@@ -13,51 +13,61 @@
 - 废墟具备最小可重建判定。
 - 建筑创建逻辑已从 `GameEntry` 下沉到 `BuildingFactory`。
 - 运行时建筑已通过 `BuildingRegistry` 按阵营登记和查询。
-- `BuildingRebuildService` 已初步新增，但需要补一个空值防御。
+- `BuildingRebuildService` 已新增，并已补齐 `mapData` 空值防御。
 
-## 当前正式任务：MVP-03.8 小修
+## 新增用户规则
+
+```text
+最后的敌方大本营不能重建，但是可以聚兵，也可以连接别的未占领的地方可以派兵。
+```
+
+Codex 拆分：
+
+- 大本营废墟不再是普通可重建建筑。
+- 大本营废墟未来是战略据点。
+- 战略据点可以承载聚兵、连接未占领地点、派兵。
+- 本轮先做规则边界，不做完整 UI / 资源 / 占领 / 派兵系统。
+
+## 当前正式任务：MVP-03.9 大本营废墟特殊规则
 
 目标：
 
 ```text
-补齐 BuildingRebuildService.Rebuild(...) 的 mapData 空值保护。
+MainBase ruin 不允许通过普通 BuildingRebuildService 重建成建筑。
 ```
 
-这是服务边界问题，不是玩法扩展。修完后再继续做重建闭环验证。
-
-## 给 Claude 的实现方向
+实现方向：
 
 ```diff
-+ 在 BuildingRebuildService.Rebuild(...) 中检查 mapData == null
-+ 为空时 Debug.LogWarning 并 return null
-+ 保持现有 R 测试入口不变
-+ 更新 WORKLOG.md 并 commit / push
-- 不做正式 UI
-- 不做资源 / 占领 / 升级 / 连地 / AI
++ BuildingRebuildService 使用 mapData.GetPlot(ruin.sourcePlotId).isMainBase 判断
++ mainBase ruin 时 return null，不销毁废墟
++ R 测试不能把 EnemyBase / PlayerBase 废墟重建成 Barracks
++ 普通非大本营废墟仍可重建
++ 可新增 RuinComponent 数据层方法表达“可聚兵 / 可派兵战略据点”
+- 不做正式重建按钮
+- 不做 UI / 资源 / 占领 / 完整连地 / AI
 - 不修改 ProjectSettings
 ```
 
-## 小修通过后的建议顺序
+## MVP-03.9 后的建议顺序
 
-### MVP-03.9 临时调试入口整理与验证重建闭环
+### MVP-03.10 大本营废墟聚兵点最小原型
 
-当前已经有 R 测试入口。小修通过后，下一轮建议不要立刻做正式 UI，而是整理并验证临时调试闭环：
+在大本营不可重建规则稳定后，再做“聚兵点”最小原型：
 
-- K 生成敌方废墟。
-- R 重建第一个废墟为 Player 建筑。
-- 验证旧废墟销毁、新建筑注册到 `BuildingRegistry`。
-- 再通过 K / L 或额外测试确认重建建筑参与阵营清场。
-- 明确 R 是临时测试入口，不是正式 UI。
+- 大本营废墟可作为 rally center。
+- 士兵可以围绕大本营废墟聚集 / 巡逻。
+- 不做正式 UI，只用测试入口或固定逻辑验证。
 
-### 后续再做重建规则
+### MVP-03.11 未占领地点连接与派兵测试入口
 
-等调试闭环稳定后，再考虑最小规则：
+再往后才处理“连接别的未占领地点并派兵”：
 
-- 哪个阵营允许重建。
-- 重建后归属谁。
-- 是否只能重建特定 plot。
+- 读取 `MapData.GetNeighbors(plotId)`。
+- 只允许派兵到相邻未占领地点。
+- 先做测试入口，不做正式 UI。
 
-资源、升级、连地、区域奖励继续后置。
+资源、升级、区域奖励、传送阵、AI 继续后置。
 
 ## 长期提醒
 

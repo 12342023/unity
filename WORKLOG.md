@@ -3151,3 +3151,62 @@ git add kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs WORKLOG.md
 git commit -m "fix: add mapData null guard in BuildingRebuildService.Rebuild"
 git push origin main
 ```
+
+### MVP-03.8 Codex Review：通过并发布 MVP-03.9
+
+操作人：Codex
+
+审查提交：
+
+```text
+32bb717 fix: add mapData null guard in BuildingRebuildService.Rebuild
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.8 代码审查通过
+```
+
+已确认：
+
+1. `BuildingRebuildService.Rebuild(...)` 已补齐 `mapData == null` 防御。
+2. `ruin == null` 和 `mapData == null` 都会安全返回 `null`。
+3. 正常重建仍通过 `BuildingFactory.CreateBuilding(...)`，新建筑仍自动注册到 `BuildingRegistry`。
+4. 本轮未引入 UI、资源、占领、升级、连地、区域奖励、传送阵或 AI。
+5. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+用户新增规则：
+
+```text
+最后的敌方大本营不能重建，但是可以聚兵，也可以连接别的未占领的地方可以派兵。
+```
+
+新发布任务：
+
+```text
+MVP-03.9 大本营废墟特殊规则
+```
+
+任务边界：
+
+```diff
++ 大本营废墟不能通过普通 BuildingRebuildService 重建
++ 使用 mapData.GetPlot(ruin.sourcePlotId).isMainBase 判断
++ mainBase ruin 时 return null，不销毁废墟
++ R 测试不能把 EnemyBase / PlayerBase 废墟重建成 Barracks
++ 普通非大本营废墟仍可重建
++ 可新增 RuinComponent 数据层方法表达未来“可聚兵 / 可派兵战略据点”
+- 不做正式重建按钮
+- 不做 UI、资源、占领、完整连地、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
