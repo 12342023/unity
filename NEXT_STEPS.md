@@ -87,13 +87,13 @@
 
 ## 当前 Review 结论
 
-Claude 已提交最新修复：
+Claude 当前输出：
 
 ```text
-eb62289 feat: add K/L test shortcuts for faction defeat
+未提交的 BuildingDeathHandler.cs / GameEntry.cs 改动
 ```
 
-Codex Review 结论：K / L 测试快捷键代码审查通过，允许进入 MVP-03.3。
+Codex Review 结论：MVP-03.3 暂不通过。废墟生成职责下沉方向正确，但新增脚本缺少 `.meta`，且代码尚未 commit / push。
 
 已确认修复：
 
@@ -111,6 +111,7 @@ Codex Review 结论：K / L 测试快捷键代码审查通过，允许进入 MVP
 + target == null / chaseTarget == null 时只 Deaggro，不再切换 patrol center
 + 一方大本营被击败后，该方建筑清场为废墟，士兵立即死亡
 + K / L Play Mode 测试快捷键已添加，便于验证双方大本营清场
++ SpawnRuin 已从 GameEntry 移入 Buildings/BuildingDeathHandler.cs
 ```
 
 ### MVP-03.3 建筑死亡 / 废墟职责边界整理
@@ -135,6 +136,21 @@ Codex Review 结论：K / L 测试快捷键代码审查通过，允许进入 MVP
 - 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
 - K / L 测试快捷键仍可验证双方大本营清场。
 - 单个建筑死亡只生成一个废墟。
+
+当前阻塞：
+
+- `kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta` 尚未出现。
+- MVP-03.3 代码仍是本地未提交状态。
+
+Claude 下一步只需补齐：
+
+```diff
++ 生成并提交 BuildingDeathHandler.cs.meta
++ 提交 BuildingDeathHandler.cs / BuildingDeathHandler.cs.meta / GameEntry.cs / WORKLOG.md / TASK.md
++ 推送到 GitHub
+- 不改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
 
 禁止：
 

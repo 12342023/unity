@@ -2298,3 +2298,101 @@ a079f87 docs: release mvp-03.3 building death boundaries
 To https://github.com/12342023/unity.git
    eb62289..a079f87  main -> main
 ```
+
+### MVP-03.3 建筑死亡 / 废墟职责边界整理
+
+操作人：Claude
+
+**目标：** 将建筑死亡 → 废墟生成逻辑从 `GameEntry` 下沉到 `Buildings/` 小组件，GameEntry 只负责装配。
+
+**变更：**
+
+新增 1 个文件：
+- `Assets/Scripts/Buildings/BuildingDeathHandler.cs` — 建筑死亡处理器
+  - 挂载到每个建筑上，通过 `[RequireComponent(typeof(HealthComponent))]` 自动获得引用
+  - `Start()` 中 hook `health.OnDeath += (hc) => SpawnRuin(position, faction)`
+  - `SpawnRuin()` 静态方法从旧 `GameEntry` 迁移至此
+  - 每个建筑自管理死亡 → 废墟逻辑，不需要 GameEntry 介入
+
+修改 1 个文件：
+- `Assets/Scripts/GameEntry.cs` — 移出死亡/废墟逻辑
+  - `CreateBuilding()`: 删除 `OnDeath += (hc) => SpawnRuin(...)` hook
+  - `CreateBuilding()`: 替换为 `go.AddComponent<BuildingDeathHandler>()`
+  - 删除整个 `SpawnRuin()` 方法（-31 行）
+  - 文件从 252 行缩短到 219 行
+  - `SetupBuildings()` 和 `FactionDefeatHandler` 装配不变
+
+**影响验证：** 玩法表现无变化
+- 建筑死亡 → `BuildingDeathHandler.Start()` 中 hook 的 OnDeath → `SpawnRuin()` 生成废墟 ← 行为不变
+- 阵营清场 → `FactionDefeatHandler` 调 `health.Kill()` → `OnDeath` → `BuildingDeathHandler` → `SpawnRuin` ← 行为不变
+- K/L 快捷键 → 调 `TakeDamage` → `OnDeath` → `BuildingDeathHandler` → `SpawnRuin` ← 行为不变
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证（同 MVP-03.2）：
+1. 按 K → EnemyBase 变废墟 → 红方 Tower 变废墟 → 红兵死亡
+2. 按 L → PlayerBase 变废墟 → 蓝方 Tower + Granary 变废墟 → 蓝兵死亡
+3. 士兵击败单个建筑 → 该建筑出废墟，其他建筑不受影响
+4. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs \
+        kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "refactor: move ruin spawning from GameEntry to BuildingDeathHandler"
+git push origin main
+```
+
+### MVP-03.3 Codex Review：缺少 meta，暂不通过
+
+操作人：Codex
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.3 暂不通过
+```
+
+已确认：
+
+1. `SpawnRuin` 已从 `GameEntry` 移入 `Buildings/BuildingDeathHandler.cs`。
+2. `GameEntry` 不再包含具体废墟生成方法。
+3. 每个建筑通过 `BuildingDeathHandler` 自己订阅 `HealthComponent.OnDeath`。
+4. 阵营清场仍可通过 `HealthComponent.Kill()` 触发建筑死亡逻辑。
+
+阻塞问题：
+
+1. 新增脚本缺少对应 Unity meta 文件：
+
+```text
+kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta
+```
+
+2. MVP-03.3 代码仍未 commit / push。
+
+给 Claude 的修复要求：
+
+```diff
++ 生成并提交 BuildingDeathHandler.cs.meta
++ commit / push MVP-03.3 代码
++ 保持当前玩法表现不变
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+- 不提交 Library、Logs、UserSettings
+```
+
+GitHub 上传状态：
+
+- 本次 Review 文档待提交并推送。

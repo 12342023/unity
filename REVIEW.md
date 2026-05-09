@@ -2,65 +2,95 @@
 
 ## Review 状态
 
-Codex 已审查 Claude 最新提交：
+Codex 已审查 Claude 当前未提交输出：
 
 ```text
-eb62289 feat: add K/L test shortcuts for faction defeat
+MVP-03.3 建筑死亡 / 废墟职责边界整理
 ```
 
-结论：**测试快捷键代码审查通过，允许进入 MVP-03.3**。
+结论：**MVP-03.3 暂不通过**。
 
-说明：K / L 仅用于 Play Mode 快速验证双方大本营清场，改动范围小，没有改变正式战斗逻辑。当前下一步应整理 `GameEntry` 中过多的建筑死亡 / 废墟生成职责。
+说明：实现方向正确，`SpawnRuin` 已从 `GameEntry` 移到 `Buildings/BuildingDeathHandler.cs`，`GameEntry` 不再包含具体废墟生成方法。但当前交付不完整：新增脚本缺少 `.meta` 文件，且代码还没有 commit / push。Unity 项目中新增脚本必须提交对应 `.meta`，否则后续 GUID 会漂移。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **FAIL**
 
-### 已通过：[P2] K / L 测试快捷键范围可接受
+### 已通过：[P2] 废墟生成职责已下沉到 Buildings
 
-File:
+Files:
 
 ```text
+kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs
 kingbattle/Assets/Scripts/GameEntry.cs
 ```
 
 Review:
 
-`GameEntry.Update()` 中新增：
+`GameEntry.CreateBuilding()` 已删除旧的 `health.OnDeath += SpawnRuin(...)` 逻辑，改为：
 
 ```csharp
-if (Input.GetKeyDown(KeyCode.K) && enemyBaseHealth != null && !enemyBaseHealth.IsDead)
-    enemyBaseHealth.TakeDamage(enemyBaseHealth.CurrentHealth);
-
-if (Input.GetKeyDown(KeyCode.L) && playerBaseHealth != null && !playerBaseHealth.IsDead)
-    playerBaseHealth.TakeDamage(playerBaseHealth.CurrentHealth);
+go.AddComponent<BuildingDeathHandler>();
 ```
 
-这会走正常 `TakeDamage -> OnDeath -> FactionDefeatHandler` 路径，适合验证 MVP-03.2。`IsDead` 守卫可以避免重复触发已死亡大本营。
+`BuildingDeathHandler` 自己订阅 `HealthComponent.OnDeath` 并生成废墟。这个方向符合 MVP-03.3。
 
-### 残留：[P2] GameEntry 继续承载过多业务职责
+### [P1] 新脚本缺少 BuildingDeathHandler.cs.meta
 
 File:
 
 ```text
-kingbattle/Assets/Scripts/GameEntry.cs
+kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs
 ```
 
 Problem:
 
-`GameEntry` 当前仍包含：
+当前工作区有新增脚本：
 
-- 建筑创建和装配。
-- 大本营清场处理器装配。
-- K / L 测试快捷键。
-- `SpawnRuin()` 具体实现。
-- 建筑 `OnDeath` 到废墟生成的绑定逻辑。
+```text
+kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs
+```
 
-这已经超过“薄启动脚本”的长期职责。短期可运行，但后续会让建筑死亡、废墟、清场、测试入口混在一起。
+但没有对应：
+
+```text
+kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta
+```
+
+Impact:
+
+Unity 会为脚本生成 `.meta` 并分配 GUID。如果不提交 `.meta`，不同机器或后续重新导入时 GUID 可能变化，场景、Prefab、脚本引用会有长期风险。项目此前已要求新增 Unity 脚本时提交对应 `.meta`。
 
 Fix:
 
-发布下一条小任务：`MVP-03.3 建筑死亡 / 废墟职责边界整理`。
+请 Claude 在 Unity Editor 中让 Unity 生成该 `.meta`，或确认文件已生成后提交：
+
+```diff
++ kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs
++ kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta
+```
+
+### [P1] 代码尚未 commit / push
+
+Files:
+
+```text
+kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs
+kingbattle/Assets/Scripts/GameEntry.cs
+WORKLOG.md
+```
+
+Problem:
+
+当前 `git status` 仍显示 MVP-03.3 代码是本地未提交改动。`WORKLOG.md` 写了手动提交命令，但仓库最新提交仍是：
+
+```text
+d445c2b docs: record mvp-03.3 task push
+```
+
+Fix:
+
+Claude 需要补齐 `.meta` 后再 commit / push。
 
 ## 残留注意事项
 
@@ -79,36 +109,39 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：K / L 测试快捷键通过。现在进入 MVP-03.3。
+Codex Review：MVP-03.3 暂不通过，但实现方向正确。
 
-任务：建筑死亡 / 废墟职责边界整理。
+你已经把 SpawnRuin 从 GameEntry 移到 Buildings/BuildingDeathHandler.cs，这个方向可以。
 
-目标：
-- 不改变当前玩法表现。
-- 将 SpawnRuin / 建筑死亡处理从 GameEntry 下沉到 Buildings/ 下的小组件或小服务。
-- GameEntry 只负责装配测试场景。
+现在请只补齐交付问题：
 
-允许：
-- 新增 Buildings/BuildingDeathHandler.cs、Buildings/RuinSpawner.cs 或同等小组件。
-- 让建筑自己的死亡逻辑负责生成废墟。
-- FactionDefeatHandler 继续通过 HealthComponent.Kill() 触发建筑死亡逻辑。
-- 小范围调整 GameEntry 装配代码。
+1. 生成并提交脚本 meta 文件
+- 当前新增了 kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs
+- 但缺少 kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta
+- 请打开 Unity 或让 Unity 导入脚本后生成该 .meta
+- commit 时必须包含 .cs 和 .cs.meta
 
-必须保持：
-- 建筑死亡后生成废墟。
-- 士兵击败建筑后围绕废墟巡逻。
+2. 保持当前玩法不变
+- 建筑死亡后仍生成废墟。
+- 士兵击败建筑后仍围绕废墟巡逻。
 - 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
 - K / L 测试快捷键仍可验证双方大本营清场。
 - 单个建筑死亡只生成一个废墟。
 
-禁止：
+3. 不要扩大范围
 - 不做重建。
 - 不做占领进度。
 - 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
-- 不扩大 K / L 测试快捷键为正式功能。
 - 不修改 ProjectSettings。
-- 不提交 Unity 生成目录。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
+- 不提交 Library、Logs、UserSettings。
 
-完成后更新 WORKLOG.md，说明修改文件、Play Mode 验证步骤、是否修改场景/ProjectSettings，并 commit / push。
+4. 完成后更新 WORKLOG.md 并 commit / push
+建议提交：
+git add kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs \
+        kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "refactor: move ruin spawning from GameEntry to BuildingDeathHandler"
+git push origin main
 ```

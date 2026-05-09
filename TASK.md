@@ -126,18 +126,18 @@ MVP-02.1 / MVP-02.1a 已完成核心收尾。
 
 ## 当前状态
 
-### MVP-03.3 任务发布：建筑死亡 / 废墟职责边界整理
+### MVP-03.3 Codex Review：暂不通过
 
-Claude 最新提交：
+Claude 当前输出：
 
 ```text
-eb62289 feat: add K/L test shortcuts for faction defeat
+未提交的 BuildingDeathHandler.cs / GameEntry.cs 改动
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.1 / MVP-03.2 已通过，允许进入 MVP-03.3
+MVP-03.3 暂不通过；缺少 BuildingDeathHandler.cs.meta，且代码尚未 commit / push
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,8 +150,9 @@ MVP-03.1 / MVP-03.2 已通过，允许进入 MVP-03.3
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ MVP-03.3：将建筑死亡 / 废墟生成职责从 GameEntry 下沉到 Buildings 小组件
-- ⏳ Claude 完成后，Codex Review
+- ⏳ 生成并提交 `kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs.meta`
+- ⏳ 提交并推送 MVP-03.3 代码
+- ⏳ Claude 完成后，Codex 再 Review
 
 已处理：
 - ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动
@@ -167,6 +168,7 @@ MVP-03.1 / MVP-03.2 已通过，允许进入 MVP-03.3
 - ✅ target == null / chaseTarget == null 时只 Deaggro，不再切换 patrol center
 - ✅ 一方大本营被击败后，该方建筑清场为废墟，士兵立即死亡
 - ✅ K / L Play Mode 测试快捷键已添加，便于验证双方大本营清场
+- ✅ `SpawnRuin` 已从 `GameEntry` 移入 `Buildings/BuildingDeathHandler.cs`
 
 ## 新发布要求：MVP-03.3 建筑死亡 / 废墟职责边界整理
 
