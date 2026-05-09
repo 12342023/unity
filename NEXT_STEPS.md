@@ -1,491 +1,66 @@
 # NEXT_STEPS.md
 
-## 新目标来源
-
-依据用户更新后的 `goal.md`，项目定位正式收敛为：
-
-```text
-低操作、高战略、自动战争 RTS
-```
-
-核心不是单兵微操，而是：
-
-- 区域调度
-- 道路推进
-- 自动战争
-- 战线拉锯
-- 多线调兵
-- 中央战略区争夺
-
 ## 当前阶段判断
 
-现有实现已经覆盖部分第一、第二阶段：
+项目正在第三阶段早期：摧毁与重建。
 
-```diff
-+ 固定地图
-+ 固定道路
-+ 单位沿道路移动
-+ Barracks 自动出兵
-+ Tower 自动攻击
-+ 单位基础战斗
-- 巡逻系统尚未形成
-- 仇恨范围 / 脱战机制尚未完整
-- 集结 / 波次推进尚未形成
-- 调动区域已有兵力尚未形成
-```
+已经完成：
 
-因此下一步不要直接做“摧毁与重建、资源、升级、连地、AI”。这些属于新 `goal.md` 的第三、第四阶段。
+- 建筑被击败后变成废墟。
+- 士兵可以围绕废墟巡逻。
+- 大本营被击败后，该阵营建筑变废墟，士兵立即死亡。
+- 废墟携带来源 plot / 建筑类型 / 原阵营。
+- 废墟具备最小可重建判定。
+- 建筑创建逻辑已从 `GameEntry` 下沉到 `BuildingFactory`。
 
-## 新增后续需求：建筑废墟巡逻
+下一步不要直接做完整 UI 或资源系统，应继续用小步补齐“重建前的运行时边界”。
 
-用户新增需求：
-
-```text
-士兵打败敌方建筑后，建筑就变成废墟，士兵也可以围绕着废墟转圈巡逻。
-```
-
-阶段判断：
-
-```diff
-+ 该需求属于第三阶段：摧毁与重建 / 建筑状态 / 占领后待命
-+ 需要在后续任务中正式拆分实现
-- 当前 MVP-02.1 仍只处理巡逻、仇恨、脱战、集结点、小波次推进
-- 在脱战返回巡逻未通过前，不允许 Claude 直接实现废墟系统
-```
-
-后续实现时的最小边界建议：
-
-- 建筑生命归零后进入 Ruin 状态，而不是直接消失。
-- 废墟保留位置、阵营/归属或中立状态、可巡逻中心点。
-- 士兵打败建筑后，如果没有更高优先级命令，可以围绕废墟转圈巡逻。
-- 废墟巡逻应复用建筑周边巡逻接口，不另写一套移动逻辑。
-- 不要把废墟、重建、占领、资源产出一次性混在同一个提交里。
-
-## 已完成：MVP-02 修复收尾
-
-当前 Review 阻塞项已完成：
-
-```diff
-- Tower 可能攻击敌方建筑
-+ Tower 只攻击带 UnitCombat 的敌方单位
-+ 用户确认验证 OK
-+ WORKLOG.md 已记录
-+ commit / push 已完成
-```
-
-对应提交：
-
-```text
-48f7eb5 fix: tower targets units only, add missing meta files
-```
-
-## 当前正式任务：MVP-03.1 建筑废墟与废墟巡逻
-
-下一轮进入第三阶段的第一个小任务。
-
-目标不是一次性做完整建筑系统，而是先让“打败建筑”有稳定的战场结果：建筑留下废墟，士兵围绕废墟巡逻。
-
-## 当前 Review 结论
-
-Claude 最新提交：
-
-```text
-ca20f62 feat: ruins rebuild-predicate data layer (CanRebuildFor / GetRebuildBuildingType)
-```
-
-Codex Review 结论：MVP-03.5 代码审查通过。允许进入 MVP-03.6。
-
-已确认修复：
-
-```diff
-+ 单位沿道路前往 rally/building 时，patrol.Tick 不再覆盖 UnitMovement
-+ UnitPatrol.Setup 不再初始化时直接 snap 到巡逻圆
-+ 无 rallyPoint 时也能出兵并围绕所属 Barracks 转圈
-+ 旧版 Deaggro 一帧 MoveTowards 已删除，返回逻辑改为持续执行
-+ 脱战后走到 patrol.CurrentPatrolPosition，距离 <= 0.1 后才恢复 Tick
-+ 前往 rallyPoint 途中接敌时，Pause/Resume 保留并恢复道路路线
-+ HealthComponent 保留单位原色作为满血颜色
-+ Deaggro 清理残留 pushPath，击败敌方大本营后不再短暂折返
-+ 建筑死亡后已能生成可见废墟
-+ 非空目标场景下，普通单位死亡不再把死亡点传给 Deaggro
-+ target == null / chaseTarget == null 时只 Deaggro，不再切换 patrol center
-+ 一方大本营被击败后，该方建筑清场为废墟，士兵立即死亡
-+ K / L Play Mode 测试快捷键已添加，便于验证双方大本营清场
-+ SpawnRuin 已从 GameEntry 移入 Buildings/BuildingDeathHandler.cs
-+ BuildingDeathHandler.cs.meta 已提交
-+ 建筑身份数据 BuildingIdentity 已补充
-+ 废墟来源元数据 sourcePlotId / sourceBuildingType / originalFaction 已补充
-+ RuinComponent 已补充 CanRebuildFor / GetRebuildBuildingType
-```
-
-### MVP-03.6 建筑创建逻辑边界整理
+## 当前正式任务：MVP-03.7 建筑运行时注册表
 
 目标：
 
-- 不做实际重建。
-- 不做 UI。
-- 只把当前 `GameEntry.CreateBuilding` 的建筑创建逻辑下沉到 `Buildings/` 下的小组件 / 小服务，为后续重建复用。
-
-允许：
-
-- 新增 `Buildings/BuildingFactory.cs` 或同等小类。
-- 将创建建筑 GameObject、SpriteRenderer、HealthComponent、BuildingIdentity、BuildingDeathHandler、Collider、TowerAttack / BarracksSpawner 的装配逻辑移入 `BuildingFactory`。
-- `GameEntry` 仍负责决定测试场景里创建哪些建筑、设置 rally / push target、装配 `FactionDefeatHandler`、保留 K / L 测试快捷键。
-- 行为保持不变。
-- 新增脚本必须提交 `.meta`。
-
-必须保持：
-
-- 当前建筑出现位置、颜色、大小、血量、Tower/Barracks 行为不变。
-- 建筑死亡后仍生成废墟。
-- 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
-- K / L 测试快捷键仍可验证双方大本营清场。
-- Console 无明显错误。
-
-禁止：
-
-- 不做重建按钮。
-- 不真正生成“重建后的新建筑”流程。
-- 不做占领进度。
-- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
-- 不修改 `ProjectSettings`。
-- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
-- 不提交 Unity 生成目录。
-
-### MVP-03.5 废墟可重建判定数据层
-
-目标：
-
-- 不做完整重建系统。
-- 不做 UI。
-- 只给 Ruin 增加“是否可重建 / 可重建成什么”的最小判定数据和方法。
-
-允许：
-
-- 扩展 `RuinComponent`，新增简单方法，例如 `CanRebuildFor(Faction faction)`、`GetRebuildBuildingType()`。
-- 规则先保持最小：
-  - 有 `sourcePlotId` 才可重建。
-  - `sourceBuildingType` 决定可重建类型。
-  - `originalFaction` 只作为来源记录，不在本任务里做复杂归属规则。
-- 可以新增一个小的数据结构 / enum，但优先保持简单。
-
-必须保持：
-
-- 当前玩法表现不变。
-- 建筑死亡后仍生成废墟。
-- 士兵击败建筑后仍围绕废墟巡逻。
-- 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
-- K / L 测试快捷键仍可验证双方大本营清场。
-- 单个建筑死亡只生成一个废墟。
-
-禁止：
-
-- 不做重建按钮。
-- 不真正生成新建筑。
-- 不做占领进度。
-- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
-- 不修改 `ProjectSettings`。
-- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
-- 不提交 Unity 生成目录。
-
-### MVP-03.4 建筑身份数据与废墟元数据
-
-目标：
-
-- 不做完整重建系统。
-- 只为未来重建准备最小必要数据。
-- 建筑死亡后生成的 Ruin 应知道自己来自哪个 plot、哪个建筑类型、哪个阵营。
-
-允许：
-
-- 新增 `Buildings/BuildingIdentity.cs` 或同等小组件。
-- 在 `GameEntry.CreateBuilding()` 装配建筑时写入 `plotId`、`BuildingType`、`Faction`。
-- 扩展 `RuinComponent`，让废墟记录 `sourcePlotId`、`sourceBuildingType`、`originalFaction`。
-- `BuildingDeathHandler` 生成 Ruin 时，把建筑身份数据传给 `RuinComponent`。
-- 小范围调整 `GameEntry` 装配代码。
-
-必须保持：
-
-- 当前玩法表现不变。
-- 建筑死亡后仍生成废墟。
-- 士兵击败建筑后仍围绕废墟巡逻。
-- 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
-- K / L 测试快捷键仍可验证双方大本营清场。
-- 单个建筑死亡只生成一个废墟。
-
-禁止：
-
-- 不做重建按钮。
-- 不做占领进度。
-- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
-- 不修改 `ProjectSettings`。
-- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
-- 不提交 Unity 生成目录。
-
-### MVP-03.3 建筑死亡 / 废墟职责边界整理
-
-目标：
-
-- 不改变当前玩法表现。
-- 将 `SpawnRuin` / 建筑死亡处理从 `GameEntry` 下沉到 `Buildings/` 下的小组件或小服务。
-- `GameEntry` 只负责装配测试场景。
-
-允许：
-
-- 新增 `Buildings/BuildingDeathHandler.cs`、`Buildings/RuinSpawner.cs` 或同等小组件。
-- 让建筑自己的死亡逻辑负责生成废墟。
-- `FactionDefeatHandler` 继续通过 `HealthComponent.Kill()` 触发建筑死亡逻辑。
-- 小范围调整 `GameEntry` 装配代码。
-
-必须保持：
-
-- 建筑死亡后生成废墟。
-- 士兵击败建筑后围绕废墟巡逻。
-- 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
-- K / L 测试快捷键仍可验证双方大本营清场。
-- 单个建筑死亡只生成一个废墟。
-
-禁止：
-
-- 不做重建。
-- 不做占领进度。
-- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
-- 不扩大 K / L 测试快捷键为正式功能。
-- 不修改 `ProjectSettings`。
-- 不提交 Unity 生成目录。
-- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
-
-### Play Mode 验证清单
-
-- 击败 `EnemyBase` 后，敌方 `EnemyBase` 和 `EnemyOutpost` 都变成废墟。
-- 所有红方士兵立即死亡。
-- 蓝方士兵仍存活，并围绕废墟巡逻。
-- 击败 `PlayerBase` 后，蓝方 `PlayerBase`、`Crossroads`、`Village` 变成废墟。
-- 所有蓝方士兵立即死亡。
-- 按 K 可快速触发 EnemyBase 被击败。
-- 按 L 可快速触发 PlayerBase 被击败。
-- Console 无明显错误。
-
-### MVP-03.1 建筑废墟与废墟巡逻
-
-范围：
-
-- 建筑血量归零后进入废墟状态
-- 士兵打败建筑后围绕废墟转圈巡逻
-
-要求：
-
-- 建筑死亡后留下可见废墟，而不是完全消失
-- 废墟保留原建筑位置，作为可巡逻中心
-- 废墟不再执行原建筑功能：Tower 不攻击，Barracks 不出兵
-- 士兵打败建筑后，以废墟为 patrol center 转圈
-- 普通单位死亡逻辑保持原样，不变成废墟
-- 普通单位死亡时，士兵不能把 patrol center 切到单位死亡点
-- target == null / chaseTarget == null 时不能被当成建筑，只能普通 Deaggro
-- 废墟逻辑放在 `Buildings/` 或清晰小组件中，不新增大型 `GameManager`
-- 可使用 `HealthComponent.OnDeath`，但不要破坏单位死亡逻辑
-
-### MVP-03.2 大本营击败后的阵营清场
-
-用户新增规则：
-
 ```text
-对方大本营被攻占后，对方所有建筑成为废墟，所有兵立即死亡。
+让运行时建筑可以按阵营被登记和查询，为后续重建出的建筑接入清场逻辑做准备。
 ```
 
-当前阶段解释：
+为什么先做这个：
 
-- 还不做占领进度系统。
-- 暂时把“大本营血量归零 / 进入废墟”视为“大本营被攻占”。
-- 当前 `PlayerBase` / `EnemyBase` 的 Barracks 视为双方大本营。
+- 未来重建会创建新建筑。
+- 新建筑如果不注册进运行时建筑集合，`FactionDefeatHandler` 就不知道它存在。
+- 阵营被击败时，未注册的新建筑可能不会变成废墟。
 
-要求：
+## 给 Claude 的实现方向
 
-- 任一方大本营被击败后，该阵营判定失败。
-- 失败阵营所有仍存活建筑立即变成废墟。
-- 失败阵营所有仍存活士兵立即死亡 / 销毁。
-- 已经变成废墟的建筑不要重复生成第二个废墟。
-- 废墟仍无攻击、无出兵、无 `HealthComponent`。
-- 可新增小组件，例如 `Buildings/FactionDefeatHandler.cs` 或同等清晰小类。
-- `GameEntry` 只负责装配，不要继续膨胀成业务中心。
-- 先不做胜负 UI、重开、奖励、资源、占领条、AI 行为。
-
-禁止：
-
-- 重建
-- 占领进度
-- 资源
-- 升级
-- 连地
-- 区域奖励
-- 传送阵
-- AI
-- UI / 美术大改 / 音效
-
-MVP-03.1 通过后，再考虑重建、占领或资源。
-
-### 1. 巡逻系统
-
-士兵生产后不应原地等待，也不应立即一个个无脑送死。
-
-用户已进一步澄清：这里的“巡逻”不是在几个地块之间来回移动，而是：
-
-```text
-士兵围绕所属建筑转圈巡逻
+```diff
++ 新增 Buildings/BuildingRegistry.cs 或同等小类
++ GameEntry 创建初始建筑后注册进去
++ FactionDefeatHandler 从 registry 查询当前阵营建筑
++ 查询时过滤 null / dead building
++ 保持 K / L 清场行为完全不变
+- 不做实际重建
+- 不做 UI / 资源 / 占领 / 升级 / 连地 / AI
+- 不修改 ProjectSettings
 ```
 
-也就是单位在 Barracks / 所属建筑附近做小半径环绕、圆形或近似圆形巡逻，视觉上要像“守在建筑旁边绕圈”。
+## MVP-03.7 后的建议顺序
 
-要求：
+### MVP-03.8 废墟重建最小服务
 
-- Barracks 生成单位后，单位默认围绕所属建筑做小半径转圈巡逻
-- 巡逻中心应是所属建筑位置，或该建筑明确指定的 patrolCenter
-- 多个单位可以使用不同起始角度，避免完全重叠
-- 巡逻半径先用测试值，例如 0.6 到 1.2 Unity 单位
-- 巡逻只用于建筑周边待命，不等同于道路行军
-- 巡逻状态下如果进入仇恨范围，应能立刻切换到接敌
-- 脱战后可见地走回建筑周边，再继续转圈巡逻，不能瞬移
-- 巡逻逻辑不要写进 `GameEntry`
-- 可以新增 `Units/UnitPatrol.cs` 或同等小脚本
+在注册表稳定后，再新增 `BuildingRebuildService` 或同等小服务：
 
-暂不要求：
+- 输入 `RuinComponent`、`MapData`、目标 `Faction`
+- 使用 `RuinComponent.GetRebuildBuildingType()`
+- 通过 `BuildingFactory.CreateBuilding(...)` 创建建筑
+- 创建成功后注册到 `BuildingRegistry`
+- 再销毁废墟
+- 仍不做正式 UI / 资源
 
-- 复杂队形
-- 避障
-- 动画
-- 士气
-- 严格沿道路绕圈
+### MVP-03.9 调试入口验证重建闭环
 
-### 2. 仇恨范围与锁敌
+仅在服务边界稳定后，再考虑一个临时调试快捷键验证闭环。正式 UI、资源消耗和占领规则继续后置。
 
-单位应根据 `goal.md` 自动接敌。
+## 长期提醒
 
-要求：
-
-- 单位拥有 aggroRange / chaseRange
-- 敌人进入仇恨范围后自动锁敌
-- 锁敌优先级先做最小版：
-  1. 敌方单位
-  2. 敌方建筑
-- Tower 仍只攻击单位
-- 不做复杂权重系统
-
-### 3. 脱战机制
-
-单位不能永久卡在无效目标上。
-
-要求：
-
-- 目标死亡后脱战
-- 目标超出追击距离后脱战
-- 脱战后回到巡逻或集结点，返回过程必须是移动，不是 snap
-- 如果单位在前往 rallyPoint 途中接敌，脱战后应恢复原路线，或明确返回 rally/home 后进入巡逻
-- 不引入全局单例
-
-### 4. 集结点最小原型
-
-为了靠近“低操作、高战略”，需要从“单兵自动送”过渡到“军队集结”。
-
-要求：
-
-- 每个 Barracks 可以有一个 rallyPoint / 集结目标
-- 新生产单位优先向集结点移动
-- 到达集结点后，可以围绕集结点或指定建筑转圈巡逻
-- 没有集结点时围绕所属建筑转圈巡逻
-- 可以先在代码中设置固定测试集结点，不做 UI
-
-### 5. 波次推进最小原型
-
-`goal.md` 明确不要一个兵一个兵送。
-
-本轮只做最小验证：
-
-- 达到最小人数阈值后再向目标推进
-- 阈值可先写成测试值，例如 3 个 Soldier
-- 推进目标可以先固定为敌方主基地或敌方前线区域
-- 不做完整区域调兵 UI
-
-## 本轮禁止事项
-
-Claude 在 MVP-02.1 禁止实现：
-
-- 摧毁与重建
-- 建筑变废墟
-- 围绕废墟巡逻
-- 建筑升级
-- 粮食资源
-- 人口上限
-- 连地系统
-- 区域奖励
-- 中央区域奖励
-- 传送阵
-- AI 决策
-- 地形信息 UI
-- 英雄
-- 科技树
-- 装备
-- 随机地图
-- 联机
-- 平台适配
-- 大规模重构
-
-## 架构要求
-
-推荐继续保持：
-
-```text
-Scripts/
-├── Core/
-├── Map/
-├── Units/
-├── Buildings/
-└── Combat/
-```
-
-允许按需新增：
-
-```text
-Scripts/Orders/
-```
-
-但只有当集结 / 波次推进逻辑无法清晰放在 Units 或 Buildings 中时才新增。
-
-要求：
-
-- `GameEntry` 只负责装配测试场景
-- 不新增大型 `GameManager`
-- 不新增全局单例
-- 不把未来微信小程序、macOS、Android 平台差异写入玩法代码
-- 不修改 `ProjectSettings`，除非先说明理由并等待确认
-
-## 验收标准
-
-MVP-02.1 完成后，Claude 必须证明：
-
-- Barracks 生成单位后能围绕所属建筑转圈巡逻，或前往集结点后围绕集结点/指定建筑转圈
-- 新兵不会瞬移到巡逻圆上
-- 新兵会先沿道路到达集结点 / 建筑附近，再开始转圈
-- 无集结点时也能出兵并围绕所属建筑转圈
-- 单位会因仇恨范围自动接敌
-- 单位能在目标死亡或超出追击距离后脱战
-- 单位追敌离开建筑/集结点后，会走回巡逻圆附近再恢复转圈，不会瞬移
-- 单位前往 rallyPoint 途中接敌后，不会丢失后续移动意图
-- 至少一组单位能按人数阈值形成小波次推进
-- 单位仍沿道路 / 路点移动
-- Console 无明显错误
-- 未修改 `ProjectSettings`，或已提前说明理由
-- 未提交 Unity 生成目录
-- 已更新 `TASK.md`、`REVIEW.md`、`NEXT_STEPS.md`、`WORKLOG.md`
-- 已 commit / push
-
-## Codex Review 重点
-
-Claude 输出后，Codex 重点 Review：
-
-- 是否贴合 `goal.md` 的“低操作、高战略”方向
-- 是否避免继续堆单兵微操
-- 是否保持系统边界清晰
-- 是否没有提前做第三阶段内容
-- 是否没有新增全局状态
-- 是否没有把测试逻辑写成长期架构
-- 是否能在 Play Mode 观察到建筑周边转圈巡逻、接敌、脱战、集结、波次推进
+- 微信小程序、macOS、Android 移植会要求业务逻辑边界干净。
+- 平台能力不要散落在建筑、战斗、移动脚本中。
+- 当前阶段继续优先保持 `GameEntry` 变薄，业务能力下沉到清晰的小组件 / 小服务。

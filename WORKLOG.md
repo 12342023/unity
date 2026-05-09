@@ -2787,3 +2787,66 @@ git add kingbattle/Assets/Scripts/Buildings/BuildingFactory.cs \
 git commit -m "refactor: extract BuildingFactory from GameEntry for rebuild reuse"
 git push origin main
 ```
+
+### MVP-03.6 Codex Review：通过并发布 MVP-03.7
+
+操作人：Codex
+
+审查提交：
+
+```text
+774a48e refactor: extract BuildingFactory from GameEntry for rebuild reuse
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `kingbattle/Assets/Scripts/Buildings/BuildingFactory.cs`
+- `kingbattle/Assets/Scripts/Buildings/BuildingFactory.cs.meta`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.6 代码审查通过
+```
+
+已确认：
+
+1. `BuildingFactory.CreateBuilding(...)` 已承接原 `GameEntry.CreateBuilding(...)` 的建筑装配逻辑。
+2. `GameEntry` 仍负责场景内创建哪些建筑、rally / push target、`FactionDefeatHandler`、K / L 测试快捷键。
+3. `BuildingFactory.cs.meta` 已提交。
+4. 本轮未实现重建按钮、资源、占领、UI 或实际重建，范围正确。
+5. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+代码提交上传：
+
+```text
+git push origin main
+371afa7..774a48e  main -> main
+```
+
+新发布任务：
+
+```text
+MVP-03.7 建筑运行时注册表
+```
+
+给 Claude 的任务边界：
+
+```diff
++ 新增 BuildingRegistry 或同等小类
++ GameEntry 创建初始建筑后注册进去
++ FactionDefeatHandler 通过 registry 查询当前阵营建筑
++ 查询时过滤 null / 已死亡建筑
++ 保持 K / L 阵营清场行为不变
++ 新增脚本必须提交 .meta
+- 不做实际重建
+- 不做重建按钮
+- 不做资源、占领、升级、连地、区域奖励、传送阵、AI 或 UI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
