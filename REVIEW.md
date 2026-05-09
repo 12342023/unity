@@ -2,104 +2,94 @@
 
 ## Review 状态
 
-Codex 已审查 MVP-03.12 当前代码：
+Codex 已审查 Claude 最新提交：
 
 ```text
-8b61f54 fix: compile U dispatch shortcut
+2e19281 feat: PlotCaptureService + MapRenderer.RefreshPlotColor, U triggers capture
 ```
 
-结论：**MVP-03.12 静态代码审查通过，允许进入 MVP-03.13**。
+结论：**MVP-03.13 暂不通过，需要一轮小修后再继续**。
 
-说明：`GameEntry` 已提供 U 临时测试快捷键，可以从 main base ruin 找到第一个可连接 Neutral plot，并将附近 Player 士兵沿道路派过去。U 不改变 plot 归属，不做占领判定，不生成正式 UI。
+说明：主路径已经接近目标，U 派兵到达后可以调用占领服务并刷新地块颜色。但当前占领服务与到达回调还有几个边界问题，会影响后续连地/派兵系统稳定性。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **FAIL**
 
 Findings:
 
-```text
-无阻塞问题。
-```
+### [P1] 静态 capturedPlots 没有 reset，可能导致 Play Mode 第二次无法占领
 
-### 已确认
+File: `kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs:15`
 
-- `GameEntry` 已包含 `using System.Collections.Generic;`，修复 U 快捷键新增 `List<Vector3>` 后的编译风险。
-- U 使用 `RuinComponent.GetConnectableNeutralPlots(mapData)` 获取目标。
-- U 使用 `RoadPathFinder.FindPath(mapData, rallyRuin.sourcePlotId, targetPlotId)` 计算道路路径。
-- U 将 path plotId 转为 world waypoint。
-- U 只筛选 Player 且存活的附近士兵。
-- U 派兵前调用 `ClearPushPath()` 和 `UnitMovement.Stop()`，避免旧路径与新 push path 抢控制。
-- U 只派兵，不改变任何 plot 的 `faction`。
-- K / L / R / T / Y 行为仍保留。
-- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
+Problem: `capturedPlots` 是 static，`Reset()` 已写但没有任何地方调用。如果 Unity 关闭 Domain Reload，或者后续切换场景/重启玩法但静态状态没清掉，新的 `MapData` 里 Crossroads 仍是 Neutral，但 `capturedPlots` 还记着它已占领，导致 `TryCapture` 返回 false，颜色和归属都不会更新。
 
-### 验证限制
+Fix: 在 `GameEntry.Start()` 初始化新一局玩法时调用 `PlotCaptureService.Reset()`。更长期可以考虑去掉 `capturedPlots`，只用 `plot.faction != Faction.Neutral` 判断重复占领。
 
-Codex 本机没有可用的 `dotnet` / `mcs` / `csc` 命令，且 shell 未找到可直接执行的 Unity Editor 二进制，所以本轮只完成静态审查与 diff 检查。
+### [P2] TryCapture 没有强制只能 Player 占领，也没有拒绝 main base
 
-用户侧 Unity 需要确认：
+File: `kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs:29`
 
-```text
-K -> T -> Y -> U
-```
+Problem: 任务要求“只允许 Neutral -> Player”和“不允许占领 main base ruin 本身”。但当前 public API 接收任意 `capturingFaction`，只要目标是 Neutral，就会改成该阵营；同时没有检查 `plot.isMainBase`。虽然当前 `GameEntry` 只传 `Faction.Player`，但服务边界本身不符合任务合同，后续复用时容易引入错误。
 
-预期：
+Fix: 在 `TryCapture` 入口明确拒绝 `capturingFaction != Faction.Player`，并在拿到 plot 后拒绝 `plot.isMainBase`。
 
-- K 后 EnemyBase 变 main base ruin。
-- T 后 Player 士兵聚到 EnemyBase 废墟附近。
-- Y 打印 `EnemyBase can connect to: Crossroads`。
-- U 后附近 Player 士兵沿路前往 Crossroads。
-- Console 无明显错误。
+### [P2] OnPushDestinationReached 回调会累积，后续派兵可能触发旧占领逻辑
+
+File: `kingbattle/Assets/Scripts/GameEntry.cs:213`
+
+Problem: U 每次派兵都会 `+=` 一个 lambda，但 lambda 到达后不会 unsubscribe。当前只有一个目标时影响还小；后续一旦支持多个 Neutral 目标或多次派兵，旧回调可能在下一次到达时再次执行，造成日志噪音或错误占领尝试。
+
+Fix: 使用 one-shot handler：注册前创建 `System.Action handler = null; handler = () => { u.OnPushDestinationReached -= handler; ... }`，到达后先反订阅，再执行 `captureOnce` 判断。
+
+### [P3] WORKLOG 的二次 U 验证描述与当前逻辑不一致
+
+File: `WORKLOG.md`
+
+Problem: WORKLOG 写“再次 U 会再次走向 Crossroads 并显示 already captured”。但第一次占领后 Crossroads 已变 Player，`GetConnectableNeutralPlots` 不再返回 Crossroads，所以再次 U 更可能输出没有可连接 Neutral plot。
+
+Fix: 更新 WORKLOG 验证描述，保持和代码行为一致。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.12 静态代码审查通过。
+Codex Review：MVP-03.13 暂不通过，需要小修后再继续。
 
-进入 MVP-03.13：Neutral plot 最小占领与颜色刷新。
+本轮只修 MVP-03.13，占领边界与回调生命周期，不做新功能。
 
-本轮目标：
+必须修复：
+
+1. PlotCaptureService static 状态重置
+   - 在 GameEntry.Start() 新一局初始化时调用 PlotCaptureService.Reset()。
+   - 保证反复进入 Play Mode 时，Crossroads 不会因为旧 capturedPlots 状态而无法再次占领。
+
+2. PlotCaptureService 占领边界
+   - TryCapture 必须明确只允许 capturingFaction == Faction.Player。
+   - 如果 capturingFaction 不是 Player，返回 false 并输出清晰日志。
+   - 如果目标 plot.isMainBase == true，返回 false 并输出清晰日志。
+   - 仍然只允许 plot.faction == Faction.Neutral 时占领。
+   - 不允许占领 Enemy plot。
+
+3. U 派兵到达回调改成 one-shot
+   - 不要一直累积 OnPushDestinationReached lambda。
+   - 使用可反订阅的一次性 handler。
+   - handler 到达后先取消订阅，再执行 captureOnce / TryCapture。
+   - 保持多个士兵里只有第一个到达者触发占领。
+
+4. 修正 WORKLOG 验证描述
+   - 第一次 U 到达 Crossroads 后，Crossroads 变 Player。
+   - 再次 Y / U 时，EnemyBase 可能没有可连接 Neutral plot，因为 Crossroads 已不是 Neutral。
+   - 不要写“再次 U 会再次走向 Crossroads”。
+
+禁止：
 - 不做正式 UI。
-- 不做资源、升级、区域奖励、传送阵或 AI。
-- 不做倒计时占领条。
-- 不做敌方反夺。
-- 只做最小闭环：U 派出的 Player 士兵到达第一个可连接 Neutral plot 后，该 plot 变成 Player，并且地图颜色刷新。
-
-允许：
-- 新增一个很小的服务类，例如 StrategicCaptureService 或 PlotCaptureService。
-- 服务职责保持单一：
-  1. 检查目标 plot 是否存在。
-  2. 检查目标 plot 当前是否是 Faction.Neutral。
-  3. 将目标 plot.faction 改为 Faction.Player。
-  4. 输出日志。
-- 可以给 MapRenderer 增加最小刷新方法，例如 RefreshPlotColor(string plotId, MapData mapData)。
-- GameEntry 可以保留 MapRenderer 引用，用于 U 到达后刷新目标 plot 颜色。
-- U 派兵时可以使用 UnitCombat.OnPushDestinationReached，在士兵到达目标后触发一次占领。
-- 如果多个士兵都到达，只允许第一次把 Neutral 改为 Player，后续输出 already captured 或直接忽略。
-- 保持 K / L / R / T / Y / U 行为不变。
-
-必须保持：
-- Main base ruin 仍不能通过 R 重建。
-- Y 仍只打印可连接 Neutral 地点。
-- U 仍是临时测试入口。
-- 只允许占领 Neutral plot。
-- 不允许占领 Enemy plot。
-- 不允许占领 main base ruin 本身。
-- 不新增正式 UI。
+- 不做占领进度条。
+- 不做资源、升级、区域奖励、传送阵、AI。
+- 不重构 GameEntry。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
 
-禁止：
-- 不做资源产出。
-- 不做升级。
-- 不做区域奖励。
-- 不做传送阵。
-- 不做 AI。
-- 不做复杂占领进度。
-- 不把平台相关逻辑写进战斗/地图/建筑脚本。
-
-完成后更新 WORKLOG.md，说明修改文件、K/T/Y/U/R/L Play Mode 验证步骤、是否修改 ProjectSettings，并 commit / push。
+完成后更新 WORKLOG.md，说明修改文件、K/T/Y/U/R/L Play Mode 验证结果，并 commit / push。
 ```

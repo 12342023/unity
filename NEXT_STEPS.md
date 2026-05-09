@@ -2,7 +2,7 @@
 
 ## 当前阶段判断
 
-项目正在第三阶段中期：摧毁、废墟、战略据点、连地派兵。
+项目正在第三阶段中期：摧毁、废墟、战略据点、连地派兵、最小占领。
 
 已经完成：
 
@@ -13,30 +13,31 @@
 - R 已能跳过大本营废墟，重建普通废墟。
 - Y 已能查询 main base ruin 相邻 Neutral 地点。
 - U 已能从 main base ruin 向第一个可连接 Neutral plot 临时派兵。
+- MVP-03.13 主路径已接近完成，但占领边界和回调生命周期需要小修。
 
-## 当前正式任务：MVP-03.13 Neutral plot 最小占领与颜色刷新
+## 当前正式任务：MVP-03.13 小修
 
 目标：
 
 ```text
-U 派出的 Player 士兵到达 Neutral plot 后，占领该 plot，并刷新地图颜色。
+修稳 PlotCaptureService 与 U 到达回调，不继续加新玩法。
 ```
 
 实现方向：
 
 ```diff
-+ 新增小型 PlotCaptureService / StrategicCaptureService
-+ 只允许 Neutral -> Player
-+ GameEntry 在 U 派兵到达后触发一次占领
-+ MapRenderer 增加按 plotId 刷新颜色的最小方法
++ GameEntry.Start 调用 PlotCaptureService.Reset()
++ TryCapture 明确只允许 Player 占领
++ TryCapture 拒绝 main base plot
++ U 的 OnPushDestinationReached 使用 one-shot handler
++ 修正 WORKLOG 二次 U 验证描述
 - 不做正式 UI
 - 不做占领进度条
-- 不允许占领 Enemy plot
 - 不做资源、升级、区域奖励、传送阵、AI
 - 不修改 ProjectSettings
 ```
 
-## MVP-03.13 后的建议顺序
+## 小修通过后的建议顺序
 
 ### MVP-03.14 派兵边界整理
 

@@ -3963,3 +3963,60 @@ git add kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs \
 git commit -m "feat: PlotCaptureService + MapRenderer.RefreshPlotColor, U triggers capture"
 git push origin main
 ```
+
+### MVP-03.13 Codex Review：暂不通过，发布小修任务
+
+操作人：Codex
+
+审查提交：
+
+```text
+2e19281 feat: PlotCaptureService + MapRenderer.RefreshPlotColor, U triggers capture
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs`
+- `kingbattle/Assets/Scripts/Combat/PlotCaptureService.cs.meta`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `kingbattle/Assets/Scripts/Map/MapRenderer.cs`
+- `WORKLOG.md`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+
+结论：
+
+```text
+MVP-03.13 暂不通过，需要小修后再继续
+```
+
+主要发现：
+
+1. `PlotCaptureService` 的 static `capturedPlots` 没有在新一局开始时 reset。
+2. `TryCapture` 没有明确限制 `capturingFaction == Faction.Player`。
+3. `TryCapture` 没有拒绝 `plot.isMainBase`。
+4. `GameEntry` 中 U 派兵注册的 `OnPushDestinationReached` lambda 没有 one-shot unsubscribe。
+5. `WORKLOG.md` 写“再次 U 会再次走向 Crossroads”，但 Crossroads 被占领后已不是 Neutral，验证描述需要修正。
+
+新发布任务：
+
+```text
+MVP-03.13 小修：占领边界与 U 到达回调生命周期
+```
+
+任务边界：
+
+```diff
++ GameEntry.Start 调用 PlotCaptureService.Reset()
++ TryCapture 明确只允许 Player 占领
++ TryCapture 拒绝 main base plot
++ U 的 OnPushDestinationReached 使用 one-shot handler
++ 修正 WORKLOG 二次 U 验证描述
+- 不做正式 UI
+- 不做占领进度条
+- 不做资源、升级、区域奖励、传送阵、AI
+- 不重构 GameEntry
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
