@@ -3210,3 +3210,20 @@ MVP-03.9 大本营废墟特殊规则
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 Review 与任务发布文档。
+
+提交记录：
+
+```text
+09dcc71 docs: review mvp-03.8 and release mvp-03.9
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   32bb717..09dcc71  main -> main
+```
