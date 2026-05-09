@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-发布 MVP-03.14：派兵边界整理。
+发布 MVP-03.15：占领后的下一层可连接 Neutral 查询。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,23 +11,23 @@ Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业�
 Claude 最新提交：
 
 ```text
-ab78ee4 fix: uCaptureHandlers dict prevents stale handler on re-press U
+712cd39 refactor: extract dispatch + capture handler to StrategicDispatchService
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.13 代码审查通过；允许进入 MVP-03.14
+MVP-03.14 代码审查通过；允许进入 MVP-03.15
 ```
 
 ## 本轮目标
 
-只做代码边界整理，不改变玩法。
+只做数据层/临时验证，不做正式 UI 和复杂派兵。
 
 目标：
 
 ```text
-把 U 临时派兵、capture handler 管理、到达后占领触发从 GameEntry 下沉到小服务。
+已占领的 Player plot 能查询相邻 Neutral plot，为后续从 Crossroads 继续扩张做准备。
 ```
 
 ## 当前工作区注意事项
@@ -47,29 +47,28 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 - U 到达 Crossroads 后可将 Crossroads 从 Neutral 改为 Player。
 - Crossroads 颜色会刷新为 Player 颜色。
 - Crossroads 变 Player 后，再次 Y / U 不再把 Crossroads 当作 Neutral。
+- U 派兵与 capture handler 管理已下沉到 `StrategicDispatchService`。
 
-## MVP-03.14 允许范围
+## MVP-03.15 允许范围
 
 - 可以新增小服务类，例如：
 
 ```text
-kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs
+kingbattle/Assets/Scripts/Map/StrategicConnectionService.cs
 ```
 
-- 服务职责可以包括：
-  - 管理 U 专用 capture handler 字典。
-  - 给单位注册 one-shot capture handler。
-  - 注册新 U handler 前移除该单位旧 U handler。
-  - handler 触发后移除自身与字典记录。
-  - 查找 main base ruin 附近的 Player 存活士兵。
-  - 对这些士兵执行 `ClearPushPath()`、`UnitMovement.Stop()`、`SetPushPath(...)`。
-  - 到达后调用 `PlotCaptureService.TryCapture(...)`。
-- `GameEntry` 仍保留 K / L / R / T / Y / U 快捷键入口。
-- `GameEntry` 的 U 分支应尽量只做：
-  - 找 main base ruin。
-  - 取第一个 connectable Neutral plot。
-  - 用 `RoadPathFinder.FindPath(...)` 算路径。
-  - 调用服务执行派兵。
+- 服务职责：
+  - 给定 `MapData`、`sourcePlotId`、`Faction`。
+  - 检查 source plot 是否存在。
+  - 检查 source plot 是否属于传入 faction。
+  - 只返回相邻 `Faction.Neutral` plotId。
+  - 不改变任何 plot 归属。
+- 可以在 `GameEntry` 增加临时测试快捷键，例如 `I`。
+- `I` 的行为：
+  - 找到第一个 Player-owned 且非 main base 的 plot。
+  - 打印它可连接的 Neutral 邻居。
+  - 不派兵，不占领。
+- 如果 Crossroads 还没被占领，I 可以输出 no owned frontier plot。
 - 新增 `.cs` 文件必须提交 `.meta`。
 - 更新 `WORKLOG.md`。
 
@@ -77,6 +76,8 @@ kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs
 
 - 不改变 K / L / R / T / Y / U 行为。
 - 不做正式派兵 UI。
+- 不做多点派兵。
+- 不做自动扩张。
 - 不做占领进度条。
 - 不做敌方反夺。
 - 不做资源、升级、区域奖励、传送阵、AI。
@@ -88,21 +89,15 @@ kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs
 
 ## 验收标准
 
-- 新增 `StrategicDispatchService.cs` 或等价小服务。
+- 新增 `StrategicConnectionService.cs` 或等价小服务。
 - 新增脚本的 `.meta` 已提交。
-- `GameEntry` 中 U 分支明显变薄。
-- Play Mode：K -> T -> Y -> U。
-- U 到达 Crossroads 后：
-  - Crossroads 从 Neutral 变 Player。
-  - Crossroads 颜色刷新为 Player 颜色。
-  - Console 有清晰占领日志。
-- 到达前重复按 U：
-  - 不应留下旧 capture handler。
-  - 到达后只触发当前 U 的 capture handler。
-- Crossroads 被占领后再次 Y / U：
-  - Y / U 不应再把 Crossroads 当作 Neutral。
-  - U 应输出 no connectable neutral plots 或同等日志。
-  - 不应再次派兵去 Crossroads。
+- Play Mode：
+  - K -> T -> Y -> U。
+  - U 到达 Crossroads 后，Crossroads 变 Player。
+  - 再按 I，Console 能打印 Crossroads 可连接的 Neutral 邻居，例如 Village / Farmland。
+- I 不改变任何 plot 归属。
+- I 不派兵。
+- Y / U 原有行为不变。
 - R 仍跳过大本营废墟。
 - K / L 清场行为不变。
 - Console 无明显错误。

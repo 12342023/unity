@@ -4340,3 +4340,56 @@ git add kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs \
 git commit -m "refactor: extract dispatch + capture handler to StrategicDispatchService"
 git push origin main
 ```
+
+### MVP-03.14 Codex Review：通过并发布 MVP-03.15
+
+操作人：Codex
+
+审查提交：
+
+```text
+712cd39 refactor: extract dispatch + capture handler to StrategicDispatchService
+```
+
+结论：
+
+```text
+MVP-03.14 代码审查通过
+```
+
+已确认：
+
+1. 新增 `kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs`。
+2. 新增脚本 `.meta` 已提交。
+3. U 派兵、附近士兵筛选、capture handler 管理已从 `GameEntry` 下沉到服务。
+4. `GameEntry` 的 U 分支保留 main base ruin 查询、目标选择、路径计算和服务调用。
+5. `StrategicDispatchService.Reset()` 已在 `GameEntry.Start()` 调用。
+6. K / L / R / T / Y / U 行为保持。
+7. 本轮未引入正式 UI、占领进度、资源、升级、区域奖励、传送阵或 AI。
+8. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+说明：
+
+- `git show --check HEAD` 会报告 Unity `.meta` 空值字段的尾随空格。
+- 当前仓库内 Unity `.meta` 文件普遍采用该格式，本轮不作为阻塞问题，也不要求批量改动。
+
+新发布任务：
+
+```text
+MVP-03.15 占领后的下一层可连接 Neutral 查询
+```
+
+任务边界：
+
+```diff
++ 新增 StrategicConnectionService 或等价小服务
++ 支持从 owned plot 查询相邻 Neutral plot
++ GameEntry 增加 I 临时测试快捷键打印结果
+- 不改变 K/L/R/T/Y/U 行为
+- 不派兵
+- 不占领
+- 不做正式 UI
+- 不做资源、升级、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
