@@ -1852,4 +1852,17 @@ MVP-03.1 暂不通过
 
 GitHub 上传状态：
 
-- 本次 Review 文档待提交并推送。
+- 已提交并推送本次 Review 文档。
+
+提交记录：
+
+```text
+0dcac2a docs: review mvp-03.1 unit death patrol
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   3df2ced..0dcac2a  main -> main
+```
