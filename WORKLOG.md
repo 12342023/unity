@@ -2738,3 +2738,52 @@ ea52635 docs: review mvp-03.5 and release mvp-03.6
 To https://github.com/12342023/unity.git
    ca20f62..ea52635  main -> main
 ```
+
+### MVP-03.6 建筑创建逻辑下沉到 BuildingFactory
+
+操作人：Claude
+
+已完成目标：将建筑创建逻辑从 `GameEntry` 下沉到 `BuildingFactory`，为后续重建复用做准备。
+
+新增 1 个文件：
+- `Assets/Scripts/Buildings/BuildingFactory.cs` — 建筑工厂
+  - `public static GameObject CreateBuilding(plotId, mapData, faction, type)`
+  - 完全移植了原 `GameEntry.CreateBuilding()` 的所有装配逻辑
+  - SpriteRenderer、HealthComponent、BuildingIdentity、BuildingDeathHandler、Collider、BarracksSpawner / TowerAttack 全在此组装
+
+修改 1 个文件：
+- `Assets/Scripts/GameEntry.cs` — 委托工厂
+  - `CreateBuilding()` 从 78 行缩为 1 行：`return BuildingFactory.CreateBuilding(...)`
+  - 文件缩短至 170 行（之前 223+ 行）
+  - `SetupBuildings()` 中所有 `CreateBuilding(...)` 调用不变
+
+职责边界：
+```
+GameEntry.SetupBuildings()
+  → 决定创建哪些建筑（PlayerBase Barracks、Crossroads Tower……）
+  → 设置 rally / push target 和 FactionDefeatHandler
+  → K / L 测试快捷键
+     ↓ 委托
+BuildingFactory.CreateBuilding()
+  → 创建 GameObject + 所有组件
+  → 返回装配完成的 building
+```
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. Play → 地图建筑位置、颜色、大小、血量与之前完全一致
+2. Barracks 正常出兵，Tower 正常攻击
+3. 按 K / L → 阵营清场正常
+4. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Buildings/BuildingFactory.cs \
+        kingbattle/Assets/Scripts/Buildings/BuildingFactory.cs.meta \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "refactor: extract BuildingFactory from GameEntry for rebuild reuse"
+git push origin main
+```
