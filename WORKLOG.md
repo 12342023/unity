@@ -3371,3 +3371,20 @@ MVP-03.10 大本营废墟聚兵点最小原型
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 Review 与任务发布文档。
+
+提交记录：
+
+```text
+eb6b790 docs: review mvp-03.9 and release mvp-03.10
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   8dc3927..eb6b790  main -> main
+```
