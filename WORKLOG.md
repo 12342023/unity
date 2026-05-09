@@ -2125,3 +2125,57 @@ git add kingbattle/Assets/Scripts/Buildings/FactionDefeatHandler.cs \
 git commit -m "fix: handle base defeat faction cleanup"
 git push origin main
 ```
+
+### MVP-03.1 / MVP-03.2 Codex Review：代码审查通过
+
+操作人：Codex
+
+审查提交：
+
+```text
+a5f49ad fix: handle base defeat faction cleanup
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/FactionDefeatHandler.cs`
+- `kingbattle/Assets/Scripts/Combat/HealthComponent.cs`
+- `kingbattle/Assets/Scripts/Combat/UnitCombat.cs`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.1 / MVP-03.2 代码审查通过
+```
+
+已确认：
+
+1. `UnitCombat.GetDefeatedBuildingPos()` 对 null target 返回 null，不再把 null 当成建筑。
+2. 只有目标非空且没有 `UnitCombat` 时，才把 patrol center 切到建筑死亡位置。
+3. `FactionDefeatHandler` 会在大本营死亡后清理该阵营建筑和单位。
+4. 建筑清场复用 `HealthComponent.Kill()` -> `OnDeath` -> `SpawnRuin`，可以生成废墟。
+5. 单位清场只处理带 `UnitCombat` 的 `HealthComponent`，不会把废墟或建筑当作单位。
+6. Unity 版本为 `2022.3.62f1`，`FindObjectsByType` API 可用。
+
+残留风险：
+
+1. Codex 未在 Unity Editor 中亲自运行 Play Mode。
+2. `SpawnRuin` 仍在 `GameEntry` 中，后续应下沉到 `Buildings/` 小组件。
+3. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍是未跟踪 Unity Editor 生成文件，继续不提交。
+
+建议下一步：
+
+```diff
++ 用户先做 Play Mode 最终确认
++ 若确认 OK，再进入 MVP-03.3 建筑死亡 / 废墟职责边界整理
+- 暂不做重建、占领进度、资源、升级、连地、区域奖励、传送阵、AI 或 UI
+```
+
+GitHub 上传状态：
+
+- 本次 Review 文档待提交并推送。

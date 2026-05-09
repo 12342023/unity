@@ -90,10 +90,10 @@
 Claude 已提交最新修复：
 
 ```text
-852c70c fix: only buildings trigger patrol-center shift on death
+a5f49ad fix: handle base defeat faction cleanup
 ```
 
-Codex Review 结论：MVP-03.1 仍暂不通过。非空目标的建筑/单位区分方向正确，但 `target == null` / `chaseTarget == null` 仍会被当成建筑，并把 patrol center 切到当前士兵脚下。
+Codex Review 结论：MVP-03.1 / MVP-03.2 代码审查通过。等待用户 Play Mode 最终确认。
 
 已确认修复：
 
@@ -108,7 +108,18 @@ Codex Review 结论：MVP-03.1 仍暂不通过。非空目标的建筑/单位区
 + Deaggro 清理残留 pushPath，击败敌方大本营后不再短暂折返
 + 建筑死亡后已能生成可见废墟
 + 非空目标场景下，普通单位死亡不再把死亡点传给 Deaggro
++ target == null / chaseTarget == null 时只 Deaggro，不再切换 patrol center
++ 一方大本营被击败后，该方建筑清场为废墟，士兵立即死亡
 ```
+
+### 用户 Play Mode 最终确认清单
+
+- 击败 `EnemyBase` 后，敌方 `EnemyBase` 和 `EnemyOutpost` 都变成废墟。
+- 所有红方士兵立即死亡。
+- 蓝方士兵仍存活，并围绕废墟巡逻。
+- 击败 `PlayerBase` 后，蓝方 `PlayerBase`、`Crossroads`、`Village` 变成废墟。
+- 所有蓝方士兵立即死亡。
+- Console 无明显错误。
 
 ### MVP-03.1 建筑废墟与废墟巡逻
 
@@ -167,6 +178,27 @@ Codex Review 结论：MVP-03.1 仍暂不通过。非空目标的建筑/单位区
 - UI / 美术大改 / 音效
 
 MVP-03.1 通过后，再考虑重建、占领或资源。
+
+### 下一条建议小任务
+
+用户 Play Mode 确认 OK 后，建议先做：
+
+```text
+MVP-03.3 建筑死亡 / 废墟职责边界整理
+```
+
+目标：
+
+- 将 `SpawnRuin` / 建筑死亡处理从 `GameEntry` 逐步下沉到 `Buildings/` 下的小组件。
+- `GameEntry` 保持测试场景装配职责。
+- 不改变当前玩法表现。
+
+禁止：
+
+- 不做完整重建系统
+- 不做占领进度
+- 不做资源 / 升级
+- 不做 UI
 
 ### 1. 巡逻系统
 

@@ -126,18 +126,18 @@ MVP-02.1 / MVP-02.1a 已完成核心收尾。
 
 ## 当前状态
 
-### MVP-03.1 Codex Review：仍暂不通过
+### MVP-03.1 / MVP-03.2 Codex Review：代码审查通过
 
 Claude 最新提交：
 
 ```text
-852c70c fix: only buildings trigger patrol-center shift on death
+a5f49ad fix: handle base defeat faction cleanup
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.1 仍暂不通过；target == null 仍会被当成建筑并切换 patrol center
+MVP-03.1 / MVP-03.2 代码审查通过；等待用户 Play Mode 最终确认
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,10 +150,8 @@ MVP-03.1 仍暂不通过；target == null 仍会被当成建筑并切换 patrol 
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ target == null / chaseTarget == null 时只能 Deaggro()，不能传 defeatedPos
-- ⏳ 只有目标非空且无 UnitCombat 时，才切换 patrol center 到废墟位置
-- ⏳ 新增用户要求：一方大本营被击败后，该方所有建筑变废墟，所有存活士兵立即死亡
-- ⏳ Claude 修复后，Codex 再 Review
+- ⏳ 用户 Play Mode 最终确认 EnemyBase / PlayerBase 被击败后的阵营清场
+- ⏳ 用户确认 OK 后，再进入下一条小任务
 
 已处理：
 - ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动
@@ -166,6 +164,8 @@ MVP-03.1 仍暂不通过；target == null 仍会被当成建筑并切换 patrol 
 - ✅ Deaggro 清理残留 pushPath，解决击败敌方大本营后短暂折返
 - ✅ 建筑死亡后已能生成可见废墟
 - ✅ 非空目标场景下，普通单位死亡不再把死亡点传给 Deaggro
+- ✅ target == null / chaseTarget == null 时只 Deaggro，不再切换 patrol center
+- ✅ 一方大本营被击败后，该方建筑清场为废墟，士兵立即死亡
 
 ## 新发布要求：MVP-03.1 建筑废墟与废墟巡逻
 
