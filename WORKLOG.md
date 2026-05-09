@@ -3106,3 +3106,20 @@ BuildingRebuildService.Rebuild(...) 缺少 mapData == null 防御。
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 Review 文档。
+
+提交记录：
+
+```text
+7037618 docs: review mvp-03.8 rebuild service
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   6d517e6..7037618  main -> main
+```
