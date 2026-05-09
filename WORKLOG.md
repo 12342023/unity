@@ -4534,3 +4534,44 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    966a408..3a30f68  main -> main
 ```
+
+### MVP-03.16 从已占领 plot 派兵到相邻 Neutral
+
+操作人：Claude
+
+已完成目标：Player 占领 Crossroads 后，可通过 O 从 Crossroads 派兵到相邻 Neutral 地块并触发占领。
+
+修改 1 个文件：
+- `Assets/Scripts/GameEntry.cs` — 新增 O 测试快捷键
+  - `StrategicConnectionService.GetPlayerFrontierPlots(mapData)` → 取第一个 frontier 和 target
+  - `RoadPathFinder.FindPath(sourcePlotId, targetPlotId)` → 算路径
+  - `StrategicDispatchService.DispatchToPlot(sourcePos, waypoints, targetPlotId, ...)` → 派兵 + 占领
+
+全部复用现有服务，不新增文件。行为完全靠现有 StrategicConnectionService / StrategicDispatchService / PlotCaptureService 组合。
+
+快捷键全表（Play Mode 验证）：
+1. **Play** → 蓝兵巡逻
+2. **K** → EnemyBase 废墟，红方全灭
+3. **Y** → "EnemyBase can connect to: Crossroads"
+4. **T** → 蓝兵聚到 EnemyBase
+5. **U** → 蓝兵走向 Crossroads，到达后 **Crossroads 变为 Player 蓝色**
+6. **I** → "Crossroads can connect to: Village, Farmland"
+7. **O** → 蓝兵从 Crossroads 走向 Village 或 Farmland（第一个 target），
+   到达后 **目标地块变为 Player 蓝色**
+8. 再次 **I** → 新增占领的地块出现在 frontier 列表中
+9. 再次 **O** → 继续扩张到下一个 Neutral
+10. **Y** → "EnemyBase has no neutral neighbours"（Crossroads 已不是 Neutral）
+11. **U** → "no connectable neutral plots"
+12. **R** → 跳过 EnemyBase，重建 EnemyOutpost
+13. **L** → 蓝方全灭
+14. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/GameEntry.cs WORKLOG.md TASK.md
+git commit -m "feat: O shortcut dispatches from frontier plot to adjacent neutral"
+git push origin main
+```
