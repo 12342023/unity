@@ -2,15 +2,15 @@
 
 ## Review 状态
 
-Codex 已审查 Claude 最新提交：
+Codex 已审查 MVP-03.12 当前代码：
 
 ```text
-2424573 feat: GetConnectableNeutralPlots on main-base ruin, Y shortcut prints them
+8b61f54 fix: compile U dispatch shortcut
 ```
 
-结论：**MVP-03.11 代码审查通过**。
+结论：**MVP-03.12 静态代码审查通过，允许进入 MVP-03.13**。
 
-说明：`RuinComponent.GetConnectableNeutralPlots(MapData)` 已提供 main base ruin 到相邻 Neutral 地点的数据查询；`GameEntry` 的 Y 临时测试快捷键只打印结果，不派兵、不改变 plot 归属。本轮没有引入正式 UI、资源、占领、升级、区域奖励、传送阵或 AI。
+说明：`GameEntry` 已提供 U 临时测试快捷键，可以从 main base ruin 找到第一个可连接 Neutral plot，并将附近 Player 士兵沿道路派过去。U 不改变 plot 归属，不做占领判定，不生成正式 UI。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,79 +24,82 @@ Findings:
 
 ### 已确认
 
-- `GetConnectableNeutralPlots(mapData)` 只在 `CanUseAsRallyPoint(mapData)` 为 true 时返回连接结果。
-- 查询使用 `MapData.GetNeighbors(sourcePlotId)`。
-- 只返回 `plot.faction == Faction.Neutral` 的邻居 plotId。
-- Y 只打印连接数据，不派兵、不改归属。
-- K / L / R / T 测试入口仍保留。
+- `GameEntry` 已包含 `using System.Collections.Generic;`，修复 U 快捷键新增 `List<Vector3>` 后的编译风险。
+- U 使用 `RuinComponent.GetConnectableNeutralPlots(mapData)` 获取目标。
+- U 使用 `RoadPathFinder.FindPath(mapData, rallyRuin.sourcePlotId, targetPlotId)` 计算道路路径。
+- U 将 path plotId 转为 world waypoint。
+- U 只筛选 Player 且存活的附近士兵。
+- U 派兵前调用 `ClearPushPath()` 和 `UnitMovement.Stop()`，避免旧路径与新 push path 抢控制。
+- U 只派兵，不改变任何 plot 的 `faction`。
+- K / L / R / T / Y 行为仍保留。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
-## 文档更正
+### 验证限制
 
-Claude 的 `WORKLOG.md` 验证说明里写到 EnemyBase 可连接 `Farmland`。按当前 `MapData.CreateFixedMap()`：
+Codex 本机没有可用的 `dotnet` / `mcs` / `csc` 命令，且 shell 未找到可直接执行的 Unity Editor 二进制，所以本轮只完成静态审查与 diff 检查。
 
-```text
-EnemyBase neighbours = Crossroads, EnemyOutpost
-```
-
-其中 `Crossroads` 是 Neutral，`EnemyOutpost` 是 Enemy，所以正确结果是：
+用户侧 Unity 需要确认：
 
 ```text
-EnemyBase can connect to: Crossroads
+K -> T -> Y -> U
 ```
 
-Unity 日志也显示了这个正确结果。
+预期：
+
+- K 后 EnemyBase 变 main base ruin。
+- T 后 Player 士兵聚到 EnemyBase 废墟附近。
+- Y 打印 `EnemyBase can connect to: Crossroads`。
+- U 后附近 Player 士兵沿路前往 Crossroads。
+- Console 无明显错误。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.11 代码审查通过。
+Codex Review：MVP-03.12 静态代码审查通过。
 
-进入 MVP-03.12：大本营废墟临时派兵测试入口。
-
-用户规则继续保持：
-- 最后的敌方大本营不能重建。
-- 它可以作为聚兵点。
-- 它可以连接别的未占领地点，并从这里派兵。
+进入 MVP-03.13：Neutral plot 最小占领与颜色刷新。
 
 本轮目标：
 - 不做正式 UI。
-- 不做资源、占领进度、升级、区域奖励、传送阵或 AI。
-- 只做临时测试入口：从 main base ruin 派当前聚集的 Player 士兵前往第一个可连接 Neutral 地点。
+- 不做资源、升级、区域奖励、传送阵或 AI。
+- 不做倒计时占领条。
+- 不做敌方反夺。
+- 只做最小闭环：U 派出的 Player 士兵到达第一个可连接 Neutral plot 后，该 plot 变成 Player，并且地图颜色刷新。
 
 允许：
-- 在 GameEntry 增加临时测试快捷键，例如 U。
-- U 的行为：
-  1. 找到第一个 main base ruin。
-  2. 调用 GetConnectableNeutralPlots(mapData)。
-  3. 选择第一个 connectable neutral plot。
-  4. 找到当前靠近 main base ruin 的 Player 士兵。
-  5. 使用 RoadPathFinder.FindPath(mapData, ruin.sourcePlotId, targetPlotId) 计算路径。
-  6. 将 path plotId 转成 world waypoint。
-  7. 对这些士兵调用 UnitCombat.ClearPushPath() 后 SetPushPath(waypoints)，让他们沿路前往目标。
-- 士兵筛选可以先用距离 main base ruin <= 3f 或同等简单阈值。
-- 可以输出日志说明派出多少士兵、从哪个 ruin 派往哪个 plot。
-- 保持 K / L / R / T / Y 行为不变。
+- 新增一个很小的服务类，例如 StrategicCaptureService 或 PlotCaptureService。
+- 服务职责保持单一：
+  1. 检查目标 plot 是否存在。
+  2. 检查目标 plot 当前是否是 Faction.Neutral。
+  3. 将目标 plot.faction 改为 Faction.Player。
+  4. 输出日志。
+- 可以给 MapRenderer 增加最小刷新方法，例如 RefreshPlotColor(string plotId, MapData mapData)。
+- GameEntry 可以保留 MapRenderer 引用，用于 U 到达后刷新目标 plot 颜色。
+- U 派兵时可以使用 UnitCombat.OnPushDestinationReached，在士兵到达目标后触发一次占领。
+- 如果多个士兵都到达，只允许第一次把 Neutral 改为 Player，后续输出 already captured 或直接忽略。
+- 保持 K / L / R / T / Y / U 行为不变。
 
 必须保持：
-- U 只是临时测试入口。
-- U 不改变 plot 归属。
-- U 不做占领判定。
-- U 不生成 UI。
-- R 仍跳过大本营废墟。
-- T 仍能聚兵到大本营废墟。
+- Main base ruin 仍不能通过 R 重建。
 - Y 仍只打印可连接 Neutral 地点。
-- Console 无明显错误。
-
-禁止：
-- 不做正式派兵 UI。
-- 不改变地图归属。
-- 不做占领进度。
-- 不做资源、升级、区域奖励、传送阵、AI。
+- U 仍是临时测试入口。
+- 只允许占领 Neutral plot。
+- 不允许占领 Enemy plot。
+- 不允许占领 main base ruin 本身。
+- 不新增正式 UI。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
 
-完成后更新 WORKLOG.md，说明修改文件、U/Y/T/R/K/L Play Mode 验证步骤、是否修改 ProjectSettings，并 commit / push。
+禁止：
+- 不做资源产出。
+- 不做升级。
+- 不做区域奖励。
+- 不做传送阵。
+- 不做 AI。
+- 不做复杂占领进度。
+- 不把平台相关逻辑写进战斗/地图/建筑脚本。
+
+完成后更新 WORKLOG.md，说明修改文件、K/T/Y/U/R/L Play Mode 验证步骤、是否修改 ProjectSettings，并 commit / push。
 ```

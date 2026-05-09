@@ -3824,3 +3824,74 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    e20c8c8..8b61f54  main -> main
 ```
+
+### MVP-03.12 Codex Review：通过并发布 MVP-03.13
+
+操作人：Codex
+
+审查提交：
+
+```text
+8b61f54 fix: compile U dispatch shortcut
+```
+
+当前仓库状态：
+
+- `main` 与 `origin/main` 一致。
+- 仅 `kingbattle/ProjectSettings/SceneTemplateSettings.json` 为未跟踪 Unity 生成/设置文件，继续不提交。
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `kingbattle/Assets/Scripts/Combat/UnitCombat.cs`
+- `kingbattle/Assets/Scripts/Units/UnitMovement.cs`
+- `kingbattle/Assets/Scripts/Units/UnitPatrol.cs`
+- `kingbattle/Assets/Scripts/Map/MapData.cs`
+- `kingbattle/Assets/Scripts/Map/MapRenderer.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.12 静态代码审查通过
+```
+
+已确认：
+
+1. U 快捷键已能从 main base ruin 获取第一个可连接 Neutral plot。
+2. U 使用 `RoadPathFinder.FindPath(mapData, rallyRuin.sourcePlotId, targetPlotId)` 计算道路路径。
+3. U 派兵前调用 `ClearPushPath()` 与 `UnitMovement.Stop()`，避免旧路径干扰。
+4. U 只派 Player 存活士兵，不改变 plot 归属。
+5. U / Y / T / R / K / L 临时测试入口均保留。
+6. 本轮未引入正式 UI、资源、升级、区域奖励、传送阵或 AI。
+7. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+验证限制：
+
+- Codex 本机没有可用 `dotnet` / `mcs` / `csc` 命令。
+- shell 未找到可直接执行的 Unity Editor 二进制。
+- 本轮完成静态检查与 `git diff --check`，Play Mode 结果以用户侧 Unity Console 为准。
+
+新发布任务：
+
+```text
+MVP-03.13 Neutral plot 最小占领与颜色刷新
+```
+
+任务边界：
+
+```diff
++ 新增小型 PlotCaptureService / StrategicCaptureService
++ 只允许 Neutral -> Player
++ U 派出的 Player 士兵到达目标后触发一次占领
++ MapRenderer 增加按 plotId 刷新颜色的最小方法
+- 不做正式 UI
+- 不做占领进度条
+- 不允许占领 Enemy plot
+- 不做资源、升级、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
