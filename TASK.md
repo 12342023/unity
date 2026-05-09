@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-MVP-03.13 收口小修：U capture handler 替换与 WORKLOG 验证修正。
+发布 MVP-03.14：派兵边界整理。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,25 +11,23 @@ Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业�
 Claude 最新提交：
 
 ```text
-224db1d fix: capture guards (Player-only, no main base, Reset, one-shot handler)
+ab78ee4 fix: uCaptureHandlers dict prevents stale handler on re-press U
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.13 仍暂不通过；还需修复到达前重复 U 时旧 handler 残留的问题，并修正 WORKLOG 验证描述
+MVP-03.13 代码审查通过；允许进入 MVP-03.14
 ```
 
 ## 本轮目标
 
-只做最后收口，不加玩法。
+只做代码边界整理，不改变玩法。
 
-成功标准：
+目标：
 
 ```text
-重复按 U / 到达前重新派兵不会留下旧 capture handler；
-Crossroads 被占领后，再次 Y/U 的行为描述与代码一致；
-MVP-03.13 可以进入通过状态。
+把 U 临时派兵、capture handler 管理、到达后占领触发从 GameEntry 下沉到小服务。
 ```
 
 ## 当前工作区注意事项
@@ -40,73 +38,49 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 
 该文件仍是未跟踪 Unity Editor 生成文件。除非用户明确批准，否则不要提交。
 
-## 必须修复
+## 已完成基础能力
 
-### 1. U capture handler 到达前替换
+- Main base ruin 不能通过 R 重建。
+- Main base ruin 可以作为 T 聚兵点。
+- Y 可以查询 main base ruin 相邻 Neutral 地点。
+- U 可以从 main base ruin 派兵去第一个相邻 Neutral plot。
+- U 到达 Crossroads 后可将 Crossroads 从 Neutral 改为 Player。
+- Crossroads 颜色会刷新为 Player 颜色。
+- Crossroads 变 Player 后，再次 Y / U 不再把 Crossroads 当作 Neutral。
 
-当前已有 self-unsubscribe：
+## MVP-03.14 允许范围
 
-```csharp
-localHandler = () =>
-{
-    u.OnPushDestinationReached -= localHandler;
-    ...
-};
+- 可以新增小服务类，例如：
+
+```text
+kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs
 ```
 
-但如果单位还没到达时再次按 U，旧 handler 没有触发，也就不会取消订阅。
-
-要求：
-
-- 在 `GameEntry` 中新增 U 专用 handler 记录，例如：
-
-```csharp
-private readonly Dictionary<UnitCombat, System.Action> uCaptureHandlers = new();
-```
-
-- 给某个单位注册新的 U capture handler 前：
-
-```csharp
-if (uCaptureHandlers.TryGetValue(u, out var previous))
-{
-    u.OnPushDestinationReached -= previous;
-    uCaptureHandlers.Remove(u);
-}
-```
-
-- 新 handler 触发时：
-
-```csharp
-u.OnPushDestinationReached -= localHandler;
-uCaptureHandlers.Remove(u);
-```
-
-- 然后再执行 `captureOnce` / `PlotCaptureService.TryCapture(...)`。
-- 不要清空整个 `OnPushDestinationReached`。
-- 不要重构 `UnitCombat`。
-
-### 2. WORKLOG 最新验证描述修正
-
-当前代码逻辑是：
-
-- 第一次 U 到达 Crossroads 后，Crossroads 从 Neutral 变 Player。
-- 之后 `GetConnectableNeutralPlots(mapData)` 不再返回 Crossroads。
-- 所以再次 Y / U 不会再次派兵到 Crossroads。
-
-WORKLOG 应写：
-
-- 再次 Y：EnemyBase 没有可连接 Neutral。
-- 再次 U：输出 no connectable neutral plots，不派兵。
-- 不要写“再次 U 走向 Crossroads”。
-- 不要写“TryCapture 因 not neutral 拒绝”，除非代码真的绕过 Neutral 查询。
+- 服务职责可以包括：
+  - 管理 U 专用 capture handler 字典。
+  - 给单位注册 one-shot capture handler。
+  - 注册新 U handler 前移除该单位旧 U handler。
+  - handler 触发后移除自身与字典记录。
+  - 查找 main base ruin 附近的 Player 存活士兵。
+  - 对这些士兵执行 `ClearPushPath()`、`UnitMovement.Stop()`、`SetPushPath(...)`。
+  - 到达后调用 `PlotCaptureService.TryCapture(...)`。
+- `GameEntry` 仍保留 K / L / R / T / Y / U 快捷键入口。
+- `GameEntry` 的 U 分支应尽量只做：
+  - 找 main base ruin。
+  - 取第一个 connectable Neutral plot。
+  - 用 `RoadPathFinder.FindPath(...)` 算路径。
+  - 调用服务执行派兵。
+- 新增 `.cs` 文件必须提交 `.meta`。
+- 更新 `WORKLOG.md`。
 
 ## 禁止范围
 
+- 不改变 K / L / R / T / Y / U 行为。
 - 不做正式派兵 UI。
 - 不做占领进度条。
 - 不做敌方反夺。
 - 不做资源、升级、区域奖励、传送阵、AI。
-- 不重构 `GameEntry`。
+- 不改变 `MapData.CreateFixedMap()`。
 - 不重构 `UnitCombat`。
 - 不修改 `ProjectSettings`。
 - 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
@@ -114,6 +88,9 @@ WORKLOG 应写：
 
 ## 验收标准
 
+- 新增 `StrategicDispatchService.cs` 或等价小服务。
+- 新增脚本的 `.meta` 已提交。
+- `GameEntry` 中 U 分支明显变薄。
 - Play Mode：K -> T -> Y -> U。
 - U 到达 Crossroads 后：
   - Crossroads 从 Neutral 变 Player。

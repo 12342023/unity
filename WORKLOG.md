@@ -4216,3 +4216,58 @@ git add kingbattle/Assets/Scripts/GameEntry.cs WORKLOG.md TASK.md
 git commit -m "fix: uCaptureHandlers dict prevents stale handler on re-press U"
 git push origin main
 ```
+
+### MVP-03.13 Codex Review：通过并发布 MVP-03.14
+
+操作人：Codex
+
+审查提交：
+
+```text
+ab78ee4 fix: uCaptureHandlers dict prevents stale handler on re-press U
+```
+
+结论：
+
+```text
+MVP-03.13 代码审查通过
+```
+
+已确认：
+
+1. `GameEntry.Start()` 已调用 `PlotCaptureService.Reset()`。
+2. `PlotCaptureService.TryCapture()` 已限制只有 `Faction.Player` 可以占领。
+3. `PlotCaptureService.TryCapture()` 已拒绝 `plot.isMainBase`。
+4. `TryCapture` 仍只允许 `plot.faction == Faction.Neutral`。
+5. `uCaptureHandlers` 字典已用于记录 U 专用 capture handler。
+6. 注册新 U handler 前会移除该单位旧 handler。
+7. handler 触发后会从 `OnPushDestinationReached` 与字典中移除。
+8. 最新 WORKLOG 已修正为：Crossroads 被占领后再次 Y / U 没有可连接 Neutral。
+9. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+残留风险：
+
+- U / capture / handler 逻辑集中在 `GameEntry`，`GameEntry` 已经变厚。
+- 下一步应整理派兵边界，保持玩法不变，把 U 派兵流程下沉到小服务。
+
+新发布任务：
+
+```text
+MVP-03.14 派兵边界整理
+```
+
+任务边界：
+
+```diff
++ 新增 StrategicDispatchService 或等价小服务
++ 服务管理 U capture handler 字典
++ 服务负责附近 Player 士兵筛选与 SetPushPath
++ 服务负责到达后调用 PlotCaptureService.TryCapture
++ GameEntry 只保留快捷键入口与高层流程
+- 不改变玩法表现
+- 不做正式 UI
+- 不做占领进度条
+- 不做资源、升级、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
