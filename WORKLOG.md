@@ -3310,3 +3310,64 @@ a2472bb fix: add Map namespace for main base ruin rule
 To https://github.com/12342023/unity.git
    6e613a2..a2472bb  main -> main
 ```
+
+### MVP-03.9 Codex Review：通过并发布 MVP-03.10
+
+操作人：Codex
+
+审查提交：
+
+```text
+a2472bb fix: add Map namespace for main base ruin rule
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/RuinComponent.cs`
+- `kingbattle/Assets/Scripts/Buildings/BuildingRebuildService.cs`
+- `kingbattle/Assets/Scripts/GameEntry.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.9 代码审查通过
+```
+
+已确认：
+
+1. `RuinComponent.cs` 已补充 `using Map;`，Unity `CS0246 MapData could not be found` 已修复。
+2. `RuinComponent.IsMainBaseRuin(MapData)` 能判断来源 plot 是否为大本营。
+3. `BuildingRebuildService.Rebuild(...)` 遇到 main base ruin 会返回 `null`，不销毁废墟，不创建新建筑。
+4. 普通非大本营废墟仍可通过重建服务创建建筑。
+5. 本轮未引入正式 UI、资源、占领、完整连地、区域奖励、传送阵或 AI。
+6. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+残留注意：
+
+- `R` 临时测试入口仍只尝试第一个废墟，不应作为正式重建入口设计依据。
+
+新发布任务：
+
+```text
+MVP-03.10 大本营废墟聚兵点最小原型
+```
+
+任务边界：
+
+```diff
++ RuinComponent 增加 CanUseAsRallyPoint(MapData)
++ GameEntry 增加 T 临时测试快捷键
++ T 找到 main base ruin
++ T 将当前 Player 士兵聚到该废墟周围巡逻
++ 复用 UnitPatrol / UnitMovement / UnitCombat 现有能力
+- 不做正式 UI
+- 不做连接未占领地正式系统
+- 不做正式派兵系统
+- 不做资源、占领、升级、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```

@@ -2,15 +2,15 @@
 
 ## Review 状态
 
-Codex 已审查 Claude 最新修复提交：
+Codex 已审查 MVP-03.9 最新提交与 Unity 编译热修：
 
 ```text
-32bb717 fix: add mapData null guard in BuildingRebuildService.Rebuild
+a2472bb fix: add Map namespace for main base ruin rule
 ```
 
-结论：**MVP-03.8 代码审查通过**。
+结论：**MVP-03.9 代码审查通过**。
 
-说明：`BuildingRebuildService.Rebuild(...)` 已补齐 `mapData == null` 防御，满足“错误入参安全返回”的服务边界要求。本轮仍未引入正式 UI、资源、占领、升级、连地、区域奖励、传送阵或 AI。
+说明：大本营废墟已经不会通过普通 `BuildingRebuildService` 被重建；`RuinComponent` 的 `MapData` namespace 编译错误也已修复。本轮没有引入正式 UI、资源、占领、完整连地、区域奖励、传送阵或 AI。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,68 +24,63 @@ Findings:
 
 ### 已确认
 
-- `BuildingRebuildService.Rebuild(null, mapData, faction)` 会安全返回 `null`。
-- `BuildingRebuildService.Rebuild(ruin, null, faction)` 会安全返回 `null` 并输出 Warning。
-- 正常重建仍通过 `BuildingFactory.CreateBuilding(...)` 创建建筑。
-- 新建筑仍通过 `BuildingFactory` 自动注册到 `BuildingRegistry`。
-- `R` 测试快捷键保持为临时验证入口。
-- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+- `RuinComponent.cs` 已补充 `using Map;`，解决 Unity `CS0246 MapData could not be found`。
+- `RuinComponent.IsMainBaseRuin(MapData mapData)` 会通过 `mapData.GetPlot(sourcePlotId).isMainBase` 判断来源 plot 是否大本营。
+- `BuildingRebuildService.Rebuild(...)` 遇到 main base ruin 时会 `return null`。
+- Main base ruin 不会被销毁，也不会创建新建筑。
+- 普通非大本营废墟仍可通过服务重建。
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
-## 新增用户规则
+## 残留注意事项
 
-用户新增要求：
+### R 测试入口仍是临时入口
 
-```text
-最后的敌方大本营不能重建，但是可以聚兵，也可以连接别的未占领的地方可以派兵。
-```
+`GameEntry` 当前 `R` 键只尝试 `FindObjectsByType<RuinComponent>(...)[0]`。如果第一个废墟是大本营废墟，服务会正确拒绝重建，但 `R` 不会自动尝试下一个普通废墟。
 
-Codex 阶段拆分：
-
-- 立即禁止大本营废墟走普通重建流程。
-- 大本营废墟保留为可聚兵 / 可派兵的战略据点概念。
-- 本轮先做数据和规则边界，不做正式 UI、资源、占领进度或完整派兵系统。
+这不阻塞 MVP-03.9，因为核心规则已落地；但后续调试入口不要依赖 Unity 返回顺序。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.8 代码审查通过。
+Codex Review：MVP-03.9 代码审查通过。
 
-进入 MVP-03.9：大本营废墟特殊规则。
+进入 MVP-03.10：大本营废墟聚兵点最小原型。
 
-用户新增规则：
+用户规则继续保持：
 - 最后的敌方大本营不能重建。
-- 但它未来可以作为聚兵点。
-- 也可以连接别的未占领地点，并从这里派兵。
+- 但它可以作为聚兵点。
+- 后续还要能连接别的未占领地点并派兵。
 
 本轮目标：
 - 不做正式 UI。
-- 不做资源、占领进度、升级、连地系统完整版或 AI。
-- 先把“大本营废墟不能被普通重建服务重建”这个规则落地。
-- 为“大本营废墟可作为聚兵 / 派兵战略据点”保留清晰数据边界。
+- 不做资源、占领进度、升级、完整连地系统或 AI。
+- 只做“大本营废墟可以作为聚兵点”的最小可见验证。
 
 允许：
-- 在 BuildingRebuildService.Rebuild(...) 中使用 mapData.GetPlot(ruin.sourcePlotId).isMainBase 判断。
-- 如果 source plot 是 main base，则 Debug.LogWarning 并 return null，不销毁废墟。
-- R 测试快捷键按到 EnemyBase / PlayerBase 废墟时不能把它重建成 Barracks。
-- 可以在 RuinComponent 上新增最小方法或字段，例如 CanUseAsRallyPoint / CanDispatchFrom，表达大本营废墟未来可聚兵 / 可派兵。
-- 如果新增方法，只做数据层，不接入 UI 或完整派兵逻辑。
-- 保持普通非大本营废墟仍可通过 R 测试重建。
+- 在 RuinComponent 上新增最小数据层方法，例如 CanUseAsRallyPoint(MapData mapData)，main base ruin 返回 true。
+- 在 GameEntry 增加一个临时测试快捷键，例如 T。
+- T 的行为：找到第一个 main base ruin，把当前存活的 Player 士兵聚到该废墟周围巡逻。
+- 聚兵可以先复用 UnitPatrol.Setup(center, radius, staggerAngle)。
+- 可以对这些单位调用 UnitMovement.Stop() / UnitCombat.ClearPushPath()，避免旧路径继续影响聚兵测试。
+- 多个单位要用不同角度，避免完全重叠。
+- 保持 R/K/L 测试快捷键现有行为。
 
 必须保持：
-- K 击败 EnemyBase 后，EnemyBase 废墟不能被 R 重建成 Player Barracks。
-- EnemyOutpost 等非大本营废墟仍可按当前测试逻辑重建。
-- 大本营废墟不被销毁，仍可作为士兵巡逻/未来聚兵中心。
+- Main base ruin 仍不能被 R 重建。
+- 普通非大本营废墟仍可重建。
+- T 聚兵后，士兵围绕 main base ruin 巡逻。
 - K / L 清场行为不变。
 - Console 无明显错误。
 
 禁止：
-- 不做正式重建按钮。
-- 不做选择废墟 UI。
-- 不做资源消耗、占领进度、升级、连地系统完整版、区域奖励、传送阵、AI。
+- 不做正式按钮或 UI。
+- 不做连接未占领地的正式系统。
+- 不做正式派兵系统。
+- 不做资源、占领、升级、区域奖励、传送阵、AI。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
 
-完成后更新 WORKLOG.md，说明修改文件、规则边界、R/K/L Play Mode 验证步骤、是否修改 ProjectSettings，并 commit / push。
+完成后更新 WORKLOG.md，说明修改文件、T/R/K/L Play Mode 验证步骤、是否修改 ProjectSettings，并 commit / push。
 ```
