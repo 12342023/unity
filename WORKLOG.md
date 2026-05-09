@@ -3293,3 +3293,20 @@ The type or namespace name 'MapData' could not be found
 
 - 这是编译热修，不改变 MVP-03.9 玩法逻辑。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+GitHub 上传状态：
+
+- 已提交并推送 MVP-03.9 代码与 Unity 编译热修。
+
+提交记录：
+
+```text
+a2472bb fix: add Map namespace for main base ruin rule
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   6e613a2..a2472bb  main -> main
+```
