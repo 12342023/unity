@@ -126,18 +126,18 @@ MVP-02.1 / MVP-02.1a 已完成核心收尾。
 
 ## 当前状态
 
-### MVP-03.5 任务发布：废墟可重建判定数据层
+### MVP-03.6 任务发布：建筑创建逻辑边界整理
 
 Claude 最新提交：
 
 ```text
-9bc149b feat: building identity data and ruin metadata for future reconstruction
+ca20f62 feat: ruins rebuild-predicate data layer (CanRebuildFor / GetRebuildBuildingType)
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.4 代码审查通过；允许进入 MVP-03.5
+MVP-03.5 代码审查通过；允许进入 MVP-03.6
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,7 +150,7 @@ MVP-03.4 代码审查通过；允许进入 MVP-03.5
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ MVP-03.5：为废墟增加可重建判定数据层
+- ⏳ MVP-03.6：将建筑创建逻辑从 GameEntry 下沉到 Buildings/BuildingFactory
 - ⏳ Claude 完成后，Codex 再 Review
 
 已处理：
@@ -171,6 +171,55 @@ MVP-03.4 代码审查通过；允许进入 MVP-03.5
 - ✅ `BuildingDeathHandler.cs.meta` 已提交
 - ✅ 建筑身份数据 `BuildingIdentity` 已补充
 - ✅ 废墟来源元数据 `sourcePlotId / sourceBuildingType / originalFaction` 已补充
+- ✅ `RuinComponent` 已补充 `CanRebuildFor` / `GetRebuildBuildingType`
+
+## 新发布要求：MVP-03.6 建筑创建逻辑边界整理
+
+```text
+不做实际重建，只把建筑创建逻辑抽到 Buildings/ 下，方便后续重建复用。
+```
+
+## MVP-03.6 目标
+
+- 将当前 `GameEntry.CreateBuilding()` 的建筑创建逻辑下沉到 `Buildings/BuildingFactory.cs` 或同等小类。
+- `GameEntry` 保持测试场景装配职责。
+- 当前玩法表现保持不变。
+
+## MVP-03.6 允许范围
+
+- 新增 `Buildings/BuildingFactory.cs` 或同等小类。
+- 将以下装配逻辑从 `GameEntry` 移入 factory：
+  - GameObject 创建和位置设置
+  - SpriteRenderer / 颜色 / 大小
+  - `HealthComponent`
+  - `BuildingIdentity`
+  - `BuildingDeathHandler`
+  - Collider
+  - `TowerAttack` / `BarracksSpawner`
+- `GameEntry` 仍负责：
+  - 决定测试场景创建哪些建筑
+  - 设置 rally / push target
+  - 装配 `FactionDefeatHandler`
+  - 保留 K / L 测试快捷键
+- 新增脚本必须提交 `.meta`。
+
+## MVP-03.6 禁止范围
+
+- 不做重建按钮。
+- 不真正生成“重建后的新建筑”流程。
+- 不做占领进度。
+- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不改变当前建筑位置、颜色、大小、血量或行为。
+- 不修改 `ProjectSettings`。
+- 不提交 Unity 生成目录。
+
+## MVP-03.6 验收标准
+
+- `GameEntry` 中不再包含完整建筑创建细节。
+- 建筑创建逻辑位于 `Buildings/BuildingFactory.cs` 或同等小类。
+- 当前场景建筑、出兵、Tower 攻击、建筑死亡生成废墟、大本营清场、K/L 快捷键行为不变。
+- 新增脚本包含 `.meta`。
+- Console 无明显错误。
 
 ## 新发布要求：MVP-03.5 废墟可重建判定数据层
 

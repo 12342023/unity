@@ -5,58 +5,52 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-9bc149b feat: building identity data and ruin metadata for future reconstruction
+ca20f62 feat: ruins rebuild-predicate data layer (CanRebuildFor / GetRebuildBuildingType)
 ```
 
-结论：**MVP-03.4 代码审查通过**。
+结论：**MVP-03.5 代码审查通过**。
 
-说明：建筑身份数据和废墟来源元数据已补齐，`BuildingIdentity.cs.meta` 已提交。当前实现没有引入重建、资源、UI 或占领进度，符合 MVP-03.4 的范围。
+说明：`RuinComponent` 已具备最小可重建判定数据层，没有实现 UI、资源、占领进度或实际重建，符合任务范围。
 
 ## CODEX PROJECT REVIEW
 
 Gate: **PASS**
 
-### 已通过：[P1] 建筑身份数据已装配
+### 已通过：[P2] RuinComponent 提供最小重建判定 API
 
-Files:
-
-```text
-kingbattle/Assets/Scripts/Buildings/BuildingIdentity.cs
-kingbattle/Assets/Scripts/GameEntry.cs
-```
-
-Review:
-
-`GameEntry.CreateBuilding()` 已为每个建筑写入：
-
-```csharp
-identity.plotId = plotId;
-identity.buildingType = type;
-identity.faction = faction;
-```
-
-`BuildingIdentity.cs.meta` 已提交，Unity GUID 稳定。
-
-### 已通过：[P1] 废墟保存来源元数据
-
-Files:
+File:
 
 ```text
 kingbattle/Assets/Scripts/Buildings/RuinComponent.cs
-kingbattle/Assets/Scripts/Buildings/BuildingDeathHandler.cs
 ```
 
 Review:
 
-`RuinComponent` 现在保存：
+新增方法：
 
 ```csharp
-public string sourcePlotId;
-public BuildingType sourceBuildingType;
-public Faction originalFaction;
+public bool CanRebuildFor(Faction faction)
+{
+    return !string.IsNullOrEmpty(sourcePlotId);
+}
+
+public BuildingType GetRebuildBuildingType()
+{
+    return sourceBuildingType;
+}
 ```
 
-`BuildingDeathHandler` 在生成 Ruin 时从 `BuildingIdentity` 传入这些字段。这样后续重建系统可以知道废墟来自哪个 plot、原建筑类型和原阵营。
+这符合 MVP-03.5 的最小规则：
+
+```diff
++ 有 sourcePlotId 才可重建
++ sourceBuildingType 决定可重建类型
++ originalFaction 只作为来源记录
+- 不真正生成新建筑
+- 不做 UI / 资源 / 占领进度
+```
+
+`CanRebuildFor(Faction faction)` 当前没有使用 `faction` 参数，这是刻意保留的未来扩展点；本轮不阻塞。
 
 ## 残留注意事项
 
@@ -70,44 +64,41 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 
 该文件由 Unity Editor 生成。由于项目规则要求不随意修改 `ProjectSettings`，继续保持未提交状态。
 
-### 下一步仍不做完整 UI / 资源
+### 下一步建议先抽建筑创建边界
 
-下一步可以进入“废墟可重建判定”前置层，但仍不要做完整重建 UI、资源消耗、升级、连地或 AI。
+现在废墟已经知道“能不能重建 / 重建成什么”。真正重建前，需要先避免未来重建逻辑依赖 `GameEntry.CreateBuilding()`。下一步建议把建筑创建逻辑抽到 `Buildings/BuildingFactory`，但不改变玩法表现。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.4 代码审查通过。
+Codex Review：MVP-03.5 代码审查通过。
 
-进入 MVP-03.5：废墟可重建判定数据层。
+进入 MVP-03.6：建筑创建逻辑边界整理。
 
 目标：
-- 不做完整重建系统。
+- 不做实际重建。
 - 不做 UI。
-- 只给 Ruin 增加“是否可重建 / 可重建成什么”的最小判定数据和方法。
+- 只把当前 GameEntry.CreateBuilding 的建筑创建逻辑下沉到 Buildings/ 下的小组件 / 小服务，为后续重建复用。
 
 允许：
-- 扩展 RuinComponent，新增只读或简单方法，例如 CanRebuildFor(Faction faction)、GetRebuildBuildingType()。
-- 规则先保持最小：
-  - 有 sourcePlotId 才可重建。
-  - sourceBuildingType 决定可重建类型。
-  - originalFaction 只作为来源记录，不在本任务里做复杂归属规则。
-- 可以新增一个小的数据结构 / enum，但优先保持简单。
-- 更新 WORKLOG.md。
+- 新增 Buildings/BuildingFactory.cs 或同等小类。
+- 将创建建筑 GameObject、SpriteRenderer、HealthComponent、BuildingIdentity、BuildingDeathHandler、Collider、TowerAttack / BarracksSpawner 的装配逻辑移入 BuildingFactory。
+- GameEntry 仍负责决定测试场景里创建哪些建筑、设置 rally / push target、装配 FactionDefeatHandler、保留 K / L 测试快捷键。
+- 行为保持不变。
+- 新增脚本必须提交 .meta。
 
 必须保持：
-- 当前玩法表现不变。
+- 当前建筑出现位置、颜色、大小、血量、Tower/Barracks 行为不变。
 - 建筑死亡后仍生成废墟。
-- 士兵击败建筑后仍围绕废墟巡逻。
 - 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
 - K / L 测试快捷键仍可验证双方大本营清场。
-- 单个建筑死亡只生成一个废墟。
+- Console 无明显错误。
 
 禁止：
 - 不做重建按钮。
-- 不真正生成新建筑。
+- 不真正生成“重建后的新建筑”流程。
 - 不做占领进度。
 - 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
 - 不修改 ProjectSettings。

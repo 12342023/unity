@@ -2669,3 +2669,59 @@ git add kingbattle/Assets/Scripts/Buildings/RuinComponent.cs WORKLOG.md TASK.md
 git commit -m "feat: ruins rebuild-predicate data layer (CanRebuildFor / GetRebuildBuildingType)"
 git push origin main
 ```
+
+### MVP-03.5 Codex Review：通过并发布 MVP-03.6
+
+操作人：Codex
+
+审查提交：
+
+```text
+ca20f62 feat: ruins rebuild-predicate data layer (CanRebuildFor / GetRebuildBuildingType)
+```
+
+审查范围：
+
+- `kingbattle/Assets/Scripts/Buildings/RuinComponent.cs`
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+结论：
+
+```text
+MVP-03.5 代码审查通过
+```
+
+已确认：
+
+1. `RuinComponent.CanRebuildFor(Faction faction)` 已存在。
+2. `RuinComponent.GetRebuildBuildingType()` 已存在。
+3. 当前规则保持最小：有 `sourcePlotId` 才可重建，`sourceBuildingType` 决定重建类型。
+4. 未实现重建按钮、UI、资源、占领进度或实际生成新建筑，范围正确。
+
+新发布任务：
+
+```text
+MVP-03.6 建筑创建逻辑边界整理
+```
+
+给 Claude 的任务边界：
+
+```diff
++ 新增 BuildingFactory 或同等小类
++ 将 GameEntry.CreateBuilding 的建筑创建细节下沉到 Buildings/
++ GameEntry 仍负责测试场景装配、rally/push target、FactionDefeatHandler、K/L 测试快捷键
++ 保持当前玩法表现不变
++ 新增脚本必须提交 .meta
+- 不做重建按钮
+- 不真正生成“重建后的新建筑”流程
+- 不做占领进度、资源、升级、连地、区域奖励、传送阵、AI 或 UI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
+
+GitHub 上传状态：
+
+- 本次 Review 与任务发布文档待提交并推送。

@@ -90,10 +90,10 @@
 Claude 最新提交：
 
 ```text
-9bc149b feat: building identity data and ruin metadata for future reconstruction
+ca20f62 feat: ruins rebuild-predicate data layer (CanRebuildFor / GetRebuildBuildingType)
 ```
 
-Codex Review 结论：MVP-03.4 代码审查通过。允许进入 MVP-03.5。
+Codex Review 结论：MVP-03.5 代码审查通过。允许进入 MVP-03.6。
 
 已确认修复：
 
@@ -115,7 +115,42 @@ Codex Review 结论：MVP-03.4 代码审查通过。允许进入 MVP-03.5。
 + BuildingDeathHandler.cs.meta 已提交
 + 建筑身份数据 BuildingIdentity 已补充
 + 废墟来源元数据 sourcePlotId / sourceBuildingType / originalFaction 已补充
++ RuinComponent 已补充 CanRebuildFor / GetRebuildBuildingType
 ```
+
+### MVP-03.6 建筑创建逻辑边界整理
+
+目标：
+
+- 不做实际重建。
+- 不做 UI。
+- 只把当前 `GameEntry.CreateBuilding` 的建筑创建逻辑下沉到 `Buildings/` 下的小组件 / 小服务，为后续重建复用。
+
+允许：
+
+- 新增 `Buildings/BuildingFactory.cs` 或同等小类。
+- 将创建建筑 GameObject、SpriteRenderer、HealthComponent、BuildingIdentity、BuildingDeathHandler、Collider、TowerAttack / BarracksSpawner 的装配逻辑移入 `BuildingFactory`。
+- `GameEntry` 仍负责决定测试场景里创建哪些建筑、设置 rally / push target、装配 `FactionDefeatHandler`、保留 K / L 测试快捷键。
+- 行为保持不变。
+- 新增脚本必须提交 `.meta`。
+
+必须保持：
+
+- 当前建筑出现位置、颜色、大小、血量、Tower/Barracks 行为不变。
+- 建筑死亡后仍生成废墟。
+- 大本营被击败后，该阵营所有存活建筑变废墟，士兵立即死亡。
+- K / L 测试快捷键仍可验证双方大本营清场。
+- Console 无明显错误。
+
+禁止：
+
+- 不做重建按钮。
+- 不真正生成“重建后的新建筑”流程。
+- 不做占领进度。
+- 不做资源、升级、连地、区域奖励、传送阵、AI 或 UI。
+- 不修改 `ProjectSettings`。
+- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+- 不提交 Unity 生成目录。
 
 ### MVP-03.5 废墟可重建判定数据层
 
