@@ -5,16 +5,40 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-88455d4 fix: preserve unit original color, prevent one-frame chase to dead target
+8dbbbd7 fix: clear stale pushPath on deaggro to prevent one-frame折返 toward dead building
 ```
 
-结论：**MVP-02.1a 暂不通过**。
+结论：**MVP-02.1a 通过，允许进入第三阶段第一个小任务**。
 
-说明：颜色问题的代码方向正确；但用户确认“打败敌人大本营后返回时短暂折返”仍然存在。Claude 本次修复只处理了击杀后一帧可能追逐 dead target 的情况，没有处理 `pushPath` / push order 在目标建筑死亡后的残留。
+说明：Claude 已在 `Deaggro()` 中清理残留 `pushPath`，解决击败敌方大本营后仍沿旧 push 路线短暂折返的问题。用户已表示“好了进行下一步”，因此 Codex 允许发布第三阶段的第一个小范围任务：建筑变废墟 + 围绕废墟巡逻。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **FAIL**
+Gate: **PASS**
+
+### 已修复：[P1] 目标死亡后旧 pushPath 残留导致折返
+
+File:
+
+```text
+kingbattle/Assets/Scripts/Combat/UnitCombat.cs:242
+```
+
+Review:
+
+`Deaggro()` 已增加：
+
+```csharp
+ClearPushPath();
+```
+
+修复效果：
+
+```diff
++ 清理 target / chaseTarget 后同步清理旧 pushPath
++ 单位不再继续执行指向已摧毁建筑的旧推进路径
++ 击败敌方大本营后可稳定返回 rally/patrol
+```
 
 ### 已修复：[P2] 士兵颜色被白色覆盖
 
@@ -26,78 +50,13 @@ kingbattle/Assets/Scripts/Combat/HealthComponent.cs:31
 
 Review:
 
-Claude 已在 `Start()` 中捕获 `SpriteRenderer.color`：
-
-```csharp
-if (targetRenderer != null)
-    originalColor = targetRenderer.color;
-```
-
-受伤时改为：
-
-```csharp
-targetRenderer.color = Color.Lerp(lowHealthColor, originalColor, t);
-```
-
-这符合要求：满血/未受伤时保留单位原色，受伤时从原色向低血量色过渡，不再把 Soldier 原色覆盖成白色。
-
-### [P1] 击败敌人大本营后仍短暂折返
-
-Files:
-
-```text
-kingbattle/Assets/Scripts/Combat/UnitCombat.cs:122
-kingbattle/Assets/Scripts/Combat/UnitCombat.cs:223
-kingbattle/Assets/Scripts/Combat/UnitCombat.cs:242
-```
-
-Problem:
-
-Claude 本次只在 `TakeDamage()` 后增加了：
-
-```csharp
-if (target.IsDead)
-{
-    Deaggro();
-    return;
-}
-```
-
-这可以避免“击杀后一帧继续追 dead target”，但没有清理旧的 `pushPath`。当前 `UpdateIdle()` 的执行顺序是：
-
-```text
-1. 扫描敌人
-2. 如果 pushPath != null，则继续沿 pushPath 移动
-3. pushPath == null 时才返回巡逻圆
-```
-
-所以单位在打死敌人大本营后，如果 `pushPath` 仍然指向敌方大本营/旧推进终点，`Deaggro()` 回到 Idle 后仍会先执行旧 pushPath，表现就是用户看到的“回来时折返一下”。
-
-Impact:
-
-用户已经在 Play Mode 中确认折返仍存在。这个问题会让波次推进收尾显得不稳定，也会影响第三阶段“建筑废墟 / 围绕废墟巡逻”的基础。
-
-Fix:
-
-请 Claude 继续小修，不要进入第三阶段。重点不是 dead target chase，而是 push order 残留：
-
-```diff
-+ 当攻击目标建筑死亡，并且该目标属于当前 push 目标 / 敌方大本营时，清理 pushPath
-+ 清理 chaseTarget / target 后，单位应直接进入返回 rally/patrol 的单一路径
-+ Deaggro 后不要再执行指向已摧毁建筑的旧 pushPath
-+ 可以在 UnitCombat 中增加明确方法，例如 ClearPushPathOnTargetDeath
-+ 或由 BarracksSpawner 在 enemyTarget 死亡时通知已派出的单位 ClearPushPath
-- 不要实现废墟、占领、重建、资源或 AI
-```
-
-验收标准：
-
-- 打败敌人大本营后，单位不再朝已摧毁目标点短暂折返。
-- 单位稳定返回 rally/patrol。
-- 颜色保持本次修复效果。
-- Console 无明显错误。
+`HealthComponent` 已记录 `SpriteRenderer.color` 作为满血颜色，受伤时从原始颜色过渡到低血量色，不再把 Soldier 原色覆盖成白色。
 
 ## 残留注意事项
+
+### pushPath 清理策略后续需观察
+
+当前 `Deaggro()` 会在任何脱战场景下清理 `pushPath`。这解决了大本营死亡后的折返问题，但后续如果希望“波次部队打完路上小兵后继续推进”，可能需要更细的 push order 恢复策略。当前不阻塞 MVP-03.1。
 
 ### ProjectSettings 新增文件仍未处理
 
@@ -109,21 +68,53 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 
 该文件由 Unity Editor 生成。由于项目规则要求不随意修改 `ProjectSettings`，继续保持未提交状态。后续需要单独确认是否提交或忽略。
 
-## 给 Claude 的下一条任务
+## 下一条任务：MVP-03.1 建筑废墟与废墟巡逻
+
+请 Claude 先阅读：
 
 ```text
-请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
-
-用户再次 Play Mode 验证：颜色问题看起来已经按方向修了，但“打败敌人大本营后回来时短暂折返”仍然存在。
-
-Codex Review 判断：你上次只修了 dead target chase 的一帧问题，但没有处理 pushPath / push order 残留。单位打死敌方大本营后，Deaggro 回到 Idle，仍可能继续执行旧 pushPath，先朝已摧毁的大本营/旧推进终点走一下，再返回 rally/patrol。
-
-请只修这个问题：
-- 当攻击目标建筑死亡，并且它是当前 push 目标 / 敌方大本营时，清理 pushPath。
-- 清理 target / chaseTarget / pushPath 后，单位应直接稳定返回 rally/patrol。
-- 不要让单位在目标死亡后继续执行指向已摧毁建筑的旧 pushPath。
-
-不要实现建筑废墟、重建、资源、升级、连地、区域奖励、传送阵、AI 或 UI。
-
-完成后更新 WORKLOG.md，说明修改文件、Play Mode 验证步骤、是否修改场景/ProjectSettings，并 commit / push。
+AGENTS.md
+TASK.md
+REVIEW.md
+NEXT_STEPS.md
+WORKLOG.md
 ```
+
+然后只做以下任务：
+
+```text
+建筑被击败后进入废墟状态；士兵可以围绕废墟转圈巡逻。
+```
+
+### 允许范围
+
+- 建筑死亡后生成或转换为 Ruin / 废墟状态。
+- 废墟应保留原建筑位置，作为新的巡逻中心。
+- 击败建筑的士兵，或参与攻击该建筑的士兵，在目标死亡后可以围绕废墟转圈巡逻。
+- 废墟使用简单视觉即可，例如灰色/暗色方块或破损样式。
+- Tower / Barracks / Granary 进入废墟后应停止原功能：Tower 不再攻击，Barracks 不再出兵。
+- 建筑废墟逻辑应放在 `Buildings/` 或清晰的组件中，不要塞进大型 `GameManager`。
+- 可使用 `HealthComponent.OnDeath` 或新增小组件处理建筑死亡，但不要破坏单位死亡逻辑。
+
+### 禁止范围
+
+- 不做重建。
+- 不做占领进度。
+- 不做资源产出。
+- 不做建筑升级。
+- 不做连地系统。
+- 不做区域奖励。
+- 不做传送阵。
+- 不做 AI 决策。
+- 不做 UI / 美术大改 / 音效。
+
+### 验收标准
+
+- EnemyBase / 敌方建筑血量归零后，不是简单消失，而是留下可见废墟。
+- 废墟不再执行原建筑功能。
+- 士兵打败建筑后不会折返旧目标点，而是围绕废墟转圈巡逻。
+- 普通单位死亡仍按原逻辑销毁，不变成废墟。
+- Console 无明显错误。
+- 不修改 `ProjectSettings`，除非先说明理由并等待确认。
+- 不提交 Unity 生成目录。
+- 更新 `WORKLOG.md`，并 commit / push。

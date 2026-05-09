@@ -79,21 +79,21 @@
 48f7eb5 fix: tower targets units only, add missing meta files
 ```
 
-## 当前正式任务：MVP-02.1 自动战争基础体验补强
+## 当前正式任务：MVP-03.1 建筑废墟与废墟巡逻
 
-下一轮进入 MVP-02.1。
+下一轮进入第三阶段的第一个小任务。
 
-目标不是增加更多系统，而是让已有“出兵 + 移动 + 战斗”更接近 `goal.md` 的自动战争体验。
+目标不是一次性做完整建筑系统，而是先让“打败建筑”有稳定的战场结果：建筑留下废墟，士兵围绕废墟巡逻。
 
 ## 当前 Review 结论
 
 Claude 已提交最新修复：
 
 ```text
-88455d4 fix: preserve unit original color, prevent one-frame chase to dead target
+8dbbbd7 fix: clear stale pushPath on deaggro to prevent one-frame折返 toward dead building
 ```
 
-Codex Review 结论：MVP-02.1a 暂不通过。颜色修复方向正确，但用户确认打败敌人大本营后短暂折返仍存在。
+Codex Review 结论：MVP-02.1a 通过，允许进入 MVP-03.1。
 
 已确认修复：
 
@@ -104,44 +104,40 @@ Codex Review 结论：MVP-02.1a 暂不通过。颜色修复方向正确，但用
 + 旧版 Deaggro 一帧 MoveTowards 已删除，返回逻辑改为持续执行
 + 脱战后走到 patrol.CurrentPatrolPosition，距离 <= 0.1 后才恢复 Tick
 + 前往 rallyPoint 途中接敌时，Pause/Resume 保留并恢复道路路线
++ HealthComponent 保留单位原色作为满血颜色
++ Deaggro 清理残留 pushPath，击败敌方大本营后不再短暂折返
 ```
 
-用户反馈：
-
-```diff
-+ 核心四项没问题
-+ 颜色问题已按正确方向修复，待最终 Play Mode 确认
-- 打败敌人大本营后回来的时候仍会折返一下
-```
-
-进入第三阶段前，先发布 MVP-02.1a 小修。
-
-### MVP-02.1a 小修
+### MVP-03.1 建筑废墟与废墟巡逻
 
 范围：
 
-- 修复打败敌人大本营后返回时短暂折返的问题
+- 建筑血量归零后进入废墟状态
+- 士兵打败建筑后围绕废墟转圈巡逻
 
 要求：
 
-- 目标建筑死亡后，单位应稳定返回 rally/patrol，不要短暂折返到旧 push / 已死亡目标方向
-- 重点检查 `pushPath` / push order 是否在目标建筑死亡后仍残留
-- 如果目标是当前 push 目标 / 敌方大本营，目标死亡时应清理 `pushPath`
-- `HealthComponent` 原色修复保持不回退
-- 只做最小修复，不新增 UI / 血条 / 废墟 / 占领 / 重建
+- 建筑死亡后留下可见废墟，而不是完全消失
+- 废墟保留原建筑位置，作为可巡逻中心
+- 废墟不再执行原建筑功能：Tower 不攻击，Barracks 不出兵
+- 士兵打败建筑后，以废墟为 patrol center 转圈
+- 普通单位死亡逻辑保持原样，不变成废墟
+- 废墟逻辑放在 `Buildings/` 或清晰小组件中，不新增大型 `GameManager`
+- 可使用 `HealthComponent.OnDeath`，但不要破坏单位死亡逻辑
 
 禁止：
 
-- 建筑废墟
 - 重建
+- 占领进度
 - 资源
 - 升级
 - 连地
 - 区域奖励
 - 传送阵
 - AI
+- UI / 美术大改 / 音效
 
-MVP-02.1a 通过后再进入第三阶段拆分。
+MVP-03.1 通过后，再考虑重建、占领或资源。
 
 ### 1. 巡逻系统
 

@@ -1681,3 +1681,55 @@ git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs WORKLOG.md TASK.md
 git commit -m "fix: clear stale pushPath on deaggro to prevent one-frame折返 toward dead building"
 git push origin main
 ```
+
+### MVP-02.1a 收尾与 MVP-03.1 任务发布
+
+操作人：Codex
+
+审查提交：
+
+```text
+8dbbbd7 fix: clear stale pushPath on deaggro to prevent one-frame折返 toward dead building
+```
+
+结论：
+
+```text
+MVP-02.1a 通过，允许进入第三阶段第一个小任务。
+```
+
+已确认：
+
+1. 士兵颜色修复方向正确：`HealthComponent` 使用原始 `SpriteRenderer.color` 作为满血颜色。
+2. 击败敌方大本营后的短暂折返已通过清理残留 `pushPath` 修复。
+3. MVP-02.1 的巡逻、仇恨、脱战、集结点、小波次推进核心闭环可以收尾。
+
+新发布任务：
+
+```text
+MVP-03.1 建筑废墟与废墟巡逻
+```
+
+Claude 任务范围：
+
+```diff
++ 建筑血量归零后进入 Ruin / 废墟状态
++ 废墟保留原建筑位置，作为可巡逻中心
++ 士兵打败建筑后围绕废墟转圈巡逻
++ 废墟不再执行原建筑功能：Tower 不攻击，Barracks 不出兵
++ 普通单位死亡逻辑保持原样，不变成废墟
++ 废墟逻辑放在 Buildings/ 或清晰小组件中
+- 不做重建
+- 不做占领进度
+- 不做资源产出
+- 不做建筑升级
+- 不做连地系统
+- 不做区域奖励
+- 不做传送阵
+- 不做 AI
+- 不做 UI / 美术大改 / 音效
+```
+
+GitHub 上传状态：
+
+- 本次任务发布文档待提交并推送。

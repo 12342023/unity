@@ -120,24 +120,24 @@ Codex 不直接修改上述业务脚本。
 48f7eb5 fix: tower targets units only, add missing meta files
 ```
 
-## 新发布要求：MVP-02.1 自动战争基础体验补强
+## MVP-02.1 自动战争基础体验补强收尾
 
-Claude 下一阶段正式进入 MVP-02.1。
+MVP-02.1 / MVP-02.1a 已完成核心收尾。
 
 ## 当前状态
 
-### MVP-02.1 Play Mode QA：核心通过，进入 MVP-02.1a 小修
+### MVP-02.1a Codex Review：通过
 
 Claude 最新提交：
 
 ```text
-88455d4 fix: preserve unit original color, prevent one-frame chase to dead target
+8dbbbd7 fix: clear stale pushPath on deaggro to prevent one-frame折返 toward dead building
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-02.1a 暂不通过；颜色修复方向正确，但折返仍存在
+MVP-02.1a 通过；允许进入第三阶段第一个小任务
 ```
 
 | 组件 | 状态 | 说明 |
@@ -150,8 +150,8 @@ MVP-02.1a 暂不通过；颜色修复方向正确，但折返仍存在
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ 折返修复（ClearPushPath）已提交，需用户 Play Mode 验证
-- ⏳ 两问题通过后，再进入第三阶段任务拆分
+- ⏳ 发布 MVP-03.1 建筑废墟与废墟巡逻
+- ⏳ Claude 完成 MVP-03.1 后，Codex Review
 
 已处理：
 - ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动
@@ -161,38 +161,50 @@ MVP-02.1a 暂不通过；颜色修复方向正确，但折返仍存在
 - ✅ 接敌时 `movement.Pause()` 保留 road path，脱战时 `movement.Resume()` 恢复路线
 - ✅ 用户确认核心四项没问题
 - ✅ HealthComponent 已记录原始颜色作为满血颜色，颜色修复方向正确
+- ✅ Deaggro 清理残留 pushPath，解决击败敌方大本营后短暂折返
 
-主题：
-
-```text
-巡逻 + 仇恨范围 + 脱战 + 集结点 + 小波次推进
-```
-
-用户对“巡逻”的最新定义：
+## 新发布要求：MVP-03.1 建筑废墟与废墟巡逻
 
 ```text
-单位在一个建筑旁边转圈巡逻
+建筑被击败后进入废墟状态；士兵可以围绕废墟转圈巡逻。
 ```
 
-用户新增第三阶段需求：
+## MVP-03.1 目标
 
-```text
-士兵打败敌方建筑后，建筑变成废墟；士兵也可以围绕废墟转圈巡逻。
-```
+- 建筑死亡后留下可见废墟，而不是完全消失。
+- 废墟成为新的巡逻中心。
+- 士兵打败建筑后围绕废墟巡逻。
+- 废墟不再执行原建筑功能。
 
-Codex 阶段判断：
+## MVP-03.1 允许范围
 
-```diff
-+ 这是“摧毁与重建 / 建筑状态 / 占领后待命”的第三阶段需求
-+ 需要记录并保留为后续任务
-- 当前 MVP-02.1 不允许 Claude 直接实现该功能
-```
+- 建筑死亡后生成或转换为 Ruin / 废墟状态
+- 简单废墟视觉，例如灰色/暗色方块
+- 禁用废墟上的 TowerAttack / BarracksSpawner 等建筑功能
+- 攻击建筑的士兵在目标死亡后围绕废墟转圈
+- 必要时新增小组件，例如 `BuildingRuin` / `BuildingDeathHandler`
 
-因此 Claude 需要把巡逻理解为建筑周边小半径环绕，而不是在多个地块之间来回走。
+## MVP-03.1 禁止范围
 
-目标：
+- 重建
+- 占领进度
+- 资源产出
+- 建筑升级
+- 连地系统
+- 区域奖励
+- 传送阵
+- AI 决策
+- UI / 美术大改 / 音效
 
-让已有出兵、移动、战斗系统更接近 `goal.md` 的自动战争体验，而不是继续堆新系统。
+## MVP-03.1 验收标准
+
+- EnemyBase / 敌方建筑血量归零后留下废墟
+- 废墟不再出兵、不再攻击
+- 士兵打败建筑后围绕废墟转圈
+- 普通单位死亡仍直接销毁
+- Console 无明显错误
+- 不修改 `ProjectSettings`，除非先说明理由并等待确认
+- 不提交 Unity 生成目录
 
 具体要求见：
 
@@ -200,13 +212,16 @@ Codex 阶段判断：
 NEXT_STEPS.md
 ```
 
-## 禁止提前开发
+## 历史主题：MVP-02.1
 
-MVP-02.1 禁止：
+```text
+巡逻 + 仇恨范围 + 脱战 + 集结点 + 小波次推进
+```
 
-- 摧毁与重建
-- 建筑变废墟
-- 围绕废墟巡逻
+## 当前仍需保持
+
+MVP-03.1 仍然禁止：
+
 - 建筑升级
 - 粮食资源
 - 人口系统
