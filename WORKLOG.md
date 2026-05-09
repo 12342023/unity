@@ -3895,3 +3895,20 @@ MVP-03.13 Neutral plot 最小占领与颜色刷新
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 MVP-03.12 Review 与 MVP-03.13 任务发布文档。
+
+提交记录：
+
+```text
+ddb3ef3 docs: review mvp-03.12 and release mvp-03.13
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   757a529..ddb3ef3  main -> main
+```
