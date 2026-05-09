@@ -4393,3 +4393,20 @@ MVP-03.15 占领后的下一层可连接 Neutral 查询
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 MVP-03.14 Review 与 MVP-03.15 任务发布文档。
+
+提交记录：
+
+```text
+d29b28b docs: review mvp-03.14 and release mvp-03.15
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   712cd39..d29b28b  main -> main
+```
