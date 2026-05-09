@@ -150,9 +150,8 @@ MVP-02.1a 暂不通过；颜色修复方向正确，但折返仍存在
 | Tower 仍只攻击单位 | ✅ | 不变 |
 
 待处理：
-- ⏳ 打败敌人大本营后返回时短暂折返仍存在：需要清理目标死亡后的 `pushPath` / push order 残留
-- ⏳ Claude 完成折返小修后，Codex 再 Review
-- ⏳ 两个小问题通过后，再进入第三阶段任务拆分
+- ⏳ 折返修复（ClearPushPath）已提交，需用户 Play Mode 验证
+- ⏳ 两问题通过后，再进入第三阶段任务拆分
 
 已处理：
 - ✅ UnitMovement.HasRemainingPath 为 true 时，不再允许 patrol.Tick 覆盖道路移动

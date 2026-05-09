@@ -243,6 +243,12 @@ namespace Combat
         {
             target = null;
             chaseTarget = null;
+
+            // Clear stale push orders — the unit may have intercepted the enemy
+            // before completing the full pushPath, leaving an unfinished path
+            // that would point toward a now-dead building.
+            ClearPushPath();
+
             state = CState.Idle;
 
             // Resume paused road path (if any) so unit continues toward rally point

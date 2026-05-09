@@ -1637,3 +1637,47 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    88455d4..26e7bc7  main -> main
 ```
+
+### MVP-02.1a 修复：清除 pushPath 残留
+
+操作人：Claude
+
+Codex Review 确认的折返根因已修复。
+
+**根因：**
+
+单位在 pushPath 推进过程中，`UpdateIdle()` 的 step 1（aggro 扫描）在 step 2（pushPath 执行）之前运行。当单位经由 pushPath 经过 Crossroads 时，距离 EnemyBase 约 3.2 单位，进入 aggroRange(4)：
+```
+UpdateIdle:
+  1. aggro 扫描 → 发现 EnemyBase Barracks（距离 3.2 < 4）
+     → Chase → Attack → 建筑死亡 → Deaggro
+     → pushPath 从未完成（pushIndex 还指向第二个/第三个路点）
+  2. pushPath 执行 → 跳过（永远不会执行到，因为 step 1 拦截了）
+  3. 返回巡逻圆
+  4. 巡逻 Tick
+```
+
+Deaggro 后回到 Idle，step 2 检测到 `pushPath != null && pushIndex < pushPath.Count` → 继续向旧目标路点移动一步 → 视觉"折返"。
+
+**修复：** `Deaggro()` 中增加 `ClearPushPath()`，在任何脱战场景下清除未完成的旧推进指令：
+```csharp
+ClearPushPath(); // 放在 state = Idle 之前
+```
+这样单位脱战后不会继续执行指向已摧毁建筑的 pushPath。
+
+修改文件：仅 `Assets/Scripts/Combat/UnitCombat.cs` — Deaggro() 开头增加 ClearPushPath()
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. 波次蓝兵推进途中（经过 Crossroads 时）→ 蓝兵因 aggro 转向攻击 EnemyBase
+2. 击败 EnemyBase Barracks → 蓝兵 Deaggro → **直接稳定走回 Village 巡逻圆，无折返**
+3. Console 无错误
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/UnitCombat.cs WORKLOG.md TASK.md
+git commit -m "fix: clear stale pushPath on deaggro to prevent one-frame折返 toward dead building"
+git push origin main
+```
