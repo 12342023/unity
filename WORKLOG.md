@@ -3652,7 +3652,7 @@ git push origin main
 
 ```text
 To https://github.com/12342023/unity.git
-   6f1deab..db147ea  main -> main
+   3af1891..2424573  main -> main
 ```
 
 ### MVP-03.11 Codex Review：通过并发布 MVP-03.12
@@ -3717,4 +3717,22 @@ MVP-03.12 大本营废墟临时派兵测试入口
 - 不做资源、升级、区域奖励、传送阵、AI
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 Review 与 MVP-03.12 任务发布文档。
+- 同步更正了 MVP-03.11 记录中的推送范围笔误。
+
+提交记录：
+
+```text
+f8460c3 docs: review mvp-03.11 and release mvp-03.12
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   2424573..f8460c3  main -> main
 ```
