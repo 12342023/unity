@@ -207,16 +207,22 @@
 
 ### MVP-03.20 占领需求接入
 
-- 当前 Claude 本地实现暂不通过。
-- 阻塞问题：
-  - `StrategicDispatchService` 使用每个士兵注册 handler 时的局部序号 `capturedCount + 1` 判断需求。
-  - 这不是最终 totalDispatched。
-  - 派出 3 个兵、目标需求 2 时，第一名注册士兵先到达会按 1/2 判定失败，并阻止后续占领。
-- 修复包：
-  - 使用最终 totalDispatched 判定需求。
-  - 保持 handler self-cleanup 和 `captureConsidered` 一次性语义。
-  - blocked 日志显示最终 dispatched / required。
-  - 验证不足人数不占领、足够人数可占领、重复按 U/O 不误触发旧 handler。
+- 已完成并通过：
+  - U/O 传入 target plot required count。
+  - `StrategicDispatchService` 用最终 `totalDispatched` 判定 capture requirement。
+  - dispatched 不足时 blocked。
+  - dispatched 足够时可占领。
+  - handler self-cleanup 和 `captureConsidered` 一次性语义保留。
+- Codex review 通过，并发布 MVP-03.21。
+
+### MVP-03.21 占领反馈与结果状态
+
+- 当前发布任务：为 U/O 派兵和占领结果补结构化状态，统一成功/失败日志。
+- 批量目标：
+  - `StrategicDispatchService` 增加 `DispatchResult` 或等价数据。
+  - O/U 使用结构化 dispatch result。
+  - 到达后成功/失败日志统一。
+  - P/O/U 日志继续可验证需求和派兵数量。
 
 GitHub 上传状态：
 
@@ -233,7 +239,7 @@ To https://github.com/12342023/unity.git
 
 ## 当前待处理状态
 
-截至 MVP-03.20 任务发布前，工作区仍存在以下未提交/未跟踪变更：
+截至 MVP-03.21 任务发布前，工作区仍存在以下未提交/未跟踪变更：
 
 ```text
 D  要求.md
@@ -248,6 +254,10 @@ D  要求.md
 ## 最近关键提交
 
 ```text
+681abb4 fix: use shared totalDispatched instead of per-iteration capturedCount
+2c58c94 docs: record mvp-03.20 blocker push
+09bb4dc docs: block mvp-03.20 capture count bug
+1959d56 feat: capture requires minimum soldier count, U/O both enforce it
 569c321 feat: show dispatched versus required capture count
 404b86c feat: PlotCaptureRequirementService + P shortcut prints capture requirements
 6002750 docs: record expanded mvp-03.19 batch
@@ -299,10 +309,10 @@ L
 
 ## 下一步
 
-1. Claude 执行 MVP-03.20。
+1. Claude 执行 MVP-03.21。
 2. 检查 `要求.md` 删除是否合理。
 3. 继续保持 `SceneTemplateSettings.json` 未提交，除非用户明确要求处理。
-4. Claude 完成后由 Codex review，再决定是否进入 MVP-03.21。
+4. Claude 完成后由 Codex review，再决定是否进入 MVP-03.22。
 
 ## 最近上传记录
 

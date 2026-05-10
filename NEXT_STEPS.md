@@ -22,20 +22,20 @@
 - 扩张 source/target 已整理成 `ExpansionCandidate` 候选数据。
 - 占领需求数据层已完成，P 可打印 Small/Medium/Large 对应需求，O 日志可显示 dispatched / required。
 
-## 当前正式任务：MVP-03.20 占领需求判定修复
+## 当前正式任务：MVP-03.21 占领反馈与结果状态
 
 目标：
 
 ```text
-修复 capture gate 使用局部序号导致足够派兵仍可能不占领的问题。
+为 U/O 派兵和占领结果补结构化状态，统一成功/失败日志。
 ```
 
 实现方向：
 
 ```diff
-+ StrategicDispatchService 使用最终 totalDispatched 判定需求
-+ handler 清理和 captureConsidered 逻辑保持正确
-+ blocked 日志显示最终 dispatched/required
++ StrategicDispatchService 增加 DispatchResult 或等价数据
++ O/U 使用结构化 dispatch result
++ 到达后成功/失败日志统一
 + P/O/U 日志继续可验证需求和派兵数量
 - 不改变 K/L/R/T/Y/U/I/O 行为
 - 不做正式 UI
@@ -45,14 +45,14 @@
 - 不修改 ProjectSettings
 ```
 
-## MVP-03.20 后的建议顺序
+## MVP-03.21 后的建议顺序
 
-### MVP-03.21 占领反馈批量任务
+### MVP-03.22 士兵占领后行为收口
 
-占领需求接入稳定后，再打包做：
+占领反馈稳定后，再打包做：
 
-- 占领失败时士兵巡逻/停留行为整理。
-- 占领成功/失败日志统一。
+- 占领成功后士兵围绕新占领 plot 巡逻。
+- 占领失败后士兵停留或返回来源点的行为选择。
 - 为未来 UI 准备只读状态数据。
 
 ### 后续

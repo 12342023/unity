@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-发布 MVP-03.20 修复包：占领需求判定收口。
+发布 MVP-03.21：占领反馈与结果状态批量任务。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,23 +11,23 @@ Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业�
 Claude 最新提交：
 
 ```text
-MVP-03.20 本地未提交实现
+681abb4 fix: use shared totalDispatched instead of per-iteration capturedCount
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.20 暂不通过；必须修复 requirement 判定
+MVP-03.20 修复通过；允许进入 MVP-03.21
 ```
 
 ## 本轮目标
 
-继续采用“每轮 2-3 个强相关任务”的节奏，但当前有阻塞 bug，先做修复包。
+继续采用“每轮 2-3 个强相关任务”的节奏。本轮整理占领反馈与结果状态，方便后续 UI、失败重试和行为收口。
 
 目标：
 
 ```text
-修复 U/O 派兵数量满足目标需求时仍可能无法占领的问题。
+为 U/O 派兵和占领结果补结构化状态，统一成功/失败日志。
 ```
 
 ## 当前工作区注意事项
@@ -71,31 +71,37 @@ Village, Farmland
 
 不要把 Village 写成 Player，除非本轮代码显式改变了 `Village.faction`。
 
-## MVP-03.20 修复范围
+## MVP-03.21 批量允许范围
 
-任务 A：修复总派兵数判定
+任务 A：新增派兵结果数据
 
-- `StrategicDispatchService.DispatchToPlot(...)` 必须用本次最终 totalDispatched 判断是否满足 `requiredSoldierCount`。
-- 不允许使用每个士兵注册 handler 时的局部序号作为派兵总数。
-- 第一个到达的士兵触发 capture 时，应按 `totalDispatched >= requiredSoldierCount` 判定。
+- 在 `StrategicDispatchService` 增加 `DispatchResult` 或等价小数据类型。
+- 字段建议：
+  - targetPlotId。
+  - dispatchedCount。
+  - requiredSoldierCount。
+  - hasEnoughSoldiers。
+  - captureWillBeAttemptedOnArrival。
+  - message。
 
-任务 B：保持 handler 生命周期
+任务 B：O/U 使用结构化结果
 
-- 每个 handler 到达后仍移除自身。
-- `captureConsidered` 仍防止重复 TryCapture / 重复 blocked log。
-- 重复按 U/O 时旧 handler 仍要被移除。
+- `StrategicExpansionService.ExpandNext(...)` 使用 `DispatchResult` 填充 `ExpansionResult`。
+- `GameEntry` 的 U 分支使用 `DispatchResult` 打印统一日志。
+- O/U 日志格式尽量一致，例如 `dispatch 3/2 to Crossroads, willCapture=True`。
 
-任务 C：日志和结果字段一致
+任务 C：到达后的成功/失败日志统一
 
-- blocked 日志必须显示最终 totalDispatched / requiredSoldierCount。
-- O 的 `ExpansionResult.hasEnoughDispatchedSoldiers` 必须等价于 `dispatchedCount >= requiredCount`。
-- U 日志继续显示 dispatched / required。
+- 允许占领时打印 `Capture attempt allowed: dispatched 3/2 to Crossroads`。
+- 不足时打印 `Capture blocked: dispatched 1/2 to Crossroads`。
+- 不修改 `PlotCaptureService.TryCapture(...)` 的规则。
 
-任务 D：Play Mode 验证
+任务 D：验证
 
-- 不足人数：dispatched 1/2，到达后不占领，Console 有 blocked log。
-- 足够人数：dispatched 3/2，第一个兵到达也必须占领成功。
-- 重复按 U/O 不应出现旧 handler 误触发。
+- P 仍打印需求。
+- U/O 不足人数 blocked。
+- U/O 足够人数可以占领。
+- 重复按 U/O 不触发旧 handler。
 
 - 更新 `WORKLOG.md`。
 
@@ -121,11 +127,11 @@ Village, Farmland
 
 - Play Mode：
   - P 能打印每个 plot 的占领需求。
-  - O 日志显示 dispatched / required。
-  - U 日志显示 dispatched / required。
-  - 当 dispatchedCount >= requiredCount 时，目标仍能被占领。
-  - 当 dispatchedCount < requiredCount 时，目标不应被占领，并有清晰日志。
-  - 足够人数场景下，第一名士兵到达也不能错误 blocked。
+  - O/U 日志格式一致，包含 dispatched / required / willCapture。
+  - 到达后成功/失败日志清晰。
+  - 不足人数不占领。
+  - 足够人数可占领。
+  - 重复按 U/O 不触发旧 handler。
 - `StrategicDispatchService` handler 清理逻辑仍正确。
 - `PlotCaptureService` 的基本规则不变。
 - I 不派兵、不占领。
