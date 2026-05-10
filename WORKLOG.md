@@ -1885,3 +1885,46 @@ GitHub 上传状态：
 
 - review/warning-cleanup-task commit: `028718d docs: review Unity 6 migration and release warning cleanup`
 - push: 已上传到 `origin/main`
+
+### MVP-04.6 Unity 6 obsolete warning cleanup
+
+操作人：Claude
+
+**修改内容**
+
+三项 Unity 6 API 过时警告替换：
+
+1. `Physics2D.OverlapCircleNonAlloc` → `Physics2D.OverlapCircle` + `ContactFilter2D`
+   - 文件：`Assets/Scripts/Buildings/TowerAttack.cs`
+
+2. `FindObjectsByType<T>(FindObjectsSortMode.None)` → `Object.FindObjectsByType<T>(FindObjectsSortMode.None, FindObjectsInactive.Exclude)`
+   - 文件（7 个）：
+     - `FactionDefeatHandler.cs`
+     - `EnemyAttackCommandService.cs`（2 处）
+     - `FactionStatsService.cs`
+     - `StrategicDispatchService.cs`
+     - `StrategicConnectionService.cs`
+     - `DebugShortcutController.cs`（5 处）
+
+3. `FindFirstObjectByType<T>()` → `Object.FindFirstObjectByType<T>(FindObjectsInactive.Exclude)`
+   - 文件：`Assets/Scripts/UI/GameHud.cs`
+
+修改文件（8 个）：
+- `Buildings/TowerAttack.cs`
+- `Buildings/FactionDefeatHandler.cs`
+- `Combat/EnemyAttackCommandService.cs`
+- `Combat/FactionStatsService.cs`
+- `Combat/StrategicDispatchService.cs`
+- `Combat/StrategicConnectionService.cs`
+- `Debug/DebugShortcutController.cs`
+- `UI/GameHud.cs`
+
+场景文件和 ProjectSettings：均未修改
+
+Play smoke test：
+1. 点击 Player-owned source → 高亮，点击 target → 派兵
+2. HUD Dispatch 可派兵
+3. O 可派兵
+4. K/L/E/N/R/T/Y/U/I/O/P/Q 无回归
+5. Victory 后不能再派兵
+6. Console 无 error CS，无上述 obsolete warnings

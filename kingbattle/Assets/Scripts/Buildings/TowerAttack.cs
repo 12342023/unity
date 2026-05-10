@@ -53,9 +53,12 @@ namespace Buildings
             HealthComponent nearest = null;
             float nearestDist = attackRange;
 
-            // Use non-alloc physics overlap for efficiency
-            int count = Physics2D.OverlapCircleNonAlloc(
-                transform.position, attackRange, hitBuffer);
+            // Use non-alloc physics overlap with ContactFilter2D (Unity 6 API)
+            var filter = new ContactFilter2D();
+            filter.useTriggers = true;
+            filter.useLayerMask = false;
+            int count = Physics2D.OverlapCircle(
+                transform.position, attackRange, filter, hitBuffer);
 
             for (int i = 0; i < count; i++)
             {

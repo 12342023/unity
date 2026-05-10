@@ -76,7 +76,7 @@ namespace Combat
 
             // Gather non-dead Enemy soldiers near source
             int count = 0;
-            foreach (var u in GameObject.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
+            foreach (var u in Object.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None, FindObjectsInactive.Exclude))
             {
                 if (u.faction != Faction.Enemy) continue;
                 if (u.GetComponent<HealthComponent>().IsDead) continue;
@@ -165,7 +165,7 @@ namespace Combat
 
                 Vector3 plotPos = new Vector3(plot.worldPosition.x, plot.worldPosition.y, -0.2f);
                 int nearby = 0;
-                foreach (var u in GameObject.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
+                foreach (var u in Object.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None, FindObjectsInactive.Exclude))
                 {
                     if (u.faction != Faction.Enemy) continue;
                     if (u.GetComponent<HealthComponent>().IsDead) continue;

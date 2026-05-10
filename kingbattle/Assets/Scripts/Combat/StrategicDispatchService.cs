@@ -73,7 +73,7 @@ namespace Combat
             // Target world position (last waypoint)
             Vector3 targetWorldPos = waypoints.Count > 0 ? waypoints[waypoints.Count - 1] : rallyPos;
 
-            foreach (var u in GameObject.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
+            foreach (var u in Object.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None, FindObjectsInactive.Exclude))
             {
                 if (u.faction != Faction.Player) continue;
                 if (u.GetComponent<HealthComponent>().IsDead) continue;

@@ -29,7 +29,7 @@ namespace Combat
         public static int CountAliveUnits(Faction faction)
         {
             int count = 0;
-            foreach (var u in GameObject.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
+            foreach (var u in Object.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None, FindObjectsInactive.Exclude))
             {
                 if (u.faction != faction) continue;
                 if (u.GetComponent<HealthComponent>().IsDead) continue;
