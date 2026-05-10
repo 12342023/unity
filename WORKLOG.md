@@ -560,3 +560,30 @@ b4ca674 docs: review mvp-03.19 and release mvp-03.20
 To https://github.com/12342023/unity.git
    569c321..b4ca674  main -> main
 ```
+
+### MVP-03.20 Codex Review：通过并发布 MVP-03.21
+
+操作人：Codex
+
+审查提交：
+
+```text
+681abb4 fix: use shared totalDispatched instead of per-iteration capturedCount
+```
+
+结论：MVP-03.20 修复通过。
+
+新发布任务：MVP-03.21 占领反馈与结果状态批量任务。
+
+GitHub 上传状态：
+
+```text
+501e2e1 docs: review mvp-03.20 and release mvp-03.21
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   681abb4..501e2e1  main -> main
+```
