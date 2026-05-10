@@ -1387,4 +1387,7 @@ Play Mode 验证：
 - 只做必要小范围数值调整。
 - 增加交付前剩余风险清单。
 
-GitHub 上传状态：待本次 docs commit / push。
+GitHub 上传状态：
+
+- docs commit: `59ea26a docs: review mvp-04.3 and release mvp-04.4`
+- push: 已上传到 `origin/main`
