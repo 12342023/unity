@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-6232f7a fix: GameStatusService.cs.meta GUID length 34 -> 32 hex chars
+31da520 chore: Unity 6 migration — packages, URP, project settings
 ```
 
-结论：**Unity 6 P1 编译阻塞已通过，允许进入 Unity 6 迁移文件收口任务。**
+结论：**Unity 6 迁移文件收口通过，允许进入 Unity 6 obsolete warning cleanup。**
 
-说明：`GameStatusService.cs.meta` 已修成 32 位 GUID；最新 Editor log 尾部没有 `GameStatusService does not exist` 或 ShaderGraph `GUID could not be found` 编译错误，已经进入 Play/战斗/Victory 日志。
+说明：提交范围合理，包含 Unity 6 必需的 Packages、URP、Graphics、ShaderGraph、ProjectVersion 和默认 Volume 资源；未提交 `.claude/`、`.idea/`、`kingbattle.slnx`、`SceneTemplateSettings.json`、`MultiplayerManager.asset`、`要求.md`。
 
 ## CODEX PROJECT REVIEW
 
@@ -19,116 +19,97 @@ Gate: **PASS**
 Findings:
 
 ```text
-无阻塞编译问题。
+无阻塞问题。
 ```
 
 ### 已确认
 
-- `Assets/Scripts/Combat/GameStatusService.cs.meta` 当前 GUID 为：
+- `Packages/manifest.json` / `packages-lock.json` 已迁移到 Unity 6 / URP 17 对应包版本。
+- `ProjectSettings/ProjectVersion.txt` 已记录 `6000.4.6f1`。
+- URP/Graphics/ShaderGraph 相关 asset 属于 Unity 6 自动序列化迁移范围。
+- `Assets/DefaultVolumeProfile.asset` 和 `.meta` 是 URP 自动生成的默认 Volume 资源，随 URP 迁移提交合理。
+- 最新 Editor log 尾部未发现 P1 编译错误。
+- Play 已跑到实际 gameplay / Victory 日志。
+
+### Codex 小修
+
+`git show --check HEAD` 发现 Unity 生成 YAML 里有 6 处行尾空格。Codex 已做纯格式修复，涉及：
+
+- `kingbattle/Assets/DefaultVolumeProfile.asset.meta`
+- `kingbattle/Assets/Settings/UniversalRP.asset`
+- `kingbattle/Assets/UniversalRenderPipelineGlobalSettings.asset`
+
+修复后 `git diff --check` 通过。
+
+### 当前仍未提交且应继续排除
 
 ```text
-bcdef234567890123456789012345678
-```
-
-- GUID 长度为 32 位十六进制。
-- Codex 用脚本扫描 `Assets/Scripts/**/*.meta`，未发现其他非 32 位 GUID。
-- `git show --check HEAD` 未发现 whitespace 问题。
-- 最新 Editor log 尾部未发现：
-  - `GameStatusService does not exist`
-  - `does not have a valid GUID`
-  - `GUID could not be found`
-  - `error CS`
-- Editor log 尾部已出现正常 gameplay 日志：Barracks spawn、Enemy attack、FactionDefeat、PlayerVictory、ruin spawned。
-
-### 当前残余风险
-
-工作区仍有 Unity 6 自动改出的未提交文件：
-
-```text
-kingbattle/Assets/Settings/Renderer2D.asset
-kingbattle/Assets/Settings/UniversalRP.asset
-kingbattle/Assets/UniversalRenderPipelineGlobalSettings.asset
-kingbattle/Packages/manifest.json
-kingbattle/Packages/packages-lock.json
-kingbattle/ProjectSettings/GraphicsSettings.asset
-kingbattle/ProjectSettings/ProjectVersion.txt
-kingbattle/ProjectSettings/ShaderGraphSettings.asset
-kingbattle/ProjectSettings/URPProjectSettings.asset
-kingbattle/Assets/DefaultVolumeProfile.asset
-kingbattle/Assets/DefaultVolumeProfile.asset.meta
+要求.md deletion
+.claude/
+kingbattle/.idea/
 kingbattle/ProjectSettings/MultiplayerManager.asset
 kingbattle/ProjectSettings/SceneTemplateSettings.json
 kingbattle/kingbattle.slnx
 ```
 
-这些包含 `ProjectSettings` 和 Unity 生成/迁移文件。不能盲目全部提交。
+这些不属于本轮需要入仓的 Unity 6 migration 文件。
 
-### 当前判断
+### 下一步
 
-- 既然用户当前明确使用 Unity 6，这些文件里有一部分可能必须纳入仓库，例如：
-  - `Packages/manifest.json`
-  - `Packages/packages-lock.json`
-  - `ProjectSettings/ProjectVersion.txt`
-  - URP/Graphics/ShaderGraph 相关迁移资产
-- 但 `.idea/`、`.claude/`、`.slnx`、`SceneTemplateSettings.json`、`MultiplayerManager.asset` 是否需要提交，需要单独判断。
+进入 **MVP-04.6：Unity 6 obsolete warning cleanup**。
 
-下一步不做玩法功能，先做 **Unity 6 迁移文件收口**。
+目标：只清理 Unity 6 API 过时警告，不做玩法改动。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：Unity 6 P1 编译阻塞已通过。
+Codex Review：Unity 6 迁移文件收口通过。
 
-进入下一步：Unity 6 迁移文件收口。
+进入 MVP-04.6：Unity 6 obsolete warning cleanup。
 
-当前情况：
-- GameStatusService.cs.meta 已修复。
-- 最新 Editor.log 尾部没有 GameStatusService / ShaderGraph / CS 编译错误。
-- 现在工作区有大量 Unity 6 自动改出的 Packages / URP / ProjectSettings / asset 文件。
-- 不允许盲目全部提交。
+本轮只清理 Unity 6 API obsolete warnings，不做新玩法，不重构业务系统。
 
-任务 A：列出并分类当前未提交文件
-- 用 `git status --short` 和 `git diff --stat`。
-- 分类为：
-  1. Unity 6 必须迁移文件。
-  2. 可能需要但要说明原因的 URP/Graphics 资产。
-  3. 不应提交的 IDE/临时/生成文件。
-  4. 需要用户/Codex 决定的文件。
+需要处理：
+1. Physics2D.OverlapCircleNonAlloc obsolete
+   - 文件：Assets/Scripts/Buildings/TowerAttack.cs
+   - 改成 Unity 6 推荐的 Physics2D.OverlapCircle / 等价新 API。
+   - 保持 Tower 行为不变：扫描敌方 UnitCombat，按 interval 攻击。
 
-任务 B：给出提交建议
-- 明确建议哪些文件应该提交：
-  - Packages/manifest.json
-  - Packages/packages-lock.json
-  - ProjectSettings/ProjectVersion.txt
-  - 以及确实由 Unity 6/URP 迁移必需的 Assets/Settings 或 ProjectSettings 文件。
-- 明确建议哪些文件不提交：
-  - .claude/
-  - kingbattle/.idea/
-  - kingbattle/kingbattle.slnx
-  - Unity 生成目录
-  - 任何无关文件
+2. FindObjectsByType<T>(FindObjectsSortMode.None) obsolete
+   - 涉及：
+     - DebugShortcutController.cs
+     - StrategicConnectionService.cs
+     - StrategicDispatchService.cs
+     - FactionStatsService.cs
+     - EnemyAttackCommandService.cs
+     - FactionDefeatHandler.cs
+   - 改成 Unity 6 推荐 overload，例如 FindObjectsByType<T>(FindObjectsInactive.Exclude) 或项目中最合适的新 API。
+   - 不改变查询语义：仍只找当前 active scene 中的运行时对象。
 
-任务 C：不要马上提交有争议的 ProjectSettings
-- 如果你认为 ProjectSettings/GraphicsSettings.asset、URPProjectSettings.asset、ShaderGraphSettings.asset 必须提交，请在 WORKLOG.md 解释原因。
-- 如果不确定，先不要提交，等待 Codex review。
+3. FindFirstObjectByType<T>() obsolete
+   - 文件：GameHud.cs
+   - 改成 FindAnyObjectByType<PlayerInputController>() 或更好的引用缓存。
+   - 优先小改，避免重构 HUD。
 
-任务 D：记录 Unity 6 warnings
-- 继续记录但本轮不大范围修：
-  - Physics2D.OverlapCircleNonAlloc obsolete。
-  - FindObjectsByType<T>(FindObjectsSortMode) obsolete。
-  - FindFirstObjectByType obsolete。
+验证：
+- Unity Console 无 obsolete warnings 中上述三类。
+- Unity Console 无 error CS。
+- Play smoke test：
+  - 点击 source/target 派兵。
+  - HUD Dispatch。
+  - O。
+  - K/L/E/N。
+  - Victory 后不能继续派兵。
+- 更新 WORKLOG.md，记录每个 API 替换点和验证结果。
 
-任务 E：验证
-- Unity Console 无编译错误。
-- Play 能进入场景。
-- 做一次 smoke test：点击派兵 / HUD Dispatch / O / K/L/E/N。
-
-输出：
-- 更新 WORKLOG.md，写清楚每个文件的提交/不提交建议。
-- 不做新玩法功能。
-- 不重构。
-- 如果要 commit，请只 commit 你能明确解释的 Unity 6 迁移文件和 WORKLOG.md。
+禁止：
+- 不做新玩法。
+- 不做正式 UI。
+- 不改 ProjectSettings。
 - 不提交 .claude、.idea、kingbattle.slnx、Library、Logs、UserSettings。
+- 不提交 要求.md 删除。
+
+完成后 commit / push。
 ```

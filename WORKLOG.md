@@ -1841,3 +1841,44 @@ Unity 编辑器从 2022.3.62f1 升级到 6000.4.6f1 后，自动改出以下文�
 - `Assets/DefaultVolumeProfile.asset` + `.meta`
 
 场景文件和 Scripts 目录：均未修改
+
+### Unity 6 迁移文件收口 Codex Review：通过并发布 warning cleanup
+
+操作人：Codex
+
+审查提交：
+
+```text
+31da520 chore: Unity 6 migration — packages, URP, project settings
+```
+
+结论：Unity 6 migration 文件收口通过。
+
+已确认：
+
+- 提交包含 Unity 6 必需迁移文件：Packages、ProjectVersion、URP/Graphics/ShaderGraph 设置、DefaultVolumeProfile。
+- 提交未包含 `.claude/`、`kingbattle/.idea/`、`kingbattle/kingbattle.slnx`。
+- 提交未包含 `ProjectSettings/SceneTemplateSettings.json`。
+- 提交未包含 `ProjectSettings/MultiplayerManager.asset`。
+- 提交未包含 `要求.md` 删除。
+- 最新 Editor log 无 P1 编译错误。
+- Play 已进入实际 gameplay / Victory 日志。
+
+Codex 小修：
+
+- 修复 Unity 生成 YAML 的行尾空格：
+  - `Assets/DefaultVolumeProfile.asset.meta`
+  - `Assets/Settings/UniversalRP.asset`
+  - `Assets/UniversalRenderPipelineGlobalSettings.asset`
+- `git diff --check` 已通过。
+
+剩余问题：
+
+- Unity 6 obsolete warnings 尚未清理：
+  - `Physics2D.OverlapCircleNonAlloc`
+  - `FindObjectsByType<T>(FindObjectsSortMode.None)`
+  - `FindFirstObjectByType<T>()`
+
+新发布任务：MVP-04.6 Unity 6 obsolete warning cleanup。
+
+GitHub 上传状态：待本次 review/warning-cleanup-task commit / push。
