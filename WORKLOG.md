@@ -1342,3 +1342,49 @@ Play Mode 验证：
 - `O`：从第一个 Player-owned frontier 派兵到第一个相邻 Neutral
 - `P`：打印占领需求（只读）
 - `Q`：打印扩张预览（只读）
+
+### MVP-04.3 Codex Review：通过并发布 MVP-04.4
+
+操作人：Codex
+
+审查提交：
+
+```text
+6c50000 feat: victory/defeat end panel, match-end command rejection, N restart
+```
+
+结论：MVP-04.3 通过。
+
+已确认：
+
+- 玩家扩张 command 在 match ended 后拒绝执行。
+- 敌方进攻 command 在 match ended 后拒绝执行。
+- Victory / Defeat 后 HUD 切换到结束面板。
+- O/E 不再真正派兵。
+- N 快捷键和 Restart 按钮提供重启路径。
+- Play Mode 回归清单已写入。
+- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+残余风险：
+
+- Restart 依赖当前 scene name reload；如果场景未配置为可加载，后续可能还要处理。
+- HUD 仍是临时 OnGUI。
+- 数值还没有系统调优。
+
+当前完成度粗估：
+
+- 技术底座：约 85%。
+- 核心玩法闭环：约 80%。
+- 完整游戏体验：约 68%-72%。
+
+新发布任务：MVP-04.4 数值调优和回归清单。
+
+任务范围：
+
+- 新增调优文档。
+- 可新增轻量 balance config。
+- 执行 Play Mode 回归清单。
+- 只做必要小范围数值调整。
+- 增加交付前剩余风险清单。
+
+GitHub 上传状态：待本次 docs commit / push。

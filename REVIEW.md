@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-d38fb3e feat: supply cap system and building roles (Granary +4 cap)
+6c50000 feat: victory/defeat end panel, match-end command rejection, N restart
 ```
 
-结论：**MVP-04.2 通过，允许进入 MVP-04.3**。
+结论：**MVP-04.3 通过，允许进入 MVP-04.4**。
 
-说明：人口/补给规则、Granary 作用、HUD units/cap 显示均已完成。未发现阻塞问题。
+说明：胜负结束面板、match ended 后 command 拒绝、N/Restart 重启、回归清单均已完成。未发现阻塞问题。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,108 +24,100 @@ Findings:
 
 ### 已确认
 
-- `FactionStatsService` 是无状态只读查询服务，不依赖 HUD、输入或平台 API。
-- supply cap 规则已实现：base 8，每个存活 Granary +4。
-- `BarracksSpawner` 在生成单位前调用 `FactionStatsService.CanSpawn(faction)`。
-- Player 和 Enemy 都使用同一套 supply cap 规则。
-- supply-capped 日志已节流，避免刷屏。
-- `GameHud` 显示 Player/Enemy units/cap、Granary/Tower 数量。
+- `StrategicExpansionCommandService.DispatchCandidate(...)` 在 match ended 后拒绝执行。
+- `EnemyAttackCommandService.DispatchAttack(...)` 和 `DispatchAttackToBestTarget(...)` 在 match ended 后拒绝执行。
+- Victory / Defeat 后 HUD 切换到结束面板，不再显示 Dispatch 按钮。
+- O / E 会自然走 command/controller 的拒绝路径，不再真正派兵。
+- N 快捷键和 Restart 按钮提供重启路径。
+- `NEXT_STEPS.md` 和 `WORKLOG.md` 已包含 Play Mode 回归清单。
 - `git show --check HEAD` 未发现 whitespace 或 patch 问题。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
-### 缺失检查
+### 残余风险
 
-当前没有阻塞 bug，但完整游戏还缺这些关键项：
-
-- 胜利/失败后仍可能继续点 HUD Dispatch，match end 状态没有完全收口。
-- 还没有明显的一局结束面板 / restart 提示。
-- gameplay command 服务还需要在 match ended 后统一拒绝执行。
-- 还缺数值调优和完整 Play Mode 回归清单。
-- 工作区仍有未确认项：`.claude/`、`kingbattle/.idea/`、`kingbattle/ProjectSettings/SceneTemplateSettings.json`、`要求.md` 删除。
+- Restart 依赖当前 scene name reload。如果当前场景未配置为可加载，Unity 可能需要后续单独处理；当前实现已有空 scene name 日志提示。
+- HUD 仍是临时 `OnGUI`，适合当前阶段，但不是最终 UI。
+- 数值还没有系统调优，当前只是能玩。
 
 ### 当前完成度判断
 
-- 技术底座：约 82%。
-- 核心玩法闭环：约 76%。
-- 完整游戏体验：约 62%-65%。
+- 技术底座：约 85%。
+- 核心玩法闭环：约 80%。
+- 完整游戏体验：约 68%-72%。
 
-下一步应收口“一局结束体验”：Victory/Defeat 显示更明确，结束后禁用正式 gameplay commands，并准备回归清单。
+下一步应做 MVP-04.4：数值调优和回归清单，把“能跑通”推进到“能稳定试玩”。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-04.2 通过。
+Codex Review：MVP-04.3 通过。
 
-进入 MVP-04.3：胜负界面和一局结束体验。
+进入 MVP-04.4：数值调优和回归清单。
 
 项目目标：
 - 四周内先完成完整 Unity 小游戏。
 - 后续仍可能做微信小程序、macOS、Android 移植。
-- 所以 match flow、UI、输入和平台能力必须继续分离。
+- 本轮是打磨/稳定轮，不是新系统开发轮。
 
 本轮目标：
-- 胜利/失败后给玩家清晰反馈。
-- 一局结束后阻止继续派兵/进攻等 gameplay command。
-- 增加最小 restart debug 能力。
-- 开始整理 Play Mode 回归清单。
+- 梳理当前所有关键数值。
+- 执行 Play Mode 回归清单。
+- 只做必要的小范围数值调整。
+- 记录调优依据，方便后续继续打磨。
 
-任务 A：match end 命令收口
-- 在玩家扩张 command、敌方进攻 command 等 gameplay command 入口检查 `MatchResultService.CurrentResult`。
-- 如果 match 已经 PlayerVictory / PlayerDefeat，返回失败结果或清晰 message。
-- HUD Dispatch、O、E 都应自然走到同一套拒绝逻辑。
-- K/L 作为 debug 触发胜负可以保留。
+任务 A：建立调优文档
+- 新增 `BALANCE.md` 或 `GAMEPLAY_TUNING.md`。
+- 记录当前关键数值：
+  - supply cap base / Granary bonus。
+  - Barracks spawn interval / rally threshold。
+  - unit health / damage / speed。
+  - Tower damage / range / interval。
+  - Enemy pressure first attack / repeat interval。
+  - Plot capture requirement Small / Medium / Large。
+- 写清楚当前目标体验：3-5 分钟能打一局，玩家有扩张和防守压力。
 
-任务 B：胜负结束面板
-- 扩展临时 `GameHud` 或新增小型 `GameEndHud`。
-- Victory / Defeat 时显示更明显的结束区域：
-  - Result: Victory / Defeat。
-  - 最终 Player Units / Cap。
-  - 最终 Enemy Units / Cap。
-  - 简短提示：Press N to restart / 或 Restart 按钮。
-- 不做正式 UI 美术，不做复杂动画。
-- HUD 仍只读状态，不直接改核心数据。
+任务 B：轻量配置收口
+- 可以新增 `GameBalanceConfig` 或等价静态配置类。
+- 只收口最明显的魔法数：
+  - supply cap base / Granary bonus。
+  - enemy pressure first/repeat interval。
+  - 可选：tower damage/range/interval。
+- 不要大规模重构所有数值。
+- 不要为了配置化改动太多业务代码。
 
-任务 C：Restart debug 能力
-- 新增一个 debug 快捷键，例如 `N`，在 match ended 后重启当前场景或重新初始化当前 GameEntry。
-- 优先选择最小、安全的方式。
-- 不要修改 ProjectSettings。
-- 如果用 SceneManager，需要确保当前场景可 reload；如果不可行，先用日志提示并在 WORKLOG 说明。
+任务 C：执行 Play Mode 回归清单
+- 按 `NEXT_STEPS.md` 的 Play Mode 回归清单逐项验证。
+- 记录通过/失败项到 WORKLOG.md。
+- 如果发现明显 bug，优先修 bug，而不是继续加功能。
 
-任务 D：结束后输入/按钮表现
-- match ended 后：
-  - HUD Dispatch 按钮不可用或点击返回 “match ended”。
-  - O/E 不再真正派兵。
-  - 敌方压力 controller 不再触发。
-  - Q/P 这类只读 debug 可以保留。
+任务 D：必要小范围调优
+- 如果 Play Mode 观察到明显问题，可以小范围调整：
+  - 敌方进攻过早/过晚。
+  - 产兵过快/过慢。
+  - supply cap 太高/太低。
+  - Tower 过强/过弱。
+- 每个调整数值都要在 WORKLOG.md 说明原因。
 
-任务 E：回归清单雏形
-- 新增或更新 `NEXT_STEPS.md` / `WORKLOG.md`，列出 Play Mode 回归清单。
-- 至少包含：
-  - Play 初始 HUD。
-  - HUD Dispatch。
-  - supply cap。
-  - enemy pressure。
-  - Victory。
-  - Defeat。
-  - Restart debug。
+任务 E：交付风险清单
+- 在 NEXT_STEPS.md 或 WORKLOG.md 增加“交付前剩余风险”：
+  - 正式 UI 还没做。
+  - debug 快捷键还没隐藏。
+  - 移植还没开始。
+  - ProjectSettings / 生成文件不能提交。
 
 验证：
-- Play Mode 验证：
-  - Victory 后 HUD 显示明显结果。
-  - Defeat 后 HUD 显示明显结果。
-  - Victory/Defeat 后 HUD Dispatch、O、E 不再派兵。
-  - Q/P 仍可只读验证。
-  - N 能 restart，或明确记录为什么暂不可做。
-  - Console 无明显错误。
-- 更新 WORKLOG.md。
-- 记录是否新增 .meta，是否修改 ProjectSettings。
+- Play Mode 回归清单至少跑一遍。
+- Console 无明显错误。
+- 如新增 `.meta`，随代码提交。
+- 不修改 ProjectSettings。
 
 禁止：
+- 不做新玩法系统。
 - 不做正式 UI 美术。
-- 不做复杂菜单系统。
 - 不做存档。
+- 不引入第三方框架。
 - 不做移动端/微信/macOS/Android 移植实现。
 - 不修改 ProjectSettings。
 - 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。

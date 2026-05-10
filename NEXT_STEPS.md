@@ -35,72 +35,37 @@
 
 ## 当前缺失
 
-- 数值调优（出兵速度、人口上限、塔伤害、敌方进攻间隔）。
-- 正式输入整理（地图点击 / 目标选择高亮）。
-- Debug 快捷键集中整理。
+- 数值调优还没做。
+- 调优文档还没做。
+- 正式输入整理（地图点击 / 目标选择高亮）还没做。
+- Debug 快捷键还没隐藏或集中。
+- 正式 UI 还没做。
+- 移植还没开始。
 
-## 四周冲刺路线
-
-### 全程架构边界
-
-- 核心玩法和平台能力分离。
-- 输入 / UI 只发命令和读状态，不直接改核心数据。
-- 后续触摸输入、移动端 HUD、平台存档可以替换当前键盘 / 临时 HUD。
-- 不把平台判断散落到建筑、战斗、移动、地图逻辑中。
-- 不为赶进度提交 Unity 生成目录或非必要 `ProjectSettings`。
-
-### Week 1：核心可玩闭环
-
-状态：基本完成。
-
-### Week 2：玩家正式操作与敌方压力
-
-状态：基本完成。
-
-### Week 3：游戏性系统最小版
-
-状态：已完成。
-
-### Week 4：打磨与交付
-
-当前进行中。
-
-已完成的：
-- 胜负结束面板 + match ended 输入收口 + restart debug + 回归清单。
-
-待完成：
-- 数值调优。
-- 正式输入整理。
-- 交付前清理（清理临时日志、隐藏 debug 快捷键、检查提交）。
-
-## 当前正式任务：MVP-04.3 胜负界面和一局结束体验
+## 当前正式任务：MVP-04.4 数值调优和回归清单
 
 目标：
 
 ```text
-收口一局结束体验：胜负显示更明确，match ended 后阻止继续 gameplay command，并提供最小 restart debug 能力。
+梳理关键数值，执行 Play Mode 回归清单，只做必要的小范围调优，把“能跑通”推进到“能稳定试玩”。
 ```
 
 实现方向：
 
 ```diff
-+ gameplay command 入口统一检查 match ended
-+ Victory / Defeat 时 HUD 显示明显结束面板
-+ N debug 快捷键 restart
-+ Play Mode 回归清单雏形
++ 新增 BALANCE.md 或 GAMEPLAY_TUNING.md
++ 可新增 GameBalanceConfig 收口少量关键数值
++ 执行 Play Mode 回归清单并记录结果
++ 必要时小范围调优
++ 增加交付前剩余风险清单
+- 不做新玩法系统
 - 不做正式 UI 美术
-- 不做复杂菜单系统
 - 不做存档
+- 不引入第三方框架
 - 不修改 ProjectSettings
 ```
 
-## MVP-04.3 后的建议顺序
-
-### MVP-04.4 数值调优和回归清单
-
-- 出兵速度、人口上限、塔伤害、敌方进攻间隔。
-- 完整 Play Mode 回归清单。
-- 修复明显 UI/反馈问题。
+## MVP-04.4 后的建议顺序
 
 ### MVP-04.5 正式输入整理
 
@@ -113,7 +78,7 @@
 - 隐藏或集中 debug 快捷键。
 - 检查不提交 `Library/`、`Logs/`、`UserSettings/`、非必要 `ProjectSettings`。
 
-## Play Mode 回归清单雏形
+## Play Mode 回归清单
 
 - Play 初始 HUD 显示目标、候选、人口、敌方压力。
 - HUD Dispatch 可派兵。
@@ -128,6 +93,14 @@
 - Victory/Defeat 后不再执行 gameplay command。
 - N restart debug。
 - Console 无明显错误。
+
+## 交付前剩余风险
+
+- 正式 UI 还没做，目前仍是 debug OnGUI。
+- Debug 快捷键还没隐藏。
+- 地图点击 / 目标选择高亮还没做。
+- 移植还没开始，但边界需要持续保持。
+- `ProjectSettings`、`.idea/`、`.claude/`、Unity 生成目录不能随便提交。
 
 ## 长期提醒
 

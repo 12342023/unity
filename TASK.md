@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-发布 MVP-04.3：胜负界面和一局结束体验。
+发布 MVP-04.4：数值调优和回归清单。
 
 Codex 当前仍作为 Tech Lead 和 Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,13 +11,13 @@ Codex 当前仍作为 Tech Lead 和 Reviewer 工作，不直接大规模开发�
 Claude 最新提交：
 
 ```text
-d38fb3e feat: supply cap system and building roles (Granary +4 cap)
+6c50000 feat: victory/defeat end panel, match-end command rejection, N restart
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-04.2 通过；允许进入 MVP-04.3。
+MVP-04.3 通过；允许进入 MVP-04.4。
 ```
 
 ## 四周目标
@@ -32,103 +32,71 @@ MVP-04.2 通过；允许进入 MVP-04.3。
 
 当前完成度粗估：
 
-- 技术底座：约 82%。
-- 核心玩法闭环：约 76%。
-- 完整游戏体验：约 62%-65%。
+- 技术底座：约 85%。
+- 核心玩法闭环：约 80%。
+- 完整游戏体验：约 68%-72%。
 
-## 移植边界要求
-
-- 核心玩法逻辑只能放在小服务 / 组件中，例如 dispatch、capture、match result、AI decision、gameplay command、rule/stat query。
-- 输入层只负责把“点击 / 快捷键 / 触摸”翻译成 gameplay command。
-- HUD / UI 只能读取状态并发起命令，不直接改 map/building/unit 内部状态。
-- 平台能力必须后置封装，例如存档、音频、震动、分享、广告、包体资源加载。
-- 不在 `Update()` 中散落大量平台判断或 UI 逻辑。
-- 新增临时 HUD 或 debug 快捷键时，要标明 debug / temporary，后续可替换为正式 UI / 触摸 UI。
-
-## 已完成基础能力
-
-- 建筑被击败后变成废墟。
-- 敌方大本营被击败后敌方建筑变废墟、敌方士兵死亡。
-- 士兵可以围绕废墟和占领目标巡逻。
-- Neutral -> Player 最小占领主路径已实现。
-- HUD 已显示候选按钮，玩家可点击 Dispatch 派兵。
-- O 与 HUD Dispatch 已复用 `StrategicExpansionCommandService`。
-- 敌方会按时间自动派兵进攻，E 可立即触发。
-- 最小 PlayerVictory / PlayerDefeat 状态已完成。
-- supply cap 已完成：base 8，每个 Granary +4。
-- Barracks 遵守 supply cap。
-- HUD 已显示双方 units/cap、Granary/Tower 数。
-
-## 当前工作区注意事项
-
-```text
-kingbattle/ProjectSettings/SceneTemplateSettings.json
-.claude/
-kingbattle/.idea/
-```
-
-这些仍是未跟踪项。除非用户明确批准，否则不要提交。
-
-## MVP-04.3 批量允许范围
+## MVP-04.4 批量允许范围
 
 本轮目标：
 
 ```text
-收口一局结束体验：胜负显示更明确，match ended 后阻止继续 gameplay command，并提供最小 restart debug 能力。
+梳理关键数值，执行 Play Mode 回归清单，只做必要的小范围调优，把“能跑通”推进到“能稳定试玩”。
 ```
 
-任务 A：match end 命令收口
+任务 A：建立调优文档
 
-- 在玩家扩张 command、敌方进攻 command 等 gameplay command 入口检查 `MatchResultService.CurrentResult`。
-- 如果 match 已经 PlayerVictory / PlayerDefeat，返回失败结果或清晰 message。
-- HUD Dispatch、O、E 都应自然走到同一套拒绝逻辑。
-- K/L 作为 debug 触发胜负可以保留。
+- 新增 `BALANCE.md` 或 `GAMEPLAY_TUNING.md`。
+- 记录当前关键数值：
+  - supply cap base / Granary bonus。
+  - Barracks spawn interval / rally threshold。
+  - unit health / damage / speed。
+  - Tower damage / range / interval。
+  - Enemy pressure first attack / repeat interval。
+  - Plot capture requirement Small / Medium / Large。
+- 写清楚当前目标体验：3-5 分钟能打一局，玩家有扩张和防守压力。
 
-任务 B：胜负结束面板
+任务 B：轻量配置收口
 
-- 扩展临时 `GameHud` 或新增小型 `GameEndHud`。
-- Victory / Defeat 时显示更明显的结束区域：
-  - Result: Victory / Defeat。
-  - 最终 Player Units / Cap。
-  - 最终 Enemy Units / Cap。
-  - 简短提示：Press N to restart / 或 Restart 按钮。
-- 不做正式 UI 美术，不做复杂动画。
-- HUD 仍只读状态，不直接改核心数据。
+- 可以新增 `GameBalanceConfig` 或等价静态配置类。
+- 只收口最明显的魔法数：
+  - supply cap base / Granary bonus。
+  - enemy pressure first/repeat interval。
+  - 可选：tower damage/range/interval。
+- 不要大规模重构所有数值。
+- 不要为了配置化改动太多业务代码。
 
-任务 C：Restart debug 能力
+任务 C：执行 Play Mode 回归清单
 
-- 新增一个 debug 快捷键，例如 `N`，在 match ended 后重启当前场景或重新初始化当前 GameEntry。
-- 优先选择最小、安全的方式。
-- 不要修改 ProjectSettings。
-- 如果用 SceneManager，需要确保当前场景可 reload；如果不可行，先用日志提示并在 WORKLOG 说明。
+- 按 `NEXT_STEPS.md` 的 Play Mode 回归清单逐项验证。
+- 记录通过/失败项到 `WORKLOG.md`。
+- 如果发现明显 bug，优先修 bug，而不是继续加功能。
 
-任务 D：结束后输入/按钮表现
+任务 D：必要小范围调优
 
-- match ended 后：
-  - HUD Dispatch 按钮不可用或点击返回 “match ended”。
-  - O/E 不再真正派兵。
-  - 敌方压力 controller 不再触发。
-  - Q/P 这类只读 debug 可以保留。
+- 如果 Play Mode 观察到明显问题，可以小范围调整：
+  - 敌方进攻过早/过晚。
+  - 产兵过快/过慢。
+  - supply cap 太高/太低。
+  - Tower 过强/过弱。
+- 每个调整数值都要在 `WORKLOG.md` 说明原因。
 
-任务 E：回归清单雏形
+任务 E：交付风险清单
 
-- 新增或更新 `NEXT_STEPS.md` / `WORKLOG.md`，列出 Play Mode 回归清单。
-- 至少包含：
-  - Play 初始 HUD。
-  - HUD Dispatch。
-  - supply cap。
-  - enemy pressure。
-  - Victory。
-  - Defeat。
-  - Restart debug。
+- 在 `NEXT_STEPS.md` 或 `WORKLOG.md` 增加“交付前剩余风险”：
+  - 正式 UI 还没做。
+  - debug 快捷键还没隐藏。
+  - 移植还没开始。
+  - ProjectSettings / 生成文件不能提交。
 
 ## 禁止范围
 
+- 不做新玩法系统。
 - 不做正式 UI 美术。
 - 不做复杂菜单系统。
 - 不做存档。
+- 不引入第三方框架。
 - 不做移动端/微信/macOS/Android 移植实现。
-- 不改变 `MapData.CreateFixedMap()`。
 - 不重构 `UnitCombat`。
 - 不重构 `PlotCaptureService`。
 - 不修改 `ProjectSettings`。
@@ -138,16 +106,8 @@ kingbattle/.idea/
 
 ## 验收标准
 
-- Play Mode：
-  - Victory 后 HUD 显示明显结果。
-  - Defeat 后 HUD 显示明显结果。
-  - Victory/Defeat 后 HUD Dispatch、O、E 不再派兵。
-  - 敌方压力 controller 不再触发。
-  - Q/P 仍可只读验证。
-  - N 能 restart，或明确记录为什么暂不可做。
-  - Console 无明显错误。
-- 代码：
-  - gameplay command 统一检查 match ended。
-  - HUD 不直接修改核心数据。
-  - restart debug 不修改 ProjectSettings。
-  - 未修改或提交 `ProjectSettings`。
+- `BALANCE.md` 或 `GAMEPLAY_TUNING.md` 已创建。
+- 至少一轮 Play Mode 回归清单已执行并记录。
+- 如调整数值，WORKLOG 写清楚原因。
+- Console 无明显错误。
+- 未修改或提交 `ProjectSettings`。
