@@ -426,3 +426,31 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    404b86c..3fc6cb5  main -> main
 ```
+
+### MVP-03.19 Codex Review：通过并发布 MVP-03.20
+
+操作人：Codex
+
+审查提交：
+
+```text
+404b86c feat: PlotCaptureRequirementService + P shortcut prints capture requirements
+569c321 feat: show dispatched versus required capture count
+```
+
+结论：MVP-03.19 代码审查通过。
+
+新发布任务：MVP-03.20 占领需求接入批量任务。
+
+GitHub 上传状态：
+
+```text
+b4ca674 docs: review mvp-03.19 and release mvp-03.20
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   569c321..b4ca674  main -> main
+```
