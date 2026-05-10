@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-发布 MVP-03.21：占领反馈与结果状态批量任务。
+发布 MVP-03.22：扩张预览与可派兵统计批量任务。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,23 +11,23 @@ Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业�
 Claude 最新提交：
 
 ```text
-681abb4 fix: use shared totalDispatched instead of per-iteration capturedCount
+ac2af48 feat: DispatchResult structured data, unified capture logs
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.20 修复通过；允许进入 MVP-03.21
+MVP-03.21 通过；允许进入 MVP-03.22
 ```
 
 ## 本轮目标
 
-继续采用“每轮 2-3 个强相关任务”的节奏。本轮整理占领反馈与结果状态，方便后续 UI、失败重试和行为收口。
+继续采用“每轮 2-4 个强相关任务”的节奏。本轮不改正式 UI，先补“扩张预览 + 可派兵统计”，让后续选择目标、占领失败提示、移动端 UI 都有只读数据基础。
 
 目标：
 
 ```text
-为 U/O 派兵和占领结果补结构化状态，统一成功/失败日志。
+为战略扩张增加只读预览数据：候选 source -> target、占领需求、当前可派兵数量、是否足够占领。
 ```
 
 ## 当前工作区注意事项
@@ -53,6 +53,8 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 - `PlotCaptureRequirementService` 已提供 Small/Medium/Large = 1/2/3。
 - P 可打印每个 plot 的占领需求。
 - O 日志已能显示 dispatched / required 预览。
+- `StrategicDispatchService.DispatchToPlot(...)` 已返回 `DispatchResult`。
+- U/O 日志已统一为 dispatched / required / willCapture。
 
 ## 文档更正
 
@@ -71,38 +73,54 @@ Village, Farmland
 
 不要把 Village 写成 Player，除非本轮代码显式改变了 `Village.faction`。
 
-## MVP-03.21 批量允许范围
+## MVP-03.22 批量允许范围
 
-任务 A：新增派兵结果数据
+任务 A：提取可派兵统计
 
-- 在 `StrategicDispatchService` 增加 `DispatchResult` 或等价小数据类型。
+- 在 `StrategicDispatchService` 增加只读统计方法，或新增一个很小的 query service。
+- 统计逻辑必须复用 `DispatchToPlot(...)` 的筛选条件：
+  - `Faction.Player`。
+  - `HealthComponent` 未死亡。
+  - 与 rally/source 位置距离 `<= gatherRadius`。
+- 统计方法不能清空路径、不能 Stop、不能注册 handler、不能改变游戏状态。
+
+任务 B：新增扩张预览数据
+
+- 在 `StrategicExpansionService` 增加 `ExpansionPreview` 或等价小数据类型。
 - 字段建议：
+  - sourcePlotId。
   - targetPlotId。
-  - dispatchedCount。
   - requiredSoldierCount。
+  - availableSoldierCount。
   - hasEnoughSoldiers。
-  - captureWillBeAttemptedOnArrival。
   - message。
+- 增加 `GetExpansionPreviews(MapData mapData, float gatherRadius = 5f)` 或等价方法。
+- 预览来源应基于 `StrategicConnectionService.GetExpansionCandidates(mapData)`。
+- 每个候选都应计算 target 的 required count，并统计 source 附近可派兵数量。
 
-任务 B：O/U 使用结构化结果
+任务 C：新增 Q 快捷键打印全部扩张预览
 
-- `StrategicExpansionService.ExpandNext(...)` 使用 `DispatchResult` 填充 `ExpansionResult`。
-- `GameEntry` 的 U 分支使用 `DispatchResult` 打印统一日志。
-- O/U 日志格式尽量一致，例如 `dispatch 3/2 to Crossroads, willCapture=True`。
+- 在 `GameEntry.Update()` 增加 Q 测试快捷键。
+- Q 只打印，不派兵、不占领、不改变状态。
+- 日志格式建议：
+  - `Crossroads -> Village: available 2/2, canCapture=True`
+  - `Crossroads -> Farmland: available 1/3, canCapture=False`
+- 如果没有候选，打印清晰提示。
 
-任务 C：到达后的成功/失败日志统一
+任务 D：顺手修正误导注释
 
-- 允许占领时打印 `Capture attempt allowed: dispatched 3/2 to Crossroads`。
-- 不足时打印 `Capture blocked: dispatched 1/2 to Crossroads`。
-- 不修改 `PlotCaptureService.TryCapture(...)` 的规则。
+- `StrategicExpansionService` 里关于 required count 的 `preview only` 注释已经过期。
+- 改成准确描述：required count 会传入 dispatch/capture 判定。
+- 不做额外重构。
 
-任务 D：验证
+任务 E：验证
 
 - P 仍打印需求。
-- U/O 不足人数 blocked。
-- U/O 足够人数可以占领。
-- 重复按 U/O 不触发旧 handler。
-
+- Q 能打印全部候选预览。
+- Q 连续按多次不派兵、不触发占领、不注册旧 handler。
+- O 仍按原逻辑派出第一个候选。
+- U 仍按原逻辑从 main-base ruin 派兵。
+- U/O 足够人数可以占领，不足人数 blocked。
 - 更新 `WORKLOG.md`。
 
 ## 禁止范围
@@ -127,6 +145,8 @@ Village, Farmland
 
 - Play Mode：
   - P 能打印每个 plot 的占领需求。
+  - Q 能打印所有扩张候选的 available / required / canCapture。
+  - Q 不派兵、不占领、不改变任何 plot faction。
   - O/U 日志格式一致，包含 dispatched / required / willCapture。
   - 到达后成功/失败日志清晰。
   - 不足人数不占领。

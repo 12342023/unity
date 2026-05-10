@@ -21,23 +21,25 @@
 - O 的扩张编排已下沉到 `StrategicExpansionService`。
 - 扩张 source/target 已整理成 `ExpansionCandidate` 候选数据。
 - 占领需求数据层已完成，P 可打印 Small/Medium/Large 对应需求，O 日志可显示 dispatched / required。
+- U/O 派兵已返回结构化 `DispatchResult`，到达后的 allowed / blocked 日志已统一。
 
-## 当前正式任务：MVP-03.21 占领反馈与结果状态
+## 当前正式任务：MVP-03.22 扩张预览与可派兵统计
 
 目标：
 
 ```text
-为 U/O 派兵和占领结果补结构化状态，统一成功/失败日志。
+为战略扩张增加只读预览数据：候选 source -> target、占领需求、当前可派兵数量、是否足够占领。
 ```
 
 实现方向：
 
 ```diff
-+ StrategicDispatchService 增加 DispatchResult 或等价数据
-+ O/U 使用结构化 dispatch result
-+ 到达后成功/失败日志统一
-+ P/O/U 日志继续可验证需求和派兵数量
++ StrategicDispatchService 增加只读可派兵统计，筛选条件与 DispatchToPlot 一致
++ StrategicExpansionService 增加 ExpansionPreview / GetExpansionPreviews
++ GameEntry 增加 Q 快捷键打印全部 expansion preview
++ 修正 StrategicExpansionService 过期 preview-only 注释
 - 不改变 K/L/R/T/Y/U/I/O 行为
+- Q 只打印，不派兵、不占领、不改变状态
 - 不做正式 UI
 - 不做自动扩张
 - 不做占领进度条
@@ -45,15 +47,15 @@
 - 不修改 ProjectSettings
 ```
 
-## MVP-03.21 后的建议顺序
+## MVP-03.22 后的建议顺序
 
-### MVP-03.22 士兵占领后行为收口
+### MVP-03.23 士兵占领后行为收口
 
-占领反馈稳定后，再打包做：
+预览数据稳定后，再打包做：
 
 - 占领成功后士兵围绕新占领 plot 巡逻。
 - 占领失败后士兵停留或返回来源点的行为选择。
-- 为未来 UI 准备只读状态数据。
+- 为未来 UI 准备最近一次扩张 / 派兵结果的只读状态。
 
 ### 后续
 

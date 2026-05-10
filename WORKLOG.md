@@ -626,3 +626,33 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    681abb4..501e2e1  main -> main
 ```
+
+### MVP-03.21 Claude 实现审查：通过并发布 MVP-03.22
+
+操作人：Codex
+
+审查提交：
+
+```text
+ac2af48 feat: DispatchResult structured data, unified capture logs
+```
+
+结论：MVP-03.21 通过。
+
+已确认：
+
+- `StrategicDispatchService.DispatchToPlot(...)` 返回 `DispatchResult`。
+- U/O 日志已统一为 dispatched / required / willCapture。
+- 到达后的 allowed / blocked 日志已统一。
+- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+新发布任务：MVP-03.22 扩张预览与可派兵统计批量任务。
+
+任务范围：
+
+- 增加只读可派兵统计。
+- 增加 `ExpansionPreview` / `GetExpansionPreviews`。
+- 新增 Q 快捷键打印全部候选预览。
+- 修正 `StrategicExpansionService` 过期注释。
+
+GitHub 上传状态：待本次 docs commit / push。

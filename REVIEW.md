@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-681abb4 fix: use shared totalDispatched instead of per-iteration capturedCount
+ac2af48 feat: DispatchResult structured data, unified capture logs
 ```
 
-结论：**MVP-03.20 修复通过，允许进入 MVP-03.21**。
+结论：**MVP-03.21 通过，允许进入 MVP-03.22**。
 
-说明：`StrategicDispatchService` 已改用共享 `totalDispatched`，arrival handler 触发时能读取本次最终派兵总数，不再使用 per-iteration 序号判定 capture requirement。
+说明：`StrategicDispatchService` 已返回结构化 `DispatchResult`，U/O 已使用统一 dispatch message；arrival handler 的 allowed / blocked 日志也已按 dispatched / required 输出。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,73 +24,100 @@ Findings:
 
 ### 已确认
 
-- `StrategicDispatchService.DispatchToPlot(...)` 使用 `totalDispatched` 返回最终派兵数。
-- arrival handler 读取共享 `totalDispatched` 判定 `totalDispatched >= requiredSoldierCount`。
-- blocked 日志显示最终 dispatched / required。
-- `captureConsidered` 仍防止重复 TryCapture / 重复 blocked log。
-- 每个 handler 到达后仍移除自身。
-- O/U 继续传入 target required count。
+- `DispatchResult` 包含 target、dispatched、required、hasEnough、willCapture 和 message。
+- `DispatchToPlot(...)` 在路径无效、无兵、派兵成功时都返回结构化结果。
+- U 分支改用 `DispatchResult.message` 打印统一日志。
+- O 分支通过 `StrategicExpansionService.ExpandNext(...)` 继续输出统一 message。
+- arrival handler 的 `Capture attempt allowed` / `Capture blocked` 均显示 dispatched / required。
+- `captureConsidered` 仍防止同一轮派兵重复 TryCapture / 重复 blocked log。
+- `git show --check HEAD` 未发现 whitespace 或 patch 问题。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
 ### 观察
 
-占领需求已经接入主路径。下一轮可以补“占领成功/失败后的反馈与状态数据”，让后续 UI、失败重试、士兵停留/巡逻更容易做。
+`StrategicExpansionService` 中有一句关于 required count 的 `preview only` 注释已过期：required 现在已经传入 dispatch/capture 判定。它不是行为 bug，可以在下一轮顺手修正。
 
 ### 说明
 
-`git show --check HEAD` 未发现问题。`kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍是未跟踪 Unity Editor 生成文件，不应提交。
+工作区仍有两个非本轮项：
+
+```text
+D 要求.md
+?? kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
+
+前者不是本轮修改，后者是 Unity Editor 生成的 ProjectSettings 文件；均不应随本轮提交。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.20 修复通过。
+Codex Review：MVP-03.21 通过。
 
-进入 MVP-03.21：占领反馈与结果状态批量任务。
+进入 MVP-03.22：扩张预览与可派兵统计批量任务。
 
 背景：
-- U/O 已按 target plot 的 required count 判定是否能占领。
-- 现在成功/失败主要靠日志，后续 UI 或重试逻辑需要更清晰的结果状态。
-- 用户希望每轮多布置一些任务，所以本轮继续打包 3 个强相关点。
+- U/O 已有结构化 DispatchResult。
+- P 能打印每个 plot 的占领需求。
+- O 当前会派第一个 expansion candidate。
+- 未来需要正式 UI / 移动端操作前，先要有只读扩张预览数据。
+- 用户希望加快进度，所以本轮打包 4 个强相关点。
 
 本轮目标：
-- 为派兵和占领结果补结构化状态。
-- 统一成功/失败日志。
-- 为未来 UI 准备只读结果数据。
+- 为战略扩张增加只读预览数据。
+- 能看到每个 source -> target 候选需要多少兵、当前可派多少兵、是否足够占领。
+- 新增 Q 快捷键打印全部预览。
+- 不改变当前 O/U 的实际派兵与占领行为。
 
 允许：
-任务 A：新增派兵结果数据
-- 在 `StrategicDispatchService` 增加 `DispatchResult` 或等价小数据类型。
+任务 A：提取可派兵统计
+- 在 `StrategicDispatchService` 增加只读统计方法，或新增一个很小的 query service。
+- 统计条件必须与 `DispatchToPlot(...)` 当前派兵筛选一致：
+  - Player faction
+  - HealthComponent 未死亡
+  - 距离 rally/source 位置 <= gatherRadius
+- 统计方法不能 ClearPushPath、不能 Stop、不能注册 handler、不能修改任何状态。
+
+任务 B：新增扩张预览数据
+- 在 `StrategicExpansionService` 增加 `ExpansionPreview` 或等价小数据类型。
 - 字段建议：
+  - sourcePlotId
   - targetPlotId
-  - dispatchedCount
   - requiredSoldierCount
+  - availableSoldierCount
   - hasEnoughSoldiers
-  - captureWillBeAttemptedOnArrival
   - message
-- 保留现有调用兼容性，或同步更新 U/O 调用点。
+- 增加 `GetExpansionPreviews(MapData mapData, float gatherRadius = 5f)` 或等价方法。
+- 预览来源使用 `StrategicConnectionService.GetExpansionCandidates(mapData)`。
+- 每个候选都计算 target required count，并统计 source 附近可派兵数量。
 
-任务 B：O/U 使用结构化结果
-- `StrategicExpansionService.ExpandNext(...)` 使用 `DispatchResult` 填充 `ExpansionResult`。
-- `GameEntry` 的 U 分支使用 `DispatchResult` 打印统一日志。
-- O/U 日志格式尽量一致，例如 `dispatch 3/2 to Crossroads, willCapture=True`。
+任务 C：新增 Q 快捷键打印全部扩张预览
+- 在 `GameEntry.Update()` 增加 Q。
+- Q 只打印，不派兵、不占领、不改变状态。
+- 日志格式建议：
+  - `Crossroads -> Village: available 2/2, canCapture=True`
+  - `Crossroads -> Farmland: available 1/3, canCapture=False`
+- 没有候选时打印清晰提示。
 
-任务 C：到达后的成功/失败日志统一
-- 当到达后 capture 被允许，打印 `Capture attempt allowed: dispatched 3/2 to Crossroads`。
-- 当不足被 blocked，打印 `Capture blocked: dispatched 1/2 to Crossroads`。
-- 不改变 `PlotCaptureService.TryCapture(...)` 的规则。
+任务 D：修正过期注释
+- `StrategicExpansionService` 中 required count 的 `preview only` 注释已经过期。
+- 改成准确描述：required count 会传入 dispatch/capture 判定。
+- 不做额外重构。
 
-任务 D：验证
+任务 E：验证
 - P 仍打印需求。
-- U/O 不足人数 blocked。
-- U/O 足够人数可以占领。
-- 重复按 U/O 不触发旧 handler。
+- Q 能打印全部候选预览。
+- 连续按 Q 不派兵、不占领、不改变 plot faction。
+- O 仍派第一个候选。
+- U 仍从 main-base ruin 派第一个可连接 Neutral。
+- U/O 足够人数可以占领，不足人数 blocked。
 - 更新 WORKLOG.md。
 
 必须保持：
 - K / L / R / T / Y / U / I / O 外部行为不变。
-- 除已有“兵力不足时不占领”外，不改变当前 Neutral -> Player 捕获流程。
+- Q 是新的只读测试快捷键，不能触发派兵或占领。
+- 不改变当前 Neutral -> Player 捕获流程。
 - 不改变 `MapData.CreateFixedMap()`。
 - 不修改 `PlotCaptureService` 的 Player-only / no-main-base / Neutral-only 规则。
 - 不引入长期静态游戏状态。
@@ -105,5 +132,5 @@ Codex Review：MVP-03.20 修复通过。
 - 不重构 UnitCombat。
 - 不重构无关建筑/移动/战斗代码。
 
-完成后更新 WORKLOG.md，说明 A/B/C/D 完成情况、修改文件、P/U/O Play Mode 验证结果、是否新增 .meta、是否修改 ProjectSettings，并 commit / push。
+完成后更新 WORKLOG.md，说明 A/B/C/D/E 完成情况、修改文件、P/Q/U/O Play Mode 验证结果、是否新增 .meta、是否修改 ProjectSettings，并 commit / push。
 ```
