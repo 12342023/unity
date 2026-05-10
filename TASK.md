@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-MVP-04.6 返修：正确清理 Unity 6 obsolete API warnings。
+MVP-04.7：交付前清理。
 
 Codex 当前仍作为 Tech Lead 和 Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,97 +11,113 @@ Codex 当前仍作为 Tech Lead 和 Reviewer 工作，不直接大规模开发�
 Claude 最新提交：
 
 ```text
-12bbb01 fix: Unity 6 obsolete API warnings — OverlapCircle, FindObjectsByType, FindFirstObjectByType
+4aa6d9c fix: correct Unity 6 API signatures — remove FindObjectsSortMode, use FindAnyObjectByType
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-04.6 暂不通过；FindObjectsByType / FindFirstObjectByType 替换仍需返修。
-当前 Unity 6 编译失败，Editor log 已出现 CS1503。
+MVP-04.6 通过。
+Unity 6 编译成功。
+目标 obsolete API 残留已清理。
 ```
 
-## 阻塞问题
+当前可以进入 **MVP-04.7 交付前清理**。
 
-### 问题 A：FindObjectsByType 参数顺序和 API 选择错误
+## 目标
 
-当前写法：
+让当前 MVP 更接近可交付状态，但不改变玩法行为：
+
+- 清理剩余 Unity warning。
+- 明确 debug/test 边界。
+- 收敛明显 runtime log 噪音。
+- 保持后续 macOS / Android / 微信小程序移植边界清楚。
+
+## 任务 A：清理 `UnitCombat.hasHome` warning
+
+当前 Unity 6 只剩非阻塞 warning：
+
+```text
+Assets/Scripts/Combat/UnitCombat.cs(47,22): warning CS0414:
+The field 'UnitCombat.hasHome' is assigned but its value is never used
+```
+
+要求：
+
+- 检查 `hasHome` 是否真的无逻辑用途。
+- 如果无用途，删除字段和赋值。
+- 保留 `homePosition` / `SetHomePosition` 行为不变。
+- 不重写 `UnitCombat` 状态机。
+
+## 任务 B：明确 debug/test 入口边界
+
+当前 `GameEntry` 默认创建：
+
+- `TestUnitSpawner`
+- `DebugShortcutController`
+
+要求：
+
+- 用以下条件限制这两个 debug/test 入口：
 
 ```csharp
-Object.FindObjectsByType<T>(FindObjectsSortMode.None, FindObjectsInactive.Exclude)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+// create TestUnitSpawner / DebugShortcutController
+#endif
 ```
 
-问题：
+- Editor Play Mode 和 development build 仍能用 debug keys。
+- 普通正式 build 不应自动启用 1-4 测试刷兵和 debug 快捷键。
+- `GameHud` 本轮暂时保留，不隐藏。
 
-- Unity 6 两参数 overload 顺序是 `FindObjectsInactive, FindObjectsSortMode`。
-- 继续使用 `FindObjectsSortMode` 本身也不能消除 obsolete warning。
-- 当前已经触发 `CS1503`：
-  - `Argument 1: cannot convert from 'UnityEngine.FindObjectsSortMode' to 'UnityEngine.FindObjectsInactive'`
-  - `Argument 2: cannot convert from 'UnityEngine.FindObjectsInactive' to 'UnityEngine.FindObjectsSortMode'`
+## 任务 C：收敛明显 runtime log 噪音
 
-本轮要求改为：
+要求：
+
+- 不全局删除日志。
+- 不隐藏 Warning / Error。
+- 只处理明显高频、低价值、每局会刷很多次的 `Debug.Log`。
+- 优先使用：
 
 ```csharp
-Object.FindObjectsByType<T>(FindObjectsInactive.Exclude)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+Debug.Log(...);
+#endif
 ```
 
-涉及：
+建议优先检查：
 
-- `DebugShortcutController.cs`
-- `StrategicConnectionService.cs`
-- `StrategicDispatchService.cs`
-- `FactionStatsService.cs`
-- `EnemyAttackCommandService.cs`
-- `FactionDefeatHandler.cs`
+- `UnitMovement reached destination`
+- `BarracksSpawner` spawn / wave push 重复日志
+- `TestUnitSpawner` ready / spawn 日志
 
-### 问题 B：GameHud 仍使用 FindFirstObjectByType
+## 任务 D：更新 WORKLOG.md
 
-当前写法：
+记录：
 
-```csharp
-Object.FindFirstObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
-```
-
-本轮要求改为：
-
-```csharp
-Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
-```
-
-或做轻量缓存引用，但不要重构 HUD。
-
-### 问题 C：TowerAttack 注释仍写旧 API
-
-注释中不能再写 `OverlapCircleNonAlloc`。
+- 修改文件。
+- 验证结果。
+- 未修改 `ProjectSettings`、场景文件、`Library/`、`Logs/`、`UserSettings/`。
 
 ## 验证要求
 
+- Unity Console 无 `error CS`。
+- Unity Console 无 `UnitCombat.hasHome` warning。
 - `rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scripts` 无结果。
-- Unity Console 无 `error CS`，尤其不能再有 `CS1503`。
-- Unity Console 无上述 obsolete warnings。
 - Play smoke test：
   - 点击派兵。
   - HUD Dispatch。
-  - O。
-  - K/L/E/N。
+  - `O` 派兵。
+  - `K/L/E/N` 在 Editor Play Mode 仍可用。
   - Victory/Defeat 后 command 拒绝仍正常。
-
-## 非阻塞日志
-
-当前 Editor log 里有 Unity Connect / Project ID 401：
-
-```text
-Project ID request failed ... HTTP error code 401
-```
-
-这是 Unity services/auth 问题，不是游戏编译阻塞。本轮只记录，不处理。
+- 确认 release build 路径中不会自动创建 `TestUnitSpawner` / `DebugShortcutController`。
 
 ## 禁止范围
 
 - 不做新玩法系统。
 - 不做正式 UI。
-- 不重构战斗/占领系统。
-- 不修改 ProjectSettings。
+- 不重构 `UnitCombat` 状态机。
+- 不修改 `ProjectSettings`。
 - 不提交 `Library/`、`Logs/`、`UserSettings/`。
 - 不提交 `.claude/`、`kingbattle/.idea/`。
 - 不提交 `kingbattle/kingbattle.slnx`。
@@ -109,8 +125,8 @@ Project ID request failed ... HTTP error code 401
 
 ## 验收标准
 
-- 上述 API 搜索无残留。
-- Console 无编译错误，尤其不能再有 `CS1503`。
-- Console 无本轮目标 obsolete warnings。
-- Play smoke test 通过。
-- `WORKLOG.md` 已记录返修和验证。
+- Console 无编译错误。
+- Console 无 `UnitCombat.hasHome` warning。
+- Debug/test 入口有明确 build 条件边界。
+- 高频低价值日志已收敛，Warning/Error 保留。
+- `WORKLOG.md` 已记录修改和验证。

@@ -5,183 +5,106 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-12bbb01 fix: Unity 6 obsolete API warnings — OverlapCircle, FindObjectsByType, FindFirstObjectByType
+4aa6d9c fix: correct Unity 6 API signatures — remove FindObjectsSortMode, use FindAnyObjectByType
 ```
 
-结论：**MVP-04.6 暂不通过，需要返修。**
-
-说明：最新 Editor log 已出现当前编译错误 `CS1503`。错误来源正是 `FindObjectsByType` 参数顺序写反，同时仍保留 obsolete `FindObjectsSortMode`。
+结论：**MVP-04.6 通过。**
 
 ## CODEX PROJECT REVIEW
 
-Gate: **FAIL**
+Gate: **PASS**
 
 Findings:
 
 ```text
-[P1] FindObjectsByType 参数顺序错误，并且仍使用 FindObjectsSortMode。
-[P2] GameHud 仍使用 FindFirstObjectByType，未按任务要求改为 FindAnyObjectByType 或缓存。
-[P3] TowerAttack 注释仍写 OverlapCircleNonAlloc。
+无 P1 / P2 阻塞问题。
 ```
 
-### [P1] `FindObjectsByType` 参数顺序错误，且仍使用 obsolete enum
+已验证：
 
-问题写法：
+- `rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" kingbattle/Assets/Scripts` 无结果。
+- `Editor.log` 显示 `Tundra build success`。
+- 目标 `CS1503` 编译错误已消失。
+- 目标 Unity 6 obsolete warnings 已消失。
+- `git show --check 4aa6d9c` 无 whitespace 问题。
 
-```csharp
-Object.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None, FindObjectsInactive.Exclude)
-```
+剩余非阻塞项：
 
-本机 Unity 6 XML API 显示重载顺序是：
+- `Assets/Scripts/Combat/UnitCombat.cs(47,22)` 有 `CS0414`：`hasHome` 已赋值但未使用。
+- Debug/test 入口仍默认创建：
+  - `DebugShortcutController`
+  - `TestUnitSpawner`
+- Runtime logs 仍偏多，正式交付前需要收敛。
 
-```text
-Object.FindObjectsByType<T>(FindObjectsInactive, FindObjectsSortMode)
-Object.FindObjectsByType<T>(FindObjectsInactive)
-Object.FindObjectsByType<T>()
-```
+## 下一步 Review 建议
 
-也就是说如果要传两个参数，顺序应是：
+进入 **MVP-04.7 交付前清理**。
 
-```csharp
-Object.FindObjectsByType<UnitCombat>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
-```
+目标不是做新玩法，而是让当前 MVP 更像可交付版本：
 
-但更重要的是：之前 Unity 6 warning 明确说 `FindObjectsSortMode` 也 obsolete，建议使用不带 `FindObjectsSortMode` 的 overload。因此本轮应该改成：
+- 清理 Unity warning。
+- 明确 debug/test 边界。
+- 降低 runtime log 噪音。
+- 保持后续 macOS / Android / 微信小程序移植边界清楚。
 
-```csharp
-Object.FindObjectsByType<UnitCombat>(FindObjectsInactive.Exclude)
-```
-
-需要修复的文件：
-
-- `Assets/Scripts/Debug/DebugShortcutController.cs`
-- `Assets/Scripts/Combat/StrategicConnectionService.cs`
-- `Assets/Scripts/Combat/StrategicDispatchService.cs`
-- `Assets/Scripts/Combat/FactionStatsService.cs`
-- `Assets/Scripts/Combat/EnemyAttackCommandService.cs`
-- `Assets/Scripts/Buildings/FactionDefeatHandler.cs`
-
-### [P2] `GameHud` 仍使用 `FindFirstObjectByType`
-
-当前代码：
-
-```csharp
-Object.FindFirstObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
-```
-
-之前 Unity 6 warning 指出 `FindFirstObjectByType` 本身已 deprecated，因为依赖 instance ID ordering。任务要求是：
-
-```text
-改成 FindAnyObjectByType<PlayerInputController>() 或更好的引用缓存。
-```
-
-建议最小修复：
-
-```csharp
-Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
-```
-
-### [P3] `TowerAttack` 注释仍写旧 API
-
-当前注释：
-
-```csharp
-/// Uses Physics2D.OverlapCircleNonAlloc for efficient enemy scanning.
-```
-
-但代码已经改为：
-
-```csharp
-Physics2D.OverlapCircle(...)
-```
-
-建议把注释改成：
-
-```csharp
-/// Uses Physics2D.OverlapCircle with a reusable buffer for enemy scanning.
-```
-
-### 当前 Editor log 状态
-
-最新 log 尾部发现 P1 编译错误：
-
-```text
-Assets/Scripts/Combat/EnemyAttackCommandService.cs(79,68): error CS1503:
-Argument 1: cannot convert from 'UnityEngine.FindObjectsSortMode' to 'UnityEngine.FindObjectsInactive'
-
-Assets/Scripts/Combat/EnemyAttackCommandService.cs(79,94): error CS1503:
-Argument 2: cannot convert from 'UnityEngine.FindObjectsInactive' to 'UnityEngine.FindObjectsSortMode'
-```
-
-同类 `CS1503` 还出现在：
-
-- `Assets/Scripts/Debug/DebugShortcutController.cs`
-- `Assets/Scripts/Buildings/FactionDefeatHandler.cs`
-- `Assets/Scripts/Combat/FactionStatsService.cs`
-- `Assets/Scripts/Combat/StrategicConnectionService.cs`
-- `Assets/Scripts/Combat/StrategicDispatchService.cs`
-- `Assets/Scripts/Combat/EnemyAttackCommandService.cs`
-
-同时仍有：
-
-- `FindObjectsSortMode` obsolete warning。
-- `Object.FindFirstObjectByType<T>(FindObjectsInactive)` obsolete warning。
-- `UnitCombat.hasHome` unused warning，非本轮阻塞，可后续清理。
-
-发现的非阻塞外部问题：
-
-```text
-Unity Connect / Project ID request failed: HTTP 401
-```
-
-这属于 Unity services/auth，不是当前游戏编译阻塞。
-
-## 给 Claude 的返修任务
+## 给 Claude 的新任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-04.6 暂不通过，需要返修。当前 Unity 6 编译失败，必须先修本任务，不能进入新玩法。
+MVP-04.6 已通过。现在进入 MVP-04.7：交付前清理。
 
-问题 1：FindObjectsByType 替换不正确
-- 当前用了：
-  Object.FindObjectsByType<T>(FindObjectsSortMode.None, FindObjectsInactive.Exclude)
-- Unity 6 的参数顺序是 FindObjectsInactive 在前。
-- 但为了真正消除 obsolete warning，本轮不要再使用 FindObjectsSortMode。
-- 请改为：
-  Object.FindObjectsByType<T>(FindObjectsInactive.Exclude)
+目标：
+不改玩法行为，不改 ProjectSettings，不做正式 UI，只清理 debug/test 边界、剩余 warning、明显日志噪音。
 
-涉及文件：
-- DebugShortcutController.cs
-- StrategicConnectionService.cs
-- StrategicDispatchService.cs
-- FactionStatsService.cs
-- EnemyAttackCommandService.cs
-- FactionDefeatHandler.cs
+任务 1：清理 UnitCombat unused warning
+- 当前 Unity 6 只剩非阻塞 warning：
+  Assets/Scripts/Combat/UnitCombat.cs(47,22): warning CS0414: UnitCombat.hasHome is assigned but never used
+- 请检查 hasHome 是否真的没有逻辑用途。
+- 如果没有用途，删除字段和赋值，保留 homePosition / SetHomePosition 行为不变。
+- 不要重写 UnitCombat 状态机。
 
-问题 2：GameHud 仍使用 FindFirstObjectByType
-- 当前：
-  Object.FindFirstObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
-- 请改为：
-  Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
-- 或者轻量缓存引用，但不要重构 HUD。
+任务 2：明确 debug/test 入口边界
+- GameEntry 现在总是创建 TestUnitSpawner 和 DebugShortcutController。
+- 请把 TestUnitSpawner 和 DebugShortcutController 的创建限制在：
+  #if UNITY_EDITOR || DEVELOPMENT_BUILD
+  ...
+  #endif
+- Play Mode / development build 仍可用 debug keys。
+- 普通正式 build 不应该自动启用 1-4 测试刷兵和 K/L/E/N/R/T/Y/U/I/O/P/Q debug 快捷键。
+- GameHud 暂时保留，不在本轮隐藏。
 
-问题 3：TowerAttack 注释仍写 OverlapCircleNonAlloc
-- 改成描述 OverlapCircle + reusable buffer。
+任务 3：收敛明显 runtime log 噪音
+- 不要全局删除日志。
+- 只处理明显高频、低价值、每局会刷很多次的日志。
+- 建议优先看：
+  - UnitMovement reached destination
+  - Barracks spawn / wave push 重复日志
+  - TestUnitSpawner ready/spawn 日志
+- 做法优先使用 #if UNITY_EDITOR || DEVELOPMENT_BUILD 包裹 debug-only logs。
+- Warning/Error 不要隐藏。
+
+任务 4：更新 WORKLOG.md
+- 记录修改文件。
+- 记录验证结果。
+- 记录没有修改 ProjectSettings、场景文件、Library/Logs/UserSettings。
 
 验证：
-- rg 搜索不能再出现：
-  - FindObjectsSortMode
-  - FindFirstObjectByType
-  - OverlapCircleNonAlloc
-- Unity Console 无 error CS，尤其不能再有 CS1503。
-- Unity Console 无上述 obsolete warnings。
-- Play smoke test：点击派兵、HUD Dispatch、O、K/L/E/N、Victory 后不能继续派兵。
-- 记录 Unity Connect 401 是外部服务/auth 问题，不作为游戏阻塞。
-- 更新 WORKLOG.md。
+- Unity Console 无 error CS。
+- Unity Console 无 UnitCombat.hasHome warning。
+- rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scripts 无结果。
+- Play smoke test：
+  - 点击派兵。
+  - HUD Dispatch。
+  - O 派兵。
+  - K/L/E/N 在 Editor Play Mode 仍可用。
+  - Victory/Defeat 后 command 拒绝仍正常。
+- 确认 release build 路径中不会自动创建 TestUnitSpawner / DebugShortcutController。
 
 禁止：
 - 不做新玩法。
+- 不做正式 UI。
+- 不重构 UnitCombat 状态机。
 - 不改 ProjectSettings。
 - 不提交 .claude、.idea、kingbattle.slnx、Library、Logs、UserSettings、要求.md 删除。
 

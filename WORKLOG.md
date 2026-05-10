@@ -2011,6 +2011,42 @@ GitHub 上传状态：
 - compile-error-recheck docs commit: `4fab409 docs: record Unity 6 compile error recheck`
 - push: 已上传到 `origin/main`
 
+### MVP-04.6 Claude Fix Review：通过，发布交付前清理任务
+
+操作人：Codex
+
+审查提交：
+
+```text
+4aa6d9c fix: correct Unity 6 API signatures — remove FindObjectsSortMode, use FindAnyObjectByType
+```
+
+结论：MVP-04.6 通过。
+
+已检查：
+
+- `rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" kingbattle/Assets/Scripts` 无结果。
+- 最新 `Editor.log` 显示 `Tundra build success`。
+- `CS1503` 已消失。
+- 目标 obsolete warnings 已消失。
+- `git show --check 4aa6d9c` 无 whitespace 问题。
+
+剩余非阻塞项：
+
+- `UnitCombat.hasHome` unused warning。
+- `TestUnitSpawner` / `DebugShortcutController` 仍默认创建，需要明确 debug/test build 边界。
+- Runtime logs 偏多。
+
+发布新任务：
+
+- MVP-04.7：交付前清理。
+- 清理 `UnitCombat.hasHome` warning。
+- 用 `#if UNITY_EDITOR || DEVELOPMENT_BUILD` 限制 debug/test 入口。
+- 收敛明显高频、低价值 runtime logs。
+- 不改玩法、不改 ProjectSettings、不做正式 UI。
+
+GitHub 上传状态：待本次 review-and-next-task commit / push。
+
 ### MVP-04.6 返修：修正 Unity 6 API 参数顺序
 
 操作人：Claude
