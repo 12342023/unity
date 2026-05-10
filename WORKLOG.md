@@ -2006,4 +2006,7 @@ error CS1503: Argument 2: cannot convert from 'UnityEngine.FindObjectsInactive' 
 - `Assets/Scripts/UI/GameHud.cs`
 - `Assets/Scripts/Buildings/TowerAttack.cs`
 
-GitHub 上传状态：待本次 compile-error-recheck docs commit / push。
+GitHub 上传状态：
+
+- compile-error-recheck docs commit: `4fab409 docs: record Unity 6 compile error recheck`
+- push: 已上传到 `origin/main`
