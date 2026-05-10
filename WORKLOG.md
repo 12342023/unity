@@ -4575,3 +4575,59 @@ git add kingbattle/Assets/Scripts/GameEntry.cs WORKLOG.md TASK.md
 git commit -m "feat: O shortcut dispatches from frontier plot to adjacent neutral"
 git push origin main
 ```
+
+### MVP-03.16 Codex Review：通过并发布 MVP-03.17
+
+操作人：Codex
+
+审查提交：
+
+```text
+d76e602 feat: O shortcut dispatches from frontier plot to adjacent neutral
+```
+
+结论：
+
+```text
+MVP-03.16 代码审查通过
+```
+
+已确认：
+
+1. `GameEntry` 新增 O 临时测试入口。
+2. O 复用 `StrategicConnectionService.GetPlayerFrontierPlots(mapData)` 选择第一个 Player-owned frontier。
+3. O 复用 `RoadPathFinder.FindPath(mapData, sourcePlotId, targetPlotId)` 生成路径。
+4. O 复用 `StrategicDispatchService.DispatchToPlot(...)` 派兵。
+5. 到达后的占领仍由 `PlotCaptureService.TryCapture(...)` 执行。
+6. `PlotCaptureService` 的 Player-only、Neutral-only、no-main-base 规则未被放宽。
+7. K / L / R / T / Y / U / I 行为未被改动。
+8. `MapData.CreateFixedMap()` 未被改动。
+9. 本轮没有新增 `.meta`。
+10. `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍保持未提交。
+
+说明：
+
+- 本地无法运行 Unity Play Mode；本轮基于代码审查和 Claude WORKLOG 验证记录通过。
+- `git show --check HEAD` 本轮未发现问题。
+
+新发布任务：
+
+```text
+MVP-03.17 整理已占领地块的扩张编排服务
+```
+
+任务边界：
+
+```diff
++ 新增 StrategicExpansionService 或等价小服务
++ 将 O 的 source/target/path/dispatch 编排从 GameEntry 下沉
++ GameEntry 的 O 分支只调用服务并打印结果
++ O 外部行为保持不变
+- 不改变 K/L/R/T/Y/U/I/O 行为
+- 不做正式 UI
+- 不做自动扩张
+- 不做多 source / 多 target 策略
+- 不做资源、升级、区域奖励、传送阵、AI
+- 不修改 ProjectSettings
+- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
+```
