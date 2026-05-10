@@ -1025,7 +1025,18 @@ Play Mode 验证：
 - HUD 显示双方 units/cap 和建筑收益。
 - 不做复杂经济、库存、升级、区域奖励。
 
-GitHub 上传状态：待本次 docs commit / push。
+GitHub 上传状态：
+
+```text
+6d11b73 docs: review mvp-04.1 and release mvp-04.2
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   92bb7f7..6d11b73  main -> main
+```
 
 ### MVP-04.0 Codex Review：通过并发布 MVP-04.1
 
