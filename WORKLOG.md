@@ -373,3 +373,31 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    692c4a7..612e932  main -> main
 ```
+
+### MVP-03.19 任务批量加速调整
+
+操作人：Codex
+
+用户要求：后续每轮多布置一些任务，加快进度。
+
+调整：
+
+- 从本轮开始默认给 Claude 布置 2-3 个强相关小任务。
+- MVP-03.19 扩展为：
+  - 占领需求服务。
+  - P 快捷键日志验证。
+  - O / `ExpansionResult` 携带 dispatched vs required 预览数据。
+- 仍不改变当前实际 capture 判定。
+
+GitHub 上传状态：
+
+```text
+3fc6cb5 docs: expand mvp-03.19 task batch
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   404b86c..3fc6cb5  main -> main
+```
