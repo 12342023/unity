@@ -789,4 +789,15 @@ To https://github.com/12342023/unity.git
 - 临时 HUD / 快捷键必须标明 debug / temporary，后续可替换为触摸 UI。
 - 不允许把平台判断散落到建筑、战斗、移动、地图脚本中。
 
-GitHub 上传状态：待本次 docs commit / push。
+GitHub 上传状态：
+
+```text
+2f025e6 docs: preserve porting boundaries during game sprint
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   dc19936..2f025e6  main -> main
+```
