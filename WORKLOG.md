@@ -310,3 +310,30 @@ git add kingbattle/Assets/Scripts/Combat/StrategicConnectionService.cs \
 git commit -m "refactor: add ExpansionCandidate data model and GetExpansionCandidates query"
 git push origin main
 ```
+
+### MVP-03.18 Codex Review：通过并发布 MVP-03.19
+
+操作人：Codex
+
+审查提交：
+
+```text
+692c4a7 refactor: add ExpansionCandidate data model and GetExpansionCandidates query
+```
+
+结论：MVP-03.18 代码审查通过。
+
+新发布任务：MVP-03.19 占领需求数据层。
+
+GitHub 上传状态：
+
+```text
+612e932 docs: review mvp-03.18 and release mvp-03.19
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   692c4a7..612e932  main -> main
+```
