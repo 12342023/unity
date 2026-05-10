@@ -5,106 +5,103 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-4aa6d9c fix: correct Unity 6 API signatures — remove FindObjectsSortMode, use FindAnyObjectByType
+2bfb30b cleanup: remove unused hasHome field, guard debug/test entry points, reduce log noise
 ```
 
-结论：**MVP-04.6 通过。**
+结论：**MVP-04.7 基本正确，但需要小返修 / 补验证。**
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **CONDITIONAL PASS**
 
 Findings:
 
 ```text
-无 P1 / P2 阻塞问题。
+[P2] GameEntry 正式 build 路径可能出现 release-only unused local warning。
+[P3] WORKLOG 缺少 Unity 重新编译后的验证结果。
 ```
 
-已验证：
+已确认通过：
 
-- `rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" kingbattle/Assets/Scripts` 无结果。
-- `Editor.log` 显示 `Tundra build success`。
-- 目标 `CS1503` 编译错误已消失。
-- 目标 Unity 6 obsolete warnings 已消失。
-- `git show --check 4aa6d9c` 无 whitespace 问题。
+- `hasHome` 残留搜索为 0。
+- `FindObjectsSortMode / FindFirstObjectByType / OverlapCircleNonAlloc` 残留搜索为 0。
+- `git show --check 2bfb30b` 无 whitespace 问题。
+- `TestUnitSpawner` 和 `DebugShortcutController` 的创建已经包进 `#if UNITY_EDITOR || DEVELOPMENT_BUILD`。
+- 高频低价值日志已用 debug/development build 条件限制。
+- 未修改 `ProjectSettings`、场景文件、`Library/`、`Logs/`、`UserSettings/`。
 
-剩余非阻塞项：
+### [P2] `GameEntry` 正式 build 路径可能有 unused local warning
 
-- `Assets/Scripts/Combat/UnitCombat.cs(47,22)` 有 `CS0414`：`hasHome` 已赋值但未使用。
-- Debug/test 入口仍默认创建：
-  - `DebugShortcutController`
-  - `TestUnitSpawner`
-- Runtime logs 仍偏多，正式交付前需要收敛。
+当前写法：
 
-## 下一步 Review 建议
+```csharp
+var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
+```
 
-进入 **MVP-04.7 交付前清理**。
+这两个变量只在后面的 debug-only 区块里传给 `DebugShortcutController`：
 
-目标不是做新玩法，而是让当前 MVP 更像可交付版本：
+```csharp
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+debugCtrl.Initialize(mapData, mapRenderer, enemyController, playerBaseHp, enemyBaseHp);
+#endif
+```
 
-- 清理 Unity warning。
-- 明确 debug/test 边界。
-- 降低 runtime log 噪音。
-- 保持后续 macOS / Android / 微信小程序移植边界清楚。
+正式 build 预处理后，`playerBaseHp` / `enemyBaseHp` 可能变成“赋值但未使用”的局部变量 warning。建议最小修复：
 
-## 给 Claude 的新任务
+```csharp
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
+#else
+SetupBuildings(mapData);
+#endif
+```
+
+这能避免 release-only warning，同时不改变玩法。
+
+### [P3] 缺少新提交后的 Unity 编译验证记录
+
+当前 `Editor.log` 尾部仍是旧编译记录，包含修改前的 `UnitCombat.hasHome` warning。代码已经删除该字段，但还需要在 Unity 中触发刷新/编译后确认：
+
+- Unity Console 无 `error CS`。
+- Unity Console 无 `UnitCombat.hasHome` warning。
+
+## 给 Claude 的返修任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-MVP-04.6 已通过。现在进入 MVP-04.7：交付前清理。
+MVP-04.7 基本正确，但需要小返修和补验证。
 
-目标：
-不改玩法行为，不改 ProjectSettings，不做正式 UI，只清理 debug/test 边界、剩余 warning、明显日志噪音。
+任务 1：修正 GameEntry 的 release-only unused local 风险
+- 当前：
+  var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
+- 这两个变量只在 #if UNITY_EDITOR || DEVELOPMENT_BUILD 内给 DebugShortcutController 用。
+- 请改成最小条件编译结构：
 
-任务 1：清理 UnitCombat unused warning
-- 当前 Unity 6 只剩非阻塞 warning：
-  Assets/Scripts/Combat/UnitCombat.cs(47,22): warning CS0414: UnitCombat.hasHome is assigned but never used
-- 请检查 hasHome 是否真的没有逻辑用途。
-- 如果没有用途，删除字段和赋值，保留 homePosition / SetHomePosition 行为不变。
-- 不要重写 UnitCombat 状态机。
-
-任务 2：明确 debug/test 入口边界
-- GameEntry 现在总是创建 TestUnitSpawner 和 DebugShortcutController。
-- 请把 TestUnitSpawner 和 DebugShortcutController 的创建限制在：
   #if UNITY_EDITOR || DEVELOPMENT_BUILD
-  ...
+  var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
+  #else
+  SetupBuildings(mapData);
   #endif
-- Play Mode / development build 仍可用 debug keys。
-- 普通正式 build 不应该自动启用 1-4 测试刷兵和 K/L/E/N/R/T/Y/U/I/O/P/Q debug 快捷键。
-- GameHud 暂时保留，不在本轮隐藏。
 
-任务 3：收敛明显 runtime log 噪音
-- 不要全局删除日志。
-- 只处理明显高频、低价值、每局会刷很多次的日志。
-- 建议优先看：
-  - UnitMovement reached destination
-  - Barracks spawn / wave push 重复日志
-  - TestUnitSpawner ready/spawn 日志
-- 做法优先使用 #if UNITY_EDITOR || DEVELOPMENT_BUILD 包裹 debug-only logs。
-- Warning/Error 不要隐藏。
+- 不要改 SetupBuildings 行为。
+- 不要改玩法。
 
-任务 4：更新 WORKLOG.md
-- 记录修改文件。
-- 记录验证结果。
+任务 2：补 Unity 验证
+- 在 Unity 里触发一次刷新/重新编译。
+- 确认 Console 无 error CS。
+- 确认 Console 无 UnitCombat.hasHome warning。
+- 确认 rg "hasHome|FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scripts 无结果。
+
+任务 3：更新 WORKLOG.md
+- 记录小返修。
+- 记录 Unity 编译验证结果。
 - 记录没有修改 ProjectSettings、场景文件、Library/Logs/UserSettings。
-
-验证：
-- Unity Console 无 error CS。
-- Unity Console 无 UnitCombat.hasHome warning。
-- rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scripts 无结果。
-- Play smoke test：
-  - 点击派兵。
-  - HUD Dispatch。
-  - O 派兵。
-  - K/L/E/N 在 Editor Play Mode 仍可用。
-  - Victory/Defeat 后 command 拒绝仍正常。
-- 确认 release build 路径中不会自动创建 TestUnitSpawner / DebugShortcutController。
 
 禁止：
 - 不做新玩法。
 - 不做正式 UI。
-- 不重构 UnitCombat 状态机。
+- 不重构 GameEntry。
 - 不改 ProjectSettings。
 - 不提交 .claude、.idea、kingbattle.slnx、Library、Logs、UserSettings、要求.md 删除。
 

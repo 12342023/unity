@@ -356,6 +356,37 @@ Play Mode 验证：
 
 场景文件和 ProjectSettings：均未修改
 
+### MVP-04.7 Codex Review：条件通过，发布小返修
+
+操作人：Codex
+
+审查提交：
+
+```text
+2bfb30b cleanup: remove unused hasHome field, guard debug/test entry points, reduce log noise
+```
+
+结论：MVP-04.7 基本正确，但需要小返修 / 补验证。
+
+已确认：
+
+- `hasHome` 残留搜索为 0。
+- `FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc` 残留搜索为 0。
+- `git show --check 2bfb30b` 无 whitespace 问题。
+- Debug/test 创建已限制在 `UNITY_EDITOR || DEVELOPMENT_BUILD`。
+- 高频低价值日志已收敛。
+
+需要小返修：
+
+- `GameEntry` 中 `playerBaseHp` / `enemyBaseHp` 只在 debug-only 区块使用，正式 build 路径可能产生 unused local warning。
+- 建议把 `SetupBuildings` 返回值接收也放进 `#if UNITY_EDITOR || DEVELOPMENT_BUILD`，release 分支直接调用 `SetupBuildings(mapData);`。
+
+需要补验证：
+
+- 当前 `Editor.log` 尾部仍是旧编译记录，需 Unity 刷新/重新编译后确认无 `error CS` 和无 `UnitCombat.hasHome` warning。
+
+GitHub 上传状态：待本次 cleanup-review-fix-task commit / push。
+
 ### MVP-03.19 任务 C：O 日志携带 dispatched vs required 预览
 
 修改 1 个文件：

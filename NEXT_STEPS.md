@@ -10,28 +10,26 @@
 
 当前状态：
 
-- Unity 6 迁移文件已收口。
-- MVP-04.6 warning cleanup 已通过。
-- 最新 `Editor.log` 显示 `Tundra build success`。
-- 当前剩余一个非阻塞 warning：`UnitCombat.hasHome` 未使用。
-- 下一步应先做交付前清理，再进入正式 UI。
+- MVP-04.6 已通过。
+- MVP-04.7 主体清理已完成。
+- 还需要一个小返修，避免 `GameEntry` 在正式 build 路径出现 unused local warning。
+- 还需要 Unity 刷新/重新编译后的验证记录。
 
-## 当前正式任务：MVP-04.7 交付前清理
+## 当前正式任务：MVP-04.7 小返修 / 补验证
 
 目标：
 
 ```text
-不改玩法行为，只清理 warning、debug/test 边界、明显日志噪音。
+不改玩法行为，补齐 release build 边界和 Unity 编译验证。
 ```
 
 任务：
 
-- 清理 `UnitCombat.hasHome` unused warning。
-- 用 `#if UNITY_EDITOR || DEVELOPMENT_BUILD` 限制 `TestUnitSpawner` 和 `DebugShortcutController` 创建。
-- 收敛明显高频、低价值 runtime logs。
+- 调整 `GameEntry` 中 `SetupBuildings` 返回值的条件编译使用方式。
+- 触发 Unity 刷新/重新编译，确认无 `error CS` 和 `UnitCombat.hasHome` warning。
 - 更新 `WORKLOG.md`。
 
-## MVP-04.7 之后建议顺序
+## 完成后建议顺序
 
 ### MVP-05.0 最小正式 UI
 
@@ -71,8 +69,6 @@
 ## 交付前剩余风险
 
 - 正式 UI 还没做，目前仍是 debug OnGUI。
-- Debug/test 入口需要本轮加 build 条件边界。
-- Runtime logs 偏多，需要本轮收敛一部分。
 - Unity Connect 401 属于外部服务/auth，暂不阻塞 gameplay。
 - 移植还没开始，但边界需要持续保持。
 - `ProjectSettings`、`.idea/`、`.claude/`、Unity 生成目录不能随便提交。
