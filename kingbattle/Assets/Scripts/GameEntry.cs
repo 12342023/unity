@@ -25,6 +25,7 @@ public class GameEntry : MonoBehaviour
     private HealthComponent enemyBaseHealth;
     private MapData mapData;
     private MapRenderer mapRenderer;
+    private EnemyPressureController enemyController;
 
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -62,6 +63,11 @@ public class GameEntry : MonoBehaviour
         var hud = hudObj.AddComponent<GameHud>();
         hud.Initialize(mapData, mapRenderer);
 
+        // ── Enemy pressure controller (MVP-04.1) ──
+        var enemyCtrlObj = new GameObject("EnemyPressureController");
+        enemyController = enemyCtrlObj.AddComponent<EnemyPressureController>();
+        enemyController.Initialize(mapData);
+
         Debug.Log("[GameEntry] MVP-02.1 ready. K=kill EnemyBase, L=kill PlayerBase.");
     }
 
@@ -81,6 +87,13 @@ public class GameEntry : MonoBehaviour
         {
             Debug.Log("[GameEntry] Test shortcut L: destroying PlayerBase...");
             playerBaseHealth.TakeDamage(playerBaseHealth.CurrentHealth);
+        }
+
+        // E = trigger enemy attack immediately (debug, MVP-04.1)
+        if (Input.GetKeyDown(KeyCode.E) && enemyController != null)
+        {
+            Debug.Log("[GameEntry] Test shortcut E: triggering enemy attack...");
+            enemyController.TriggerAttack();
         }
 
         // R = rebuild the first rebuildable ruin (skips main base ruins)

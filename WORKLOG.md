@@ -1028,3 +1028,58 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    87dbb99..2a711c7  main -> main
 ```
+
+### MVP-04.1 敌方最小压力 AI
+
+操作人：Claude
+
+**任务 A — 敌方进攻命令服务**
+
+新增 `Assets/Scripts/Combat/EnemyAttackCommandService.cs`：
+- `DispatchAttack(mapData, sourcePlotId, targetPlotId)` — 验证 source 是 Enemy 且 target 是 Player → 查找 road path → 派兵
+- `DispatchAttackToBestTarget(mapData)` — 自动选 source（士兵最多的 Enemy plot）和 target（PlayerBase 优先，then Player frontier）
+- 不依赖 HUD、键盘、鼠标、OnGUI、平台 API
+- 本轮不做 enemy capture；敌人只进攻不占领
+
+**任务 B — 敌方压力控制器**
+
+新增 `Assets/Scripts/Combat/EnemyPressureController.cs`：
+- MonoBehaviour，由 GameEntry 初始化
+- 首次进攻约 8-12 秒，后续每 20-30 秒
+- Victory/Defeat 后停止触发
+- 无可用士兵或无 road path 时记录清晰日志
+
+**任务 C — HUD 和共享状态**
+
+修改 `Assets/Scripts/Combat/GameStatusService.cs`：
+- 新增 `LastEnemyActionResult`、`TimeUntilNextEnemyAttack`
+
+修改 `Assets/Scripts/UI/GameHud.cs`：
+- 显示敌方进攻倒计时 ~Ns
+- 显示最近敌方行动结果（>50 字符时截断）
+
+**任务 D — E debug 快捷键**
+
+修改 `Assets/Scripts/GameEntry.cs`：
+- 新增 E 快捷键，调用 `EnemyPressureController.TriggerAttack()`
+- E 与定时进攻使用同一条 command 服务路径
+
+修改文件（3 个）：
+- `Assets/Scripts/Combat/GameStatusService.cs` — 敌方状态字段
+- `Assets/Scripts/UI/GameHud.cs` — 敌方倒计时 + 最近结果
+- `Assets/Scripts/GameEntry.cs` — Controller 初始化 + E 快捷键
+
+新增文件（4 个）：
+- `Assets/Scripts/Combat/EnemyAttackCommandService.cs` + `.meta`
+- `Assets/Scripts/Combat/EnemyPressureController.cs` + `.meta`
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. Play → 约 8-12 秒后敌方自动进攻
+2. E → 立即触发一次敌方进攻（同一条命令路径）
+3. HUD 显示倒计时和敌方行动结果
+4. K 击败 EnemyBase → Victory 后敌方压力停止
+5. L 击败 PlayerBase → Defeat 后敌方压力停止
+6. O/Q/U/P — 快捷键不变
+7. Console 无明显错误

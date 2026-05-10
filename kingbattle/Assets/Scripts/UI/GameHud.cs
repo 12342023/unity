@@ -64,6 +64,25 @@ public class GameHud : MonoBehaviour
         if (!string.IsNullOrEmpty(lastAction))
             GUILayout.Label($"Last Action: {lastAction}");
 
+        // ── Enemy attack status ──
+        if (result == MatchResult.None)
+        {
+            float timeLeft = GameStatusService.TimeUntilNextEnemyAttack;
+            if (timeLeft > 0f)
+                GUILayout.Label($"Enemy Attack: ~{timeLeft:F0}s");
+            else
+                GUILayout.Label("Enemy Attack: imminent");
+
+            string enemyLast = GameStatusService.LastEnemyActionResult;
+            if (!string.IsNullOrEmpty(enemyLast))
+            {
+                string shortMsg = enemyLast.Length > 50
+                    ? enemyLast[..50] + "…"
+                    : enemyLast;
+                GUILayout.Label($"Enemy Last: {shortMsg}");
+            }
+        }
+
         if (result != MatchResult.None)
             GUILayout.Label($"Result: {result}");
 
