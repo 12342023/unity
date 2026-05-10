@@ -579,7 +579,18 @@ d38fb3e feat: supply cap system and building roles (Granary +4 cap)
 - N debug 快捷键 restart。
 - Play Mode 回归清单雏形。
 
-GitHub 上传状态：待本次 docs commit / push。
+GitHub 上传状态：
+
+```text
+512eeb7 docs: review mvp-04.2 and release mvp-04.3
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   d38fb3e..512eeb7  main -> main
+```
 
 场景文件和 ProjectSettings：均未修改
 
