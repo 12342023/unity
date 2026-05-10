@@ -1720,3 +1720,29 @@ GitHub 上传状态：
 
 - Unity 6 error task commit: `2af9f16 docs: list Unity 6 compile errors for fix`
 - push: 已上传到 `origin/main`
+
+### Unity 6 编译返修：修复 GameStatusService.cs.meta GUID
+
+操作人：Claude
+
+**修复内容**
+
+`Assets/Scripts/Combat/GameStatusService.cs.meta` GUID 长度修正：
+
+```diff
+-guid: bcdef23456789012345678901234567890  (34 hex chars — invalid)
++guid: bcdef234567890123456789012345678    (32 hex chars — valid)
+```
+
+Unity 要求 .meta 的 guid 字段必须是 32 位十六进制（匹配 `System.Guid` 无连字符格式）。
+34 位 guid 导致 Unity 完全忽略 `GameStatusService.cs`，产生 10+ 个连锁编译错误。
+
+凭据检查：所有 `Assets/Scripts/` 下的 .meta 文件 guid 长度均已扫描，均为 32 位。
+
+修改文件（1 个）：
+- `Assets/Scripts/Combat/GameStatusService.cs.meta` — GUID 从 34 位修正为 32 位
+
+后续：
+- ShaderGraph package 错误需要重新导入 Unity 后再判断是否还存在
+- Unity 6 obsolete warnings 本轮不处理
+- 不提交 Library/、Logs/、UserSettings/
