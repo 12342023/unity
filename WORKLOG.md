@@ -1788,3 +1788,56 @@ GitHub 上传状态：
 
 - review/migration-task commit: `8dd0dd8 docs: review Unity 6 GUID fix and request migration audit`
 - push: 已上传到 `origin/main`
+
+### Unity 6 迁移文件收口
+
+操作人：Claude
+
+Unity 编辑器从 2022.3.62f1 升级到 6000.4.6f1 后，自动改出以下文件。
+逐项审核后分类提交。
+
+#### 已修改文件（M）
+
+| 文件 | 原因 | 提交？ |
+|------|------|--------|
+| `Packages/manifest.json` | Unity 6 对应包版本：URP 14→17，Rider/VS 等工具包升级，新增 modules | 是 |
+| `Packages/packages-lock.json` | 匹配新 manifest 的解析锁定 | 是 |
+| `ProjectSettings/ProjectVersion.txt` | 记录 2022.3→6000.4.6 | 是 |
+| `ProjectSettings/GraphicsSettings.asset` | serializedVersion 15→16，URP 全局设置映射格式变化 | 是 |
+| `ProjectSettings/URPProjectSettings.asset` | material version 7→10，新增 project setting folder path | 是 |
+| `ProjectSettings/ShaderGraphSettings.asset` | 新增 overrideShaderVariantLimit、customHeatmapValues | 是 |
+| `Assets/Settings/UniversalRP.asset` | asset version 11→13，新增 probe volume、reflection probe atlas、soft shadow 等字段 | 是 |
+| `Assets/Settings/Renderer2D.asset` | 新增 hdrDebugView、probe volume 资源、layerMask；内联 shader 引用迁移到内置 | 是 |
+| `Assets/UniversalRenderPipelineGlobalSettings.asset` | 重构为 settings list 体系，新增 shader stripping 配置 | 是 |
+
+#### 未跟踪文件（??）
+
+| 文件 | 原因 | 提交？ |
+|------|------|--------|
+| `Assets/DefaultVolumeProfile.asset` + `.meta` | Unity 6 URP 自动生成的 volume profile 资源 | 是 |
+| `ProjectSettings/MultiplayerManager.asset` | Unity 6 新增 multiplayer feature，本项目不使用 | 否 |
+| `ProjectSettings/SceneTemplateSettings.json` | Unity Editor 编辑场景模板时生成 | 否 |
+| `.claude/` | 内部工具配置 | 否 |
+| `kingbattle/.idea/` | JetBrains IDE 配置 | 否 |
+| `kingbattle/kingbattle.slnx` | Visual Studio 解决方案文件，IDE 自动生成 | 否 |
+| `要求.md` | 非项目文件 | 否 |
+
+#### 不允许提交目录
+
+- `Library/`、`Logs/`、`UserSettings/`
+
+修改文件（9 个）：
+- `Packages/manifest.json`
+- `Packages/packages-lock.json`
+- `ProjectSettings/ProjectVersion.txt`
+- `ProjectSettings/GraphicsSettings.asset`
+- `ProjectSettings/URPProjectSettings.asset`
+- `ProjectSettings/ShaderGraphSettings.asset`
+- `Assets/Settings/UniversalRP.asset`
+- `Assets/Settings/Renderer2D.asset`
+- `Assets/UniversalRenderPipelineGlobalSettings.asset`
+
+新增文件（2 个）：
+- `Assets/DefaultVolumeProfile.asset` + `.meta`
+
+场景文件和 Scripts 目录：均未修改
