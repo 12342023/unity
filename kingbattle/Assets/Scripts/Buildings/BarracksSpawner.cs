@@ -37,6 +37,7 @@ namespace Buildings
         private HealthComponent enemyTarget;   // building to destroy in push waves
         private float timer;
         private float waveCheckTimer;
+        private float throttleLogCooldown; // prevents spam when supply-capped
         private Sprite unitSprite;
 
         // Track spawned units for wave management
@@ -68,12 +69,25 @@ namespace Buildings
             // Remove destroyed units from tracking
             spawnedUnits.RemoveAll(u => u == null);
 
-            // Spawn timer
+            // Throttle log cooldown
+            throttleLogCooldown -= Time.deltaTime;
+
+            // Spawn timer (respects supply cap — MVP-04.2)
             timer += Time.deltaTime;
             if (timer >= spawnInterval)
             {
                 timer = 0f;
-                SpawnUnit();
+                if (FactionStatsService.CanSpawn(faction))
+                {
+                    SpawnUnit();
+                }
+                else if (throttleLogCooldown <= 0f)
+                {
+                    throttleLogCooldown = 10f;
+                    int current = FactionStatsService.CountAliveUnits(faction);
+                    int cap = FactionStatsService.GetSupplyCap(faction);
+                    Debug.Log($"[Barracks] {faction} spawn throttled: {current}/{cap} at supply cap.");
+                }
             }
 
             // Wave check every 2 seconds

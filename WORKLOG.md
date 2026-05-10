@@ -1142,3 +1142,55 @@ Play Mode 验证：
 5. L 击败 PlayerBase → Defeat 后敌方压力停止
 6. O/Q/U/P — 快捷键不变
 7. Console 无明显错误
+
+### MVP-04.2 游戏性最小系统：人口/补给 + 建筑作用
+
+操作人：Claude
+
+**任务 A — 规则/统计服务**
+
+新增 `Assets/Scripts/Combat/FactionStatsService.cs`：
+- `CountAliveUnits(Faction)` — 存活单位数
+- `CountAliveGranaries(Faction)` / `CountAliveTowers(Faction)` — 建筑数
+- `GetSupplyCap(Faction)` — base 8 + 每个 Granary +4
+- `CanSpawn(Faction)` — current < cap
+- 不依赖 HUD、键盘、鼠标、OnGUI、平台 API
+
+**任务 B — Barracks 接入人口上限**
+
+修改 `Assets/Scripts/Buildings/BarracksSpawner.cs`：
+- SpawnUnit 前检查 `FactionStatsService.CanSpawn(faction)`
+- 达到上限时不生成新兵
+- 每 10 秒输出一次节流日志，避免刷屏
+- Player 和 Enemy 都使用同一规则
+
+**任务 C — HUD 显示人口/建筑状态**
+
+修改 `Assets/Scripts/UI/GameHud.cs`：
+- 新增"Units: Player X/Y | Enemy X/Y"
+- 新增"Bldgs: Player G:N T:N | Enemy G:N T:N"
+- HUD 只读取统计服务，不直接修改核心数据
+
+**任务 D — 建筑作用**
+
+- Barracks = 生成士兵（已实现）
+- Tower = 自动攻击敌方单位（已实现）
+- Granary = +4 supply cap（本轮新增）
+- FactionStatsService 注释已明确
+
+修改文件（2 个）：
+- `Assets/Scripts/Buildings/BarracksSpawner.cs` — supply cap 检查
+- `Assets/Scripts/UI/GameHud.cs` — 人口/建筑状态显示
+
+新增文件（2 个）：
+- `Assets/Scripts/Combat/FactionStatsService.cs` + `.meta`
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. Play → HUD 显示 Player Units: N/12, Enemy Units: N/8
+2. 单位达到 cap 后 Barracks 停止生成，日志显示 throttle
+3. K 击败 EnemyBase → 清场后 Enemy Units 为 0
+4. 重建 Granary → cap 上升，HUD 更新
+5. HUD Dispatch / O / Q / U / P / E / K / L 仍可用
+6. Console 无明显错误

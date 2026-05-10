@@ -48,10 +48,10 @@ public class GameHud : MonoBehaviour
     {
         var result = MatchResultService.CurrentResult;
 
-        // ── Background box (taller to fit candidate list) ──
-        GUI.Box(new Rect(10, 10, 390, 340), "Game Status (debug)");
+        // ── Background box (taller to fit candidate list + stats) ──
+        GUI.Box(new Rect(10, 10, 390, 390), "Game Status (debug)");
 
-        GUILayout.BeginArea(new Rect(15, 28, 375, 320));
+        GUILayout.BeginArea(new Rect(15, 28, 375, 370));
 
         // ── Status section ──
         string objective = result == MatchResult.PlayerVictory ? "Victory!"
@@ -81,6 +81,24 @@ public class GameHud : MonoBehaviour
                     : enemyLast;
                 GUILayout.Label($"Enemy Last: {shortMsg}");
             }
+        }
+
+        // ── Faction stats (MVP-04.2) ──
+        if (result == MatchResult.None)
+        {
+            int pUnits = FactionStatsService.CountAliveUnits(Core.Faction.Player);
+            int pCap = FactionStatsService.GetSupplyCap(Core.Faction.Player);
+            int pGran = FactionStatsService.CountAliveGranaries(Core.Faction.Player);
+            int pTow = FactionStatsService.CountAliveTowers(Core.Faction.Player);
+
+            int eUnits = FactionStatsService.CountAliveUnits(Core.Faction.Enemy);
+            int eCap = FactionStatsService.GetSupplyCap(Core.Faction.Enemy);
+            int eGran = FactionStatsService.CountAliveGranaries(Core.Faction.Enemy);
+            int eTow = FactionStatsService.CountAliveTowers(Core.Faction.Enemy);
+
+            GUILayout.Space(2);
+            GUILayout.Label($"Units: Player {pUnits}/{pCap} | Enemy {eUnits}/{eCap}");
+            GUILayout.Label($"Bldgs: Player G:{pGran} T:{pTow} | Enemy G:{eGran} T:{eTow}");
         }
 
         if (result != MatchResult.None)
