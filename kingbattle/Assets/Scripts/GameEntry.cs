@@ -230,36 +230,8 @@ public class GameEntry : MonoBehaviour
         // O = dispatch from first Player frontier plot to its first neutral neighbour
         if (Input.GetKeyDown(KeyCode.O) && mapData != null)
         {
-            var frontiers = StrategicConnectionService.GetPlayerFrontierPlots(mapData);
-            if (frontiers.Count == 0)
-            {
-                Debug.Log("[GameEntry] Test shortcut O: no Player-owned frontier plot.");
-            }
-            else
-            {
-                var source = frontiers[0];
-                string targetPlotId = source.connectableNeutralPlots[0];
-                var pathIds = RoadPathFinder.FindPath(mapData, source.plotId, targetPlotId);
-                if (pathIds == null || pathIds.Count < 2)
-                {
-                    Debug.Log($"[GameEntry] Test shortcut O: no road path from {source.plotId} to {targetPlotId}.");
-                }
-                else
-                {
-                    var waypoints = new System.Collections.Generic.List<Vector3>();
-                    foreach (var id in pathIds)
-                    {
-                        var p = mapData.GetPlot(id);
-                        if (p != null)
-                            waypoints.Add(new Vector3(p.worldPosition.x, p.worldPosition.y, -0.2f));
-                    }
-                    Vector3 sourcePos = mapData.GetPlot(source.plotId).worldPosition;
-                    sourcePos.z = -0.2f;
-                    int count = StrategicDispatchService.DispatchToPlot(
-                        sourcePos, waypoints, targetPlotId, mapData, mapRenderer);
-                    Debug.Log($"[GameEntry] Test shortcut O: dispatched {count} soldiers from {source.plotId} to {targetPlotId}.");
-                }
-            }
+            var result = StrategicExpansionService.ExpandNext(mapData, mapRenderer);
+            Debug.Log($"[GameEntry] Test shortcut O: {result.message}");
         }
     }
 
