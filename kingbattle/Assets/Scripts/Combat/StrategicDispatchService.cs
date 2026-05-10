@@ -50,7 +50,7 @@ namespace Combat
             if (waypoints == null || waypoints.Count < 2)
                 return 0;
 
-            int count = 0;
+            int totalDispatched = 0;
             bool captureConsidered = false; // shared across handlers via closure
 
             foreach (var u in GameObject.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
@@ -69,9 +69,12 @@ namespace Combat
                     captureHandlers.Remove(u);
                 }
 
-                // One-shot handler: checks requirement, cleans itself up
-                var capturedCount = count; // capture the count AT this iteration
+                totalDispatched++; // increment BEFORE creating the handler
                 var capturedRequired = requiredSoldierCount;
+
+                // One-shot handler. totalDispatched is captured by reference —
+                // all lambdas share the same variable, so when the first soldier
+                // arrives later, totalDispatched already holds the FINAL count.
                 System.Action localHandler = null;
                 localHandler = () =>
                 {
@@ -80,14 +83,13 @@ namespace Combat
                     if (!captureConsidered)
                     {
                         captureConsidered = true;
-                        // Only capture if dispatched count meets requirement
-                        if (capturedCount + 1 >= capturedRequired)
+                        if (totalDispatched >= capturedRequired)
                         {
                             PlotCaptureService.TryCapture(targetPlotId, mapData, mapRenderer, Faction.Player);
                         }
                         else
                         {
-                            Debug.Log($"[StrategicDispatchService] Capture blocked: dispatched {capturedCount + 1}/{capturedRequired} to {targetPlotId}.");
+                            Debug.Log($"[StrategicDispatchService] Capture blocked: dispatched {totalDispatched}/{capturedRequired} to {targetPlotId}.");
                         }
                     }
                 };
@@ -95,17 +97,14 @@ namespace Combat
                 captureHandlers[u] = localHandler;
                 u.OnPushDestinationReached += localHandler;
                 u.SetPushPath(new List<Vector3>(waypoints));
-                count++;
             }
 
-            // If we never reached required count and no handler is going to fire
-            // because count == 0, log it immediately.
-            if (count > 0 && count < requiredSoldierCount)
+            if (totalDispatched > 0 && totalDispatched < requiredSoldierCount)
             {
-                Debug.Log($"[StrategicDispatchService] Dispatched {count}/{requiredSoldierCount} — capture will be blocked on arrival.");
+                Debug.Log($"[StrategicDispatchService] Dispatched {totalDispatched}/{requiredSoldierCount} — capture will be blocked on arrival.");
             }
 
-            return count;
+            return totalDispatched;
         }
     }
 }

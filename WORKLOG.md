@@ -411,6 +411,43 @@ git commit -m "feat: capture requires minimum soldier count, U/O both enforce it
 git push origin main
 ```
 
+### MVP-03.20 阻塞修复：capturedCount + 1 → 共享 totalDispatched
+
+操作人：Claude
+
+Codex Review 指出的问题已修复。
+
+**问题：** handler 使用 `capturedCount + 1`（创建 handler 时的迭代序号），不是最终总派兵数。dispatched 3/2 时第一名到达士兵的 `capturedCount + 1 = 1 < 2`，错误 blocked。
+
+**修复：** `DispatchToPlot()` 中 handler 改用共享变量 `totalDispatched`。所有 lambda 捕获同一个 C# 局部变量引用，handler 触发时读到的是循环结束后的最终值。
+
+```csharp
+int totalDispatched = 0;
+foreach (...)
+{
+    totalDispatched++;          // 递增在 handler 创建之前
+    // handler 捕获 totalDispatched（by reference，不是 by value）
+    localHandler = () => {
+        if (totalDispatched >= requiredSoldierCount)   // ← 读到最终总数
+            TryCapture(...);
+    };
+}
+```
+
+修改文件：仅 `Assets/Scripts/Combat/StrategicDispatchService.cs`
+
+验证：
+- dispatched 1/2 → handler 触发时 `totalDispatched=1 < 2` → blocked ✅
+- dispatched 3/2 → handler 触发时 `totalDispatched=3 >= 2` → capture ✅
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs WORKLOG.md TASK.md
+git commit -m "fix: use shared totalDispatched instead of per-iteration capturedCount"
+git push origin main
+```
+
 修改 2 个文件：
 - `Assets/Scripts/Combat/StrategicConnectionService.cs` — 新增：
   - `ExpansionCandidate` 类（sourcePlotId, targetPlotId）
