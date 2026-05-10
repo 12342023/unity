@@ -2087,3 +2087,43 @@ rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scri
 - `UI/GameHud.cs`
 
 场景文件和 ProjectSettings：均未修改
+
+### MVP-04.7 交付前清理
+
+操作人：Claude
+
+**任务 A — 清理 UnitCombat.hasHome warning**
+
+修改 `Assets/Scripts/Combat/UnitCombat.cs`：
+- 删除字段 `private bool hasHome;`（CS0414: assigned but never used）
+- 删除 `SetHomePosition()` 中的 `hasHome = true;`
+- `homePosition` / `SetHomePosition` 行为不变
+
+**任务 B — Debug/test 入口边界**
+
+修改 `Assets/Scripts/GameEntry.cs`：
+- `TestUnitSpawner` 创建和初始化包裹 `#if UNITY_EDITOR || DEVELOPMENT_BUILD`
+- `DebugShortcutController` 创建和初始化包裹 `#if UNITY_EDITOR || DEVELOPMENT_BUILD`
+- Ready 日志区分 debug keys 可用/不可用
+
+普通正式 build 不会自动创建这两个组件，避免 1-4 测试刷兵和 debug 快捷键泄漏。
+`GameHud` 本轮暂时保留（task 明确不隐藏）。
+
+**任务 C — 收敛高频 runtime logs**
+
+`Assets/Scripts/Units/UnitMovement.cs`：
+- `reached destination` 日志 → `#if UNITY_EDITOR || DEVELOPMENT_BUILD`（每个单位每到达一个 waypoint 就触发，极高频）
+
+`Assets/Scripts/Buildings/BarracksSpawner.cs`：
+- 3 条 spawn 日志 → `#if UNITY_EDITOR || DEVELOPMENT_BUILD`（每 5 秒/兵营触发）
+- `Wave push` 日志 → `#if UNITY_EDITOR || DEVELOPMENT_BUILD`（每 15-30 秒触发）
+
+Warning/Error 日志保留。玩法关键日志（dispatch、capture、enemy attack、defeat）保留。
+
+修改文件（4 个）：
+- `Assets/Scripts/Combat/UnitCombat.cs` — 删除 hasHome 字段和赋值
+- `Assets/Scripts/GameEntry.cs` — ifdef 守卫 debug/test 创建
+- `Assets/Scripts/Units/UnitMovement.cs` — ifdef 守卫高频日志
+- `Assets/Scripts/Buildings/BarracksSpawner.cs` — ifdef 守卫 spawn/wave 日志
+
+场景文件和 ProjectSettings：均未修改

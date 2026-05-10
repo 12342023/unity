@@ -46,13 +46,15 @@ public class GameEntry : MonoBehaviour
         mapRenderer = rendererObj.AddComponent<MapRenderer>();
         mapRenderer.Initialize(mapData);
 
-        // ── Create buildings ──
+        // ── Create buildings and get health refs ──
         var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
 
-        // ── Activate test spawner ──
+        // ── Test spawner (editor/development only) ──
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         var spawnerObj = new GameObject("TestUnitSpawner");
         var spawner = spawnerObj.AddComponent<TestUnitSpawner>();
         spawner.Initialize(mapData);
+#endif
 
         // ── Temporary HUD ──
         var hudObj = new GameObject("GameHud");
@@ -69,12 +71,17 @@ public class GameEntry : MonoBehaviour
         var inputCtrl = inputObj.AddComponent<PlayerInputController>();
         inputCtrl.Initialize(mapData, mapRenderer);
 
-        // ── Debug shortcut controller (MVP-04.5) ──
+        // ── Debug shortcut controller (editor/development only, MVP-04.5) ──
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         var debugObj = new GameObject("DebugShortcutController");
         var debugCtrl = debugObj.AddComponent<DebugShortcutController>();
         debugCtrl.Initialize(mapData, mapRenderer, enemyController, playerBaseHp, enemyBaseHp);
+#endif
 
-        Debug.Log("[GameEntry] Ready. Debug keys: K/L/E/N/R/T/Y/U/I/O/P/Q. Click source plot → target plot to dispatch.");
+        Debug.Log("[GameEntry] Ready. Click source plot → target plot to dispatch.");
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log("[GameEntry] Debug keys active: K/L/E/N/R/T/Y/U/I/O/P/Q.");
+#endif
     }
 
     // ── Building setup ─────────────────────────────────────────────────

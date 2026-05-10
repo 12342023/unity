@@ -168,18 +168,24 @@ namespace Buildings
 
                     movement.StartMoving(waypoints);
                     logPath = string.Join(" -> ", pathIds);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     Debug.Log($"[Barracks] Spawned {faction} Soldier, moving to rally {destPlotId}: {logPath}");
+#endif
                 }
                 else
                 {
                     // Rally plot unreachable — patrol at spawn position
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     Debug.Log($"[Barracks] Spawned {faction} Soldier at {currentPlotId} (rally {destPlotId} unreachable), patrolling locally.");
+#endif
                 }
             }
             else
             {
                 // No rally point — patrol around Barracks immediately
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[Barracks] Spawned {faction} Soldier at {currentPlotId}, patrolling locally (no rally point).");
+#endif
             }
 
             // Track
@@ -245,7 +251,9 @@ namespace Buildings
                 }
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[Barracks] Wave push! {gathered.Count} units from {rallyPlot.plotId} -> {targetPlot}");
+#endif
         }
 
         private string FindTargetPlotId()

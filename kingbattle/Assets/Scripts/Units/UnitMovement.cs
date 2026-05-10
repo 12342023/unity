@@ -104,7 +104,9 @@ namespace Units
                 if (currentIndex >= waypoints.Count)
                 {
                     hasPath = false;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     Debug.Log($"[UnitMovement] {name} reached destination.");
+#endif
                 }
             }
         }

@@ -44,7 +44,6 @@ namespace Combat
         // Patrol fallback — set by BarracksSpawner
         private UnitPatrol patrol;
         private Vector3 homePosition;
-        private bool hasHome;
 
         // External push command — path waypoints to enemy
         private List<Vector3> pushPath;
@@ -57,7 +56,6 @@ namespace Combat
         public void SetHomePosition(Vector3 pos)
         {
             homePosition = pos;
-            hasHome = true;
         }
 
         /// <summary>Assign a push path: unit will traverse this path toward the enemy,
