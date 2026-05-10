@@ -316,14 +316,25 @@ Play Mode 验证：
 
 场景文件和 ProjectSettings：均未修改
 
+### MVP-03.19 任务 C：O 日志携带 dispatched vs required 预览
+
+修改 1 个文件：
+- `Assets/Scripts/Combat/StrategicExpansionService.cs`：
+  - `ExpansionResult` 新增 `requiredCount` 字段
+  - `ExpandNext()` 中查询 `PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot)`
+  - O 日志从 `"Dispatched 3 soldiers from X to Y"` 变为 `"Dispatched 3/2 soldiers from X to Y"`
+  - 不改变实际 capture 判定（到达即占领）
+
+Play Mode 验证：
+1. K → T → U(占 Crossroads) → 按 **O** → 日志显示 `Dispatched N/2 soldiers from Crossroads to Village`
+2. 占领行为不变，到达即占领
+
 手动 git 推送：
 ```sh
 cd /Users/jianghao/unity
-git add kingbattle/Assets/Scripts/Combat/PlotCaptureRequirementService.cs \
-        kingbattle/Assets/Scripts/Combat/PlotCaptureRequirementService.cs.meta \
-        kingbattle/Assets/Scripts/GameEntry.cs \
+git add kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs \
         WORKLOG.md TASK.md
-git commit -m "feat: PlotCaptureRequirementService + P shortcut prints capture requirements"
+git commit -m "feat: O log shows dispatched/required count (preview only, no capture change)"
 git push origin main
 ```
 

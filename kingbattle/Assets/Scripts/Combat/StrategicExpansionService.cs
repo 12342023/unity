@@ -21,6 +21,7 @@ namespace Combat
             public string sourcePlotId;
             public string targetPlotId;
             public int dispatchedCount;
+            public int requiredCount;
         }
 
         /// <summary>
@@ -58,6 +59,10 @@ namespace Combat
             Vector3 sourcePos = mapData.GetPlot(candidate.sourcePlotId).worldPosition;
             sourcePos.z = -0.2f;
 
+            // Query the requirement (preview only — does not affect capture logic)
+            var targetPlot = mapData.GetPlot(candidate.targetPlotId);
+            int required = PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot);
+
             int count = StrategicDispatchService.DispatchToPlot(
                 sourcePos, waypoints, candidate.targetPlotId, mapData, mapRenderer);
 
@@ -67,9 +72,11 @@ namespace Combat
                 sourcePlotId = candidate.sourcePlotId,
                 targetPlotId = candidate.targetPlotId,
                 dispatchedCount = count,
+                requiredCount = required,
                 message = count > 0
-                    ? $"Dispatched {count} soldiers from {candidate.sourcePlotId} to {candidate.targetPlotId}."
-                    : $"No soldiers near {candidate.sourcePlotId} to dispatch."
+                    ? $"Dispatched {count}/{required} soldiers from {candidate.sourcePlotId} to {candidate.targetPlotId}."
+                    : $"No soldiers near {candidate.sourcePlotId} to dispatch " +
+                      $"(requires {required})."
             };
         }
     }
