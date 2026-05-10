@@ -5,103 +5,114 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-2bfb30b cleanup: remove unused hasHome field, guard debug/test entry points, reduce log noise
+fd5a503 fix: release build unused local — move SetupBuildings tuple into ifdef
 ```
 
-结论：**MVP-04.7 基本正确，但需要小返修 / 补验证。**
+结论：**MVP-04.7 通过。**
 
 ## CODEX PROJECT REVIEW
 
-Gate: **CONDITIONAL PASS**
+Gate: **PASS**
 
 Findings:
 
 ```text
-[P2] GameEntry 正式 build 路径可能出现 release-only unused local warning。
-[P3] WORKLOG 缺少 Unity 重新编译后的验证结果。
+无 P1 / P2 阻塞问题。
 ```
 
-已确认通过：
+已验证：
 
-- `hasHome` 残留搜索为 0。
-- `FindObjectsSortMode / FindFirstObjectByType / OverlapCircleNonAlloc` 残留搜索为 0。
-- `git show --check 2bfb30b` 无 whitespace 问题。
-- `TestUnitSpawner` 和 `DebugShortcutController` 的创建已经包进 `#if UNITY_EDITOR || DEVELOPMENT_BUILD`。
-- 高频低价值日志已用 debug/development build 条件限制。
+- `GameEntry` 中 `SetupBuildings` 返回值接收已限制在 `UNITY_EDITOR || DEVELOPMENT_BUILD`。
+- release 分支直接调用 `SetupBuildings(mapData);`，避免 debug-only local 变量泄漏。
+- `rg "hasHome|FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" kingbattle/Assets/Scripts` 无结果。
+- `tail -320 Editor.log` 未发现 `error CS`、`warning CS`、`hasHome`、目标 obsolete API 残留。
+- `git show --check fd5a503` 无 whitespace 问题。
 - 未修改 `ProjectSettings`、场景文件、`Library/`、`Logs/`、`UserSettings/`。
 
-### [P2] `GameEntry` 正式 build 路径可能有 unused local warning
+剩余非阻塞风险：
 
-当前写法：
+- 当前 `GameHud` 仍是 OnGUI debug 风格。
+- HUD 每次绘制会查找 `PlayerInputController`，正式 UI 阶段应缓存引用或通过 `Initialize` 传入。
+- 视觉表现仍偏开发调试，需要进入 MVP-05.0。
 
-```csharp
-var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
-```
+## 下一步 Review 建议
 
-这两个变量只在后面的 debug-only 区块里传给 `DebugShortcutController`：
+进入 **MVP-05.0：最小正式 UI**。
 
-```csharp
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-debugCtrl.Initialize(mapData, mapRenderer, enemyController, playerBaseHp, enemyBaseHp);
-#endif
-```
+目标不是重做玩法，而是替换 debug OnGUI 表现层：
 
-正式 build 预处理后，`playerBaseHp` / `enemyBaseHp` 可能变成“赋值但未使用”的局部变量 warning。建议最小修复：
+- 使用 Unity UI Canvas / uGUI。
+- 运行时由 `GameEntry` 创建，不改 scene。
+- UI 只读状态、调用 command service。
+- 不让 UI 直接修改 map/building/unit 数据。
+- 保持后续 macOS / Android / 微信小程序移植边界清楚。
 
-```csharp
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
-#else
-SetupBuildings(mapData);
-#endif
-```
-
-这能避免 release-only warning，同时不改变玩法。
-
-### [P3] 缺少新提交后的 Unity 编译验证记录
-
-当前 `Editor.log` 尾部仍是旧编译记录，包含修改前的 `UnitCombat.hasHome` warning。代码已经删除该字段，但还需要在 Unity 中触发刷新/编译后确认：
-
-- Unity Console 无 `error CS`。
-- Unity Console 无 `UnitCombat.hasHome` warning。
-
-## 给 Claude 的返修任务
+## 给 Claude 的新任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-MVP-04.7 基本正确，但需要小返修和补验证。
+MVP-04.7 已通过。现在进入 MVP-05.0：最小正式 UI。
 
-任务 1：修正 GameEntry 的 release-only unused local 风险
-- 当前：
-  var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
-- 这两个变量只在 #if UNITY_EDITOR || DEVELOPMENT_BUILD 内给 DebugShortcutController 用。
-- 请改成最小条件编译结构：
+目标：
+把当前 OnGUI debug HUD 改成运行时创建的最小正式 uGUI / Canvas UI。
+不改玩法逻辑，不改 ProjectSettings，不改场景文件，不新增平台耦合。
 
-  #if UNITY_EDITOR || DEVELOPMENT_BUILD
-  var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
-  #else
-  SetupBuildings(mapData);
-  #endif
+任务 1：替换 GameHud 的 OnGUI 表现层
+- 当前 GameHud.cs 使用 OnGUI/GUILayout，标题还是 Game Status (debug)。
+- 请改成运行时创建 Canvas 的 uGUI UI。
+- 可以继续使用 GameEntry 创建 GameHud，不要要求手动拖 scene prefab。
+- 推荐结构：
+  - 顶部状态栏：目标、敌方进攻倒计时、最近操作。
+  - 左侧/右侧小面板：玩家/敌方单位数、人口上限、Granary/Tower 数。
+  - 底部或侧边候选列表：最多显示 4 个 expansion candidates，每项有 Dispatch 按钮。
+  - 选中提示：当前 selected source 和 highlighted targets 数量。
+  - 胜负面板：Victory / Defeat、最终统计、Restart 按钮。
+- 文案从 debug 口吻改成玩家可读口吻，不要出现 Game Status (debug)、Dsp 这类临时代码词。
 
-- 不要改 SetupBuildings 行为。
-- 不要改玩法。
+任务 2：保持 UI/业务边界
+- UI 只能读取：
+  - GameStatusService
+  - MatchResultService
+  - FactionStatsService
+  - StrategicConnectionService.GetExpansionPreviews
+  - PlayerInputController selection state
+- UI 触发派兵只能调用：
+  - StrategicExpansionCommandService.DispatchCandidate(...)
+- UI 触发 Restart 可以继续加载当前 scene。
+- UI 不得直接修改 PlotData、MapData faction、building health、unit state。
 
-任务 2：补 Unity 验证
-- 在 Unity 里触发一次刷新/重新编译。
-- 确认 Console 无 error CS。
-- 确认 Console 无 UnitCombat.hasHome warning。
-- 确认 rg "hasHome|FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scripts 无结果。
+任务 3：减少每帧查找
+- 不要在每次 UI 刷新/绘制时 FindAnyObjectByType。
+- 让 GameEntry 把 PlayerInputController 传给 GameHud.Initialize，或者 GameHud 初始化时缓存一次。
+- 不要为此重构 PlayerInputController。
 
-任务 3：更新 WORKLOG.md
-- 记录小返修。
-- 记录 Unity 编译验证结果。
+任务 4：响应式和移植边界
+- Canvas 使用 Screen Space Overlay。
+- 使用 CanvasScaler，适配 16:9 和较窄屏。
+- UI 锚点清晰，不依赖固定像素绝对布局到处散落。
+- 不使用平台 API。
+- 不新增全局状态。
+
+任务 5：更新 WORKLOG.md
+- 记录修改文件。
+- 记录 UI 边界。
+- 记录验证结果。
 - 记录没有修改 ProjectSettings、场景文件、Library/Logs/UserSettings。
+
+验证：
+- Unity Console 无 error CS。
+- Play 初始显示正式 HUD，不再显示 OnGUI debug 框。
+- 点击地图派兵仍正常。
+- HUD Dispatch 按钮仍正常。
+- O 快捷键与 HUD Dispatch / 点击派兵同路径。
+- K/L/E/N 在 Editor Play Mode 仍可用。
+- Victory/Defeat 后显示正式结束面板，Restart 可用。
+- Victory/Defeat 后点击、HUD Dispatch、O/E 不再执行 gameplay command。
 
 禁止：
 - 不做新玩法。
-- 不做正式 UI。
-- 不重构 GameEntry。
+- 不改战斗/占领/派兵 service 行为。
 - 不改 ProjectSettings。
 - 不提交 .claude、.idea、kingbattle.slnx、Library、Logs、UserSettings、要求.md 删除。
 

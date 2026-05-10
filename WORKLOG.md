@@ -2191,3 +2191,32 @@ rg "hasHome|FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Ass
 修改文件：仅 `Assets/Scripts/GameEntry.cs`
 
 场景文件和 ProjectSettings：均未修改
+
+### MVP-04.7 Codex Review：通过，发布 MVP-05.0 UI 任务
+
+操作人：Codex
+
+审查提交：
+
+```text
+fd5a503 fix: release build unused local — move SetupBuildings tuple into ifdef
+```
+
+结论：MVP-04.7 通过。
+
+已检查：
+
+- `GameEntry` 中 `SetupBuildings` 返回值接收已限制在 `UNITY_EDITOR || DEVELOPMENT_BUILD`。
+- release 分支直接调用 `SetupBuildings(mapData);`，避免 debug-only local 变量泄漏。
+- `rg "hasHome|FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" kingbattle/Assets/Scripts` 无结果。
+- `tail -320 Editor.log` 未发现 `error CS`、`warning CS`、`hasHome` 或目标 obsolete API 残留。
+- `git show --check fd5a503` 无 whitespace 问题。
+
+发布新任务：
+
+- MVP-05.0：最小正式 UI。
+- 用运行时创建的 uGUI / Canvas UI 替换 OnGUI debug HUD。
+- 保持 UI / command service 边界。
+- 不改玩法、不改 ProjectSettings、不改场景文件。
+
+GitHub 上传状态：待本次 review-and-ui-task commit / push。
