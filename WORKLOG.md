@@ -917,3 +917,64 @@ b2b3dbc docs: review mvp-03.23 and release mvp-04.0
 To https://github.com/12342023/unity.git
    d5b46ed..b2b3dbc  main -> main
 ```
+
+### MVP-04.0 玩家正式操作第一步：候选按钮 + gameplay command 边界
+
+操作人：Claude
+
+**任务 A — 扩张命令服务**
+
+新增 `Assets/Scripts/Combat/StrategicExpansionCommandService.cs`：
+- `DispatchCandidate(mapData, mapRenderer, sourcePlotId, targetPlotId)` — 单一路径/派兵入口
+- 不依赖键盘、鼠标、OnGUI、平台 API
+- 验证：source 是 Player-owned non-main-base → target 是相邻 Neutral → road path → required count → DispatchToPlot
+- 被 HUD 和 O 快捷键共同使用
+
+**任务 B — HUD 候选按钮**
+
+修改 `Assets/Scripts/UI/GameHud.cs`：
+- 显示 expansion previews 列表，最多 4 个
+- 每行显示：source → target、available/required、enough/short、Dsp 按钮
+- 点击按钮调用 `StrategicExpansionCommandService.DispatchCandidate()`
+- HUD 不直接修改 map/building/unit
+- status 信息每 2 秒刷新一次
+
+**任务 C — O 快捷键复用 command 服务**
+
+修改 `Assets/Scripts/GameEntry.cs`：
+- O 分支改为：获取第一个 expansion candidate → 调用 `StrategicExpansionCommandService.DispatchCandidate()`
+- 不再在 StrategicExpansionService 和 GameEntry 中保留两套 path/dispatch 逻辑
+
+修改 `Assets/Scripts/Combat/StrategicExpansionService.cs`：
+- `ExpandNext()` 改为委托给 `StrategicExpansionCommandService.DispatchCandidate()`
+- 文件从 82 行减少到 47 行，删除重复的 path/dispatch 代码
+
+**任务 D — 移植边界**
+
+- HUD 声明 `/// Temporary component — replace with proper UI`。
+- Command 服务无 UI/平台引用。
+- HUD 只调用命令服务 + 读共享状态，不直接改 map/building/unit。
+
+**任务 E — 文档**
+
+WORKLOG 本轮已更新。
+
+修改文件（3 个）：
+- `Assets/Scripts/Combat/StrategicExpansionService.cs` — 委托给 command 服务
+- `Assets/Scripts/UI/GameHud.cs` — 候选列表 + Dispatch 按钮
+- `Assets/Scripts/GameEntry.cs` — HUD 传入 mapRenderer；O 改用 command 服务
+
+新增文件（2 个）：
+- `Assets/Scripts/Combat/StrategicExpansionCommandService.cs` + `.meta`
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. Play → HUD 显示候选列表，每行带 Dsp 按钮
+2. 点击 HUD 候选按钮 → 派兵到对应目标
+3. O → 派第一个候选（同一条路径）
+4. Q — 扩张预览只读打印，不派兵
+5. P — 占领需求打印不变
+6. U — 从 main-base ruin 派兵不变
+7. K/L — 胜负结算不变
+8. Console 无错误

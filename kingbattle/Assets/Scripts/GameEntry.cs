@@ -60,7 +60,7 @@ public class GameEntry : MonoBehaviour
         // ── Temporary HUD ──
         var hudObj = new GameObject("GameHud");
         var hud = hudObj.AddComponent<GameHud>();
-        hud.Initialize(mapData);
+        hud.Initialize(mapData, mapRenderer);
 
         Debug.Log("[GameEntry] MVP-02.1 ready. K=kill EnemyBase, L=kill PlayerBase.");
     }
@@ -241,10 +241,23 @@ public class GameEntry : MonoBehaviour
         }
 
         // O = dispatch from first Player frontier plot to its first neutral neighbour
+        // Uses same command service as HUD dispatch buttons (MVP-04.0)
         if (Input.GetKeyDown(KeyCode.O) && mapData != null)
         {
-            var result = StrategicExpansionService.ExpandNext(mapData, mapRenderer);
-            Debug.Log($"[GameEntry] Test shortcut O: {result.message}");
+            var candidates = StrategicConnectionService.GetExpansionCandidates(mapData);
+            if (candidates.Count == 0)
+            {
+                GameStatusService.LastActionResult = "O: no expansion candidates.";
+                Debug.Log("[GameEntry] Test shortcut O: no expansion candidates.");
+            }
+            else
+            {
+                var c = candidates[0];
+                var result = StrategicExpansionCommandService.DispatchCandidate(
+                    mapData, mapRenderer, c.sourcePlotId, c.targetPlotId);
+                GameStatusService.LastActionResult = result.message;
+                Debug.Log($"[GameEntry] Test shortcut O: {result.message}");
+            }
         }
 
         // P = print capture requirements per plot (MVP-03.19)
