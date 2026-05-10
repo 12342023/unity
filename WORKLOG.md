@@ -1619,3 +1619,31 @@ GitHub 上传状态：
 
 - review/fix-task commit: `875fdcc docs: review mvp-04.5 and request compile fix`
 - push: 已上传到 `origin/main`
+
+### MVP-04.5 返修：修复 GameEntry 编译错误
+
+操作人：Claude
+
+**修复内容**
+
+`Assets/Scripts/GameEntry.cs` 顶部补 `using Units;`：
+```diff
+ using Map;
++using Units;
+ using UnityEngine;
+```
+
+原因：`TestUnitSpawner` 位于 `namespace Units`，重构后漏删了该 using。
+
+修改文件（1 个）：
+- `Assets/Scripts/GameEntry.cs` — 补充 `using Units;`
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. Unity Console 无编译错误
+2. 点击 Player-owned source → 高亮，点击 target → 派兵
+3. HUD Dispatch 可派兵
+4. O 可派兵（同路径）
+5. K/L/E/N/R/T/Y/U/I/O/P/Q 行为无回归
+6. Console 无明显错误
