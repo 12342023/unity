@@ -4631,3 +4631,20 @@ MVP-03.17 整理已占领地块的扩张编排服务
 - 不修改 ProjectSettings
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
+
+GitHub 上传状态：
+
+- 已提交并推送本次 MVP-03.16 Review 与 MVP-03.17 任务发布文档。
+
+提交记录：
+
+```text
+914a3ae docs: review mvp-03.16 and release mvp-03.17
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   d76e602..914a3ae  main -> main
+```
