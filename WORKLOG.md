@@ -655,4 +655,15 @@ ac2af48 feat: DispatchResult structured data, unified capture logs
 - 新增 Q 快捷键打印全部候选预览。
 - 修正 `StrategicExpansionService` 过期注释。
 
-GitHub 上传状态：待本次 docs commit / push。
+GitHub 上传状态：
+
+```text
+bfc6271 docs: review mvp-03.21 and release mvp-03.22
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   ac2af48..bfc6271  main -> main
+```
