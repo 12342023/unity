@@ -233,6 +233,17 @@ public class GameEntry : MonoBehaviour
             var result = StrategicExpansionService.ExpandNext(mapData, mapRenderer);
             Debug.Log($"[GameEntry] Test shortcut O: {result.message}");
         }
+
+        // P = print all plots with their capture requirement (MVP-03.19)
+        if (Input.GetKeyDown(KeyCode.P) && mapData != null)
+        {
+            Debug.Log("[GameEntry] Test shortcut P: capture requirements:");
+            foreach (var plot in mapData.Plots)
+            {
+                int req = PlotCaptureRequirementService.GetRequiredSoldierCount(plot);
+                Debug.Log($"  {plot.plotId} ({plot.size}, {plot.faction}) → requires {req} soldier(s)");
+            }
+        }
     }
 
     // ── Building setup ─────────────────────────────────────────────────

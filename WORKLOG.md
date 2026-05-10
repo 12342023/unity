@@ -292,6 +292,40 @@ To https://github.com/12342023/unity.git
 已完成目标：新增 ExpansionCandidate 数据模型 + GetExpansionCandidates 查询。
 
 修改 2 个文件：
+- `Assets/Scripts/Combat/StrategicConnectionService.cs` — 新增 ExpansionCandidate + GetExpansionCandidates
+- `Assets/Scripts/Combat/StrategicExpansionService.cs` — 改用 candidates[0]，补充结构化字段
+
+### MVP-03.19 占领需求数据层
+
+操作人：Claude
+
+新增 1 个文件：
+- `Assets/Scripts/Combat/PlotCaptureRequirementService.cs` — 占领需求查询服务
+  - `GetRequiredSoldierCount(PlotData)` — Small=1, Medium=2, Large=3, null=0
+  - `GetRequiredSoldierCount(PlotSize)` — 同上
+
+修改 1 个文件：
+- `Assets/Scripts/GameEntry.cs` — 新增 P 快捷键打印所有 plot 的 capture requirement
+
+Play Mode 验证：
+1. Play → 按 **P** → Console 显示每个 plot 的 size 与需求兵力
+2. O / I / U / Y / T / R / K / L 行为不变
+3. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/PlotCaptureRequirementService.cs \
+        kingbattle/Assets/Scripts/Combat/PlotCaptureRequirementService.cs.meta \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: PlotCaptureRequirementService + P shortcut prints capture requirements"
+git push origin main
+```
+
+修改 2 个文件：
 - `Assets/Scripts/Combat/StrategicConnectionService.cs` — 新增：
   - `ExpansionCandidate` 类（sourcePlotId, targetPlotId）
   - `GetExpansionCandidates(MapData)` — 返回所有候选
