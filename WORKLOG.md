@@ -356,56 +356,6 @@ Play Mode 验证：
 
 场景文件和 ProjectSettings：均未修改
 
-### MVP-04.4 Codex Review：通过并发布 MVP-04.5
-
-操作人：Codex
-
-审查提交：
-
-```text
-f9e4641 docs: balance tuning document, GameBalanceConfig, regression checklist
-```
-
-结论：MVP-04.4 通过。
-
-已确认：
-
-- `BALANCE.md` 已记录关键数值和 3-5 分钟目标体验。
-- `GameBalanceConfig` 只收口 supply cap、enemy pressure、Tower 三组关键数值。
-- `FactionStatsService`、`EnemyPressureController`、`BuildingFactory` 使用配置后行为等价。
-- Play Mode 回归清单已记录 13 项通过。
-- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
-
-Codex 小修：
-
-- 修复 `BALANCE.md` 一处行尾空格。
-- 将 `GameBalanceConfig.cs` 注释中的非 ASCII 装饰字符改为 ASCII 注释。
-
-残余风险：
-
-- 回归验证目前仍依赖 Unity Play Mode 手动记录。
-- 正式玩家输入还缺地图点击 source/target。
-- 目标高亮还没做。
-- debug 快捷键仍散在 `GameEntry.Update()` 和 `TestUnitSpawner`。
-
-当前完成度粗估：
-
-- 技术底座：约 87%。
-- 核心玩法闭环：约 83%。
-- 完整游戏体验：约 72%-75%。
-
-新发布任务：MVP-04.5 正式输入整理、地图点击派兵、目标高亮、debug 快捷键集中。
-
-任务范围：
-
-- 新增玩家输入控制器。
-- 地图点击 source/target 派兵。
-- selected source / valid target 高亮。
-- HUD Dispatch、O、点击派兵保持同一 command service。
-- debug 快捷键迁移到独立 controller。
-
-GitHub 上传状态：待本次 docs/review commit / push。
-
 ### MVP-03.19 任务 C：O 日志携带 dispatched vs required 预览
 
 修改 1 个文件：
@@ -1503,3 +1453,56 @@ GitHub 上传状态：
 - `Assets/Scripts/Combat/GameBalanceConfig.cs` + `.meta`
 
 场景文件和 ProjectSettings：均未修改
+
+### MVP-04.4 Codex Review：通过并发布 MVP-04.5
+
+操作人：Codex
+
+审查提交：
+
+```text
+f9e4641 docs: balance tuning document, GameBalanceConfig, regression checklist
+```
+
+结论：MVP-04.4 通过。
+
+已确认：
+
+- `BALANCE.md` 已记录关键数值和 3-5 分钟目标体验。
+- `GameBalanceConfig` 只收口 supply cap、enemy pressure、Tower 三组关键数值。
+- `FactionStatsService`、`EnemyPressureController`、`BuildingFactory` 使用配置后行为等价。
+- Play Mode 回归清单已记录 13 项通过。
+- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+Codex 小修：
+
+- 修复 `BALANCE.md` 一处行尾空格。
+- 将 `GameBalanceConfig.cs` 注释中的非 ASCII 装饰字符改为 ASCII 注释。
+
+残余风险：
+
+- 回归验证目前仍依赖 Unity Play Mode 手动记录。
+- 正式玩家输入还缺地图点击 source/target。
+- 目标高亮还没做。
+- debug 快捷键仍散在 `GameEntry.Update()` 和 `TestUnitSpawner`。
+
+当前完成度粗估：
+
+- 技术底座：约 87%。
+- 核心玩法闭环：约 83%。
+- 完整游戏体验：约 72%-75%。
+
+新发布任务：MVP-04.5 正式输入整理、地图点击派兵、目标高亮、debug 快捷键集中。
+
+任务范围：
+
+- 新增玩家输入控制器。
+- 地图点击 source/target 派兵。
+- selected source / valid target 高亮。
+- HUD Dispatch、O、点击派兵保持同一 command service。
+- debug 快捷键迁移到独立 controller。
+
+GitHub 上传状态：
+
+- docs/review commit: `855bc28 docs: review mvp-04.4 and release mvp-04.5`
+- push: 已上传到 `origin/main`
