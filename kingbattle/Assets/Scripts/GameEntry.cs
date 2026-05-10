@@ -40,6 +40,8 @@ public class GameEntry : MonoBehaviour
         mapData = MapData.CreateFixedMap();
         PlotCaptureService.Reset();
         StrategicDispatchService.Reset();
+        MatchResultService.Reset();
+        GameStatusService.Reset();
         Debug.Log($"[GameEntry] Map loaded: {mapData.Plots.Count} plots, {mapData.Roads.Count} roads.");
 
         // ── Render map visuals ──
@@ -54,6 +56,11 @@ public class GameEntry : MonoBehaviour
         var spawnerObj = new GameObject("TestUnitSpawner");
         var spawner = spawnerObj.AddComponent<TestUnitSpawner>();
         spawner.Initialize(mapData);
+
+        // ── Temporary HUD ──
+        var hudObj = new GameObject("GameHud");
+        var hud = hudObj.AddComponent<GameHud>();
+        hud.Initialize(mapData);
 
         Debug.Log("[GameEntry] MVP-02.1 ready. K=kill EnemyBase, L=kill PlayerBase.");
     }
@@ -174,6 +181,7 @@ public class GameEntry : MonoBehaviour
             }
             if (rallyRuin == null)
             {
+                GameStatusService.LastActionResult = "U: no main-base ruin.";
                 Debug.Log("[GameEntry] Test shortcut U: no main-base ruin.");
             }
             else
@@ -181,6 +189,7 @@ public class GameEntry : MonoBehaviour
                 var plots = rallyRuin.GetConnectableNeutralPlots(mapData);
                 if (plots.Count == 0)
                 {
+                    GameStatusService.LastActionResult = $"U: {rallyRuin.sourcePlotId} has no connectable neutral plots.";
                     Debug.Log($"[GameEntry] Test shortcut U: {rallyRuin.sourcePlotId} has no connectable neutral plots.");
                 }
                 else
@@ -190,6 +199,7 @@ public class GameEntry : MonoBehaviour
                     var pathIds = RoadPathFinder.FindPath(mapData, rallyRuin.sourcePlotId, targetPlotId);
                     if (pathIds == null || pathIds.Count < 2)
                     {
+                        GameStatusService.LastActionResult = $"U: no road path to {targetPlotId}.";
                         Debug.Log($"[GameEntry] Test shortcut U: no road path to {targetPlotId}.");
                     }
                     else
@@ -206,6 +216,7 @@ public class GameEntry : MonoBehaviour
                         int required = PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot);
                         var dispatchResult = StrategicDispatchService.DispatchToPlot(
                             ruinPos, waypoints, targetPlotId, mapData, mapRenderer, required);
+                        GameStatusService.LastActionResult = dispatchResult.message;
                         Debug.Log($"[GameEntry] Test shortcut U: {dispatchResult.message}");
                     }
                 }

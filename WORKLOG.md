@@ -801,3 +801,70 @@ GitHub 上传状态：
 To https://github.com/12342023/unity.git
    dc19936..2f025e6  main -> main
 ```
+
+### MVP-03.23 四周冲刺第一轮：占领后行为、胜负状态、最小 HUD
+
+操作人：Claude
+
+**任务 A — 占领后士兵行为收口**
+
+修改 `Assets/Scripts/Combat/StrategicDispatchService.cs`：
+- 抵达 handler 每次触发时更新该士兵的 patrol center 为目标 plot（不再折返旧来源点）
+- 占领成功：士兵围绕新占领 plot 巡逻，角度错开
+- 占领失败（blocked）：士兵同样停留在目标附近巡逻
+- `GameStatusService.LastActionResult` 记录 capture 或 blocked 结果
+
+**任务 B — 最小胜负状态**
+
+新增 `Assets/Scripts/Combat/MatchResultService.cs`：
+- `MatchResult` 枚举：None / PlayerVictory / PlayerDefeat
+- `TryDeclareVictory()` / `TryDeclareDefeat()` 防重复触发
+
+修改 `Assets/Scripts/Buildings/FactionDefeatHandler.cs`：
+- EnemyBase 被击败并清场后 → `MatchResultService.TryDeclareVictory()`
+- PlayerBase 被击败并清场后 → `MatchResultService.TryDeclareDefeat()`
+- `GameStatusService.LastActionResult` 同步更新
+
+**任务 C — 最小可玩提示 HUD**
+
+新增 `Assets/Scripts/UI/GameHud.cs`：
+- OnGUI 临时 HUD，显示目标、扩张候选数量、最近结果、胜负状态
+- 候选数量每 2 秒刷新一次
+- 临时组件，可随时删除
+
+新增 `Assets/Scripts/Combat/GameStatusService.cs`：
+- `LastActionResult` 共享字段，由 dispatch/capture 写入，HUD 读取
+
+**任务 D — Q/O/U/P 验证保留**
+
+- Q 仍只读预览；O/U 调用 `DispatchToPlot`（含 patrol 更新）；P 打印需求
+- 所有快捷键行为不变，仅 O/U 的抵达行为增加 patrol 切换到新目标
+
+**任务 E — 文档**
+
+WORKLOG 本轮已更新。
+
+修改文件（4 个）：
+- `Assets/Scripts/Combat/StrategicDispatchService.cs` — patrol 切换 + LastActionResult 更新
+- `Assets/Scripts/Buildings/FactionDefeatHandler.cs` — 胜负声明
+- `Assets/Scripts/Combat/StrategicExpansionService.cs` — Fail() 辅助方法 + LastActionResult 更新
+- `Assets/Scripts/GameEntry.cs` — Reset 调用 + HUD 初始化 + U 状态同步
+
+新增文件（5 个）：
+- `Assets/Scripts/Combat/MatchResultService.cs` + `.meta`
+- `Assets/Scripts/Combat/GameStatusService.cs` + `.meta`
+- `Assets/Scripts/UI.meta`（新目录）
+- `Assets/Scripts/UI/GameHud.cs` + `.meta`
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. Play → HUD 显示 Objective、Candidates、Last Action
+2. T → U → 士兵到达 Crossroads 后围绕 Crossroads 巡逻
+3. U 不足人数 blocked → 士兵停留目标附近，不折返
+4. P — plot 需求打印不变
+5. Q — 扩张预览打印不变
+6. K → 击败 EnemyBase → 只触发一次 Victory → HUD 显示 Result: PlayerVictory
+7. L → 击败 PlayerBase → 只触发一次 Defeat → HUD 显示 Result: PlayerDefeat
+8. 重复 K/L 不重复触发
+9. Console 无错误

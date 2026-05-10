@@ -50,6 +50,18 @@ namespace Buildings
             }
 
             Debug.Log($"[FactionDefeatHandler] {faction} cleanup complete.");
+
+            // ── Declare game result ──
+            if (faction == Faction.Enemy)
+            {
+                if (MatchResultService.TryDeclareVictory())
+                    GameStatusService.LastActionResult = "Player Victory!";
+            }
+            else if (faction == Faction.Player)
+            {
+                if (MatchResultService.TryDeclareDefeat())
+                    GameStatusService.LastActionResult = "Player Defeated!";
+            }
         }
     }
 }

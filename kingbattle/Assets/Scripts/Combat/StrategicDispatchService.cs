@@ -68,6 +68,10 @@ namespace Combat
 
             int totalDispatched = 0;
             bool captureConsidered = false; // shared across handlers via closure
+            int dispatchedIndex = 0;
+
+            // Target world position (last waypoint)
+            Vector3 targetWorldPos = waypoints.Count > 0 ? waypoints[waypoints.Count - 1] : rallyPos;
 
             foreach (var u in GameObject.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
             {
@@ -86,6 +90,7 @@ namespace Combat
                 }
 
                 totalDispatched++; // increment BEFORE creating the handler
+                int idx = dispatchedIndex++; // capture by value per soldier for patrol stagger
                 var capturedTarget = targetPlotId;
                 var capturedRequired = requiredSoldierCount;
 
@@ -97,17 +102,32 @@ namespace Combat
                 {
                     u.OnPushDestinationReached -= localHandler;
                     captureHandlers.Remove(u);
+
+                    // ── Update patrol center to target plot ──
+                    // Whether capture succeeds or is blocked, dispatched
+                    // soldiers stay near the target and do not return to source.
+                    var patrol = u.GetComponent<UnitPatrol>();
+                    if (patrol != null)
+                    {
+                        patrol.Setup(targetWorldPos, 0.9f, (idx % 12) * 30f);
+                    }
+                    u.SetHomePosition(targetWorldPos);
+
                     if (!captureConsidered)
                     {
                         captureConsidered = true;
                         if (totalDispatched >= capturedRequired)
                         {
                             Debug.Log($"[StrategicDispatchService] Capture attempt allowed: dispatched {totalDispatched}/{capturedRequired} to {capturedTarget}.");
-                            PlotCaptureService.TryCapture(capturedTarget, mapData, mapRenderer, Faction.Player);
+                            bool captured = PlotCaptureService.TryCapture(capturedTarget, mapData, mapRenderer, Faction.Player);
+                            GameStatusService.LastActionResult = captured
+                                ? $"{capturedTarget} captured! ({totalDispatched}/{capturedRequired})"
+                                : $"{capturedTarget} capture failed ({totalDispatched}/{capturedRequired})";
                         }
                         else
                         {
                             Debug.Log($"[StrategicDispatchService] Capture blocked: dispatched {totalDispatched}/{capturedRequired} to {capturedTarget}.");
+                            GameStatusService.LastActionResult = $"Capture blocked: {totalDispatched}/{capturedRequired} to {capturedTarget}";
                         }
                     }
                 };
@@ -117,7 +137,7 @@ namespace Combat
                 u.SetPushPath(new List<Vector3>(waypoints));
             }
 
-            return new DispatchResult
+            var result = new DispatchResult
             {
                 targetPlotId = targetPlotId,
                 dispatchedCount = totalDispatched,
@@ -126,6 +146,9 @@ namespace Combat
                     ? $"dispatch {totalDispatched}/{requiredSoldierCount} to {targetPlotId}, willCapture={totalDispatched >= requiredSoldierCount}."
                     : $"No soldiers near rally point to dispatch to {targetPlotId}."
             };
+            if (totalDispatched == 0)
+                GameStatusService.LastActionResult = result.message;
+            return result;
         }
     }
 }

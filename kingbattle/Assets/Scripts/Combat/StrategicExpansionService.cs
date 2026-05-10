@@ -32,22 +32,17 @@ namespace Combat
         public static ExpansionResult ExpandNext(MapData mapData, MapRenderer mapRenderer)
         {
             if (mapData == null)
-                return new ExpansionResult { success = false, message = "MapData is null." };
+                return Fail("MapData is null.");
 
             var candidates = StrategicConnectionService.GetExpansionCandidates(mapData);
             if (candidates.Count == 0)
-                return new ExpansionResult { success = false, message = "No expansion candidates." };
+                return Fail("No expansion candidates.");
 
             var candidate = candidates[0];
             var pathIds = RoadPathFinder.FindPath(mapData, candidate.sourcePlotId, candidate.targetPlotId);
             if (pathIds == null || pathIds.Count < 2)
-                return new ExpansionResult
-                {
-                    success = false,
-                    message = $"No road path from {candidate.sourcePlotId} to {candidate.targetPlotId}.",
-                    sourcePlotId = candidate.sourcePlotId,
-                    targetPlotId = candidate.targetPlotId,
-                };
+                return Fail($"No road path from {candidate.sourcePlotId} to {candidate.targetPlotId}.",
+                    candidate.sourcePlotId, candidate.targetPlotId);
 
             var waypoints = new List<Vector3>();
             foreach (var id in pathIds)
@@ -76,6 +71,12 @@ namespace Combat
                 requiredCount = required,
                 message = dispatchResult.message
             };
+        }
+
+        private static ExpansionResult Fail(string msg, string sourceId = "", string targetId = "")
+        {
+            GameStatusService.LastActionResult = msg;
+            return new ExpansionResult { success = false, message = msg, sourcePlotId = sourceId, targetPlotId = targetId };
         }
     }
 }
