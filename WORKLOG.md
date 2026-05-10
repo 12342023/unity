@@ -2219,4 +2219,7 @@ fd5a503 fix: release build unused local — move SetupBuildings tuple into ifdef
 - 保持 UI / command service 边界。
 - 不改玩法、不改 ProjectSettings、不改场景文件。
 
-GitHub 上传状态：待本次 review-and-ui-task commit / push。
+GitHub 上传状态：
+
+- review-and-ui-task commit: `c0e3475 docs: approve cleanup and assign formal UI`
+- push: 已上传到 `origin/main`
