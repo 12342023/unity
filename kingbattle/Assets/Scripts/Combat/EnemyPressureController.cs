@@ -20,8 +20,8 @@ namespace Combat
         public void Initialize(MapData data)
         {
             mapData = data;
-            // First attack: 8-12 seconds
-            cooldown = Random.Range(8f, 12f);
+            // First attack (from GameBalanceConfig)
+            cooldown = Random.Range(GameBalanceConfig.EnemyFirstAttackMin, GameBalanceConfig.EnemyFirstAttackMax);
             timer = 0f;
             Debug.Log($"[EnemyPressureController] Started. First attack in ~{cooldown:F1}s.");
         }
@@ -41,8 +41,8 @@ namespace Combat
             {
                 timer = 0f;
                 TriggerAttack();
-                // Subsequent attacks: 20-30 seconds
-                cooldown = Random.Range(20f, 30f);
+                // Subsequent attacks (from GameBalanceConfig)
+                cooldown = Random.Range(GameBalanceConfig.EnemyRepeatAttackMin, GameBalanceConfig.EnemyRepeatAttackMax);
                 isFirstAttack = false;
             }
         }

@@ -22,8 +22,8 @@ namespace Combat
     /// </summary>
     public static class FactionStatsService
     {
-        public const int BaseSupplyCap = 8;
-        public const int GranarySupplyBonus = 4;
+        public const int BaseSupplyCap = GameBalanceConfig.BaseSupplyCap;
+        public const int GranarySupplyBonus = GameBalanceConfig.GranarySupplyBonus;
 
         /// <summary>Count non-dead units of the given faction.</summary>
         public static int CountAliveUnits(Faction faction)

@@ -85,9 +85,9 @@ namespace Buildings
                 case BuildingType.Tower:
                     var tower = go.AddComponent<TowerAttack>();
                     tower.faction = faction;
-                    tower.damage = 15f;
-                    tower.attackRange = 3.5f;
-                    tower.attackInterval = 1.5f;
+                    tower.damage = GameBalanceConfig.TowerDamage;
+                    tower.attackRange = GameBalanceConfig.TowerAttackRange;
+                    tower.attackInterval = GameBalanceConfig.TowerAttackInterval;
                     break;
                 // Granary: no special component yet (just visual + health)
             }

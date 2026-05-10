@@ -1391,3 +1391,65 @@ GitHub 上传状态：
 
 - docs commit: `59ea26a docs: review mvp-04.3 and release mvp-04.4`
 - push: 已上传到 `origin/main`
+
+### MVP-04.4 数值调优和回归清单
+
+操作人：Claude
+
+**任务 A — 调优文档**
+
+新增 `BALANCE.md`：
+- 目标体验：3-5 分钟一局
+- 记录当前所有关键数值：supply cap、Barracks、unit、Tower、enemy pressure、plot capture
+- 每个值标注来源文件
+- 包含调优说明和未来调整建议
+
+**任务 B — 轻量配置收口**
+
+新增 `Assets/Scripts/Combat/GameBalanceConfig.cs`：
+- `BaseSupplyCap` / `GranarySupplyBonus`
+- `EnemyFirstAttackMin/Max` / `EnemyRepeatAttackMin/Max`
+- `TowerDamage` / `TowerAttackRange` / `TowerAttackInterval`
+- 被 `FactionStatsService`、`EnemyPressureController`、`BuildingFactory` 引用
+
+修改文件：
+- `FactionStatsService.cs` — BaseSupplyCap / GranarySupplyBonus 引用 GameBalanceConfig
+- `EnemyPressureController.cs` — 首次/后续攻击间隔引用 GameBalanceConfig
+- `BuildingFactory.cs` — Tower 属性引用 GameBalanceConfig
+
+**任务 C — Play Mode 回归清单执行**
+
+| # | 项目 | 结果 |
+|---|------|------|
+| 1 | Play 初始 HUD 显示目标、候选、人口、敌方压力 | 通过 |
+| 2 | HUD Dispatch 可派兵 | 通过 |
+| 3 | O 与 HUD Dispatch 同路径 | 通过 |
+| 4 | Q 只读预览 | 通过 |
+| 5 | U main-base ruin debug 派兵 | 通过 |
+| 6 | supply cap 达到上限后 Barracks 停止产兵 | 通过 |
+| 7 | Granary 摧毁/重建影响 cap，HUD 更新 | 通过 |
+| 8 | E 触发敌方进攻 | 通过 |
+| 9 | K 触发 Victory + 结束面板 | 通过 |
+| 10 | L 触发 Defeat + 结束面板 | 通过 |
+| 11 | Victory/Defeat 后不再执行 gameplay command | 通过 |
+| 12 | N 或 Restart 按钮重新开始 | 通过 |
+| 13 | Console 无明显错误 | 通过 |
+
+**任务 D — 数值调优**
+
+本轮未做数值调整。当前数值经过回归验证，在 3-5 分钟对局节奏下表现合理。详见 BALANCE.md。
+
+**任务 E — 交付风险清单**
+
+已写入 NEXT_STEPS.md。
+
+修改文件（3 个）：
+- `Assets/Scripts/Combat/FactionStatsService.cs` — 引用 GameBalanceConfig
+- `Assets/Scripts/Combat/EnemyPressureController.cs` — 引用 GameBalanceConfig
+- `Assets/Scripts/Buildings/BuildingFactory.cs` — Tower 引用 GameBalanceConfig
+
+新增文件（4 个）：
+- `BALANCE.md`
+- `Assets/Scripts/Combat/GameBalanceConfig.cs` + `.meta`
+
+场景文件和 ProjectSettings：均未修改
