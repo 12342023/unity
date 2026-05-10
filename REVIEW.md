@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-f82cbd7 feat: expansion previews with live soldier count
+d5b46ed feat: patrol after capture, victory/defeat state, and game HUD
 ```
 
-结论：**MVP-03.22 通过，允许进入 MVP-03.23**。
+结论：**MVP-03.23 通过，允许进入 MVP-04.0**。
 
-说明：Q 扩张预览、可派兵统计、required 注释修正均已完成。本轮没有发现阻塞问题。
+说明：占领后士兵行为、最小胜负状态、临时 HUD 均已完成。未发现阻塞问题。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,111 +24,114 @@ Findings:
 
 ### 已确认
 
-- `StrategicConnectionService` 已增加 `ExpansionPreview`。
-- `GetExpansionPreviews(...)` 基于 `GetExpansionCandidates(...)` 返回所有候选预览。
-- 每个 preview 包含 source、target、required、available、hasEnough。
-- Q 快捷键只读打印，不派兵、不占领。
-- `StrategicExpansionService` 过期的 `preview only` 注释已修正。
-- `git diff --check` 未发现 whitespace 问题。
+- `StrategicDispatchService` 在派出士兵到达目标后，将该士兵 patrol center / home position 切到目标 plot。
+- 足够兵力时仍走 `PlotCaptureService.TryCapture(...)`，不足兵力时 blocked。
+- blocked 后士兵也停留在目标附近巡逻，不回旧来源点。
+- `MatchResultService` 使用 `TryDeclareVictory()` / `TryDeclareDefeat()` 防止重复结算。
+- `FactionDefeatHandler` 在清场后声明 PlayerVictory / PlayerDefeat。
+- `GameHud` 是临时 `OnGUI` HUD，显示目标、候选数量、最近结果、胜负状态。
+- 新增 `.meta` 已随代码提交。
+- `git show --check HEAD` 未发现 whitespace 或 patch 问题。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
 ### 观察
 
-`CountSoldiersNear(...)` 目前放在 `StrategicConnectionService` 中，短期可以接受；如果后面 dispatch 筛选条件继续扩展，可以再抽成单独 query service，避免统计与实际派兵规则漂移。
+`GameStatusService` 当前是轻量共享状态，短期可接受。后续如果状态变多，应该收口成只读 `GameState` / `HudViewModel`，避免 UI 状态散落到核心逻辑中。
 
-### 当前目标调整
+### 当前完成度判断
 
-用户已明确：
+- 技术底座：约 75%。
+- 核心玩法闭环：约 65%。
+- 完整游戏体验：约 45%-50%。
 
-```text
-四周内优先完成完整 Unity 小游戏，并要求加快节奏；后续仍可能做微信小程序、macOS、Android 移植。
-```
-
-因此后续任务从“小步底层能力”调整为“每轮 3-5 个强相关任务，优先可玩闭环”，但必须保持核心逻辑、输入/UI、平台能力边界清楚。
+现在已经能从测试入口推进到胜负状态，但还缺少正式玩家操作、敌方压力、简单经济/人口、打磨反馈。
 
 ### 说明
 
-工作区仍有两个非本轮项：
+工作区仍有非本轮项：
 
 ```text
 D 要求.md
+?? .claude/
 ?? kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
 
-前者不是本轮修改，后者是 Unity Editor 生成的 ProjectSettings 文件；均不应随本轮提交。
+这些不应随本轮提交，除非用户明确确认。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.22 通过。
+Codex Review：MVP-03.23 通过。
 
-项目目标调整：
-- 四周内先完成一个完整 Unity 小游戏。
-- 本阶段不实际开发微信小程序、macOS、Android 移植版本。
-- 但后续仍可能移植，所以必须保持边界清楚。
-- 从现在开始加快节奏，每轮做 3-5 个强相关任务。
-- 但仍禁止大规模重构、无关系统、ProjectSettings 变更。
+进入 MVP-04.0：玩家正式操作第一步，候选按钮 + gameplay command 边界。
 
-移植边界必须保持：
-- 核心玩法服务不依赖键盘、鼠标、OnGUI 或平台 API。
-- 输入层只把快捷键 / 点击 / 未来触摸翻译成 gameplay command。
-- HUD / UI 只读取状态和发起命令，不直接改 map/building/unit 内部状态。
-- 存档、音频、震动、分享、广告、资源加载等平台能力后置封装。
-- 不在建筑、战斗、移动、地图逻辑里散落平台判断。
-
-进入 MVP-03.23：四周冲刺第一轮，核心可玩闭环收口。
+项目目标：
+- 四周内先完成完整 Unity 小游戏。
+- 后续仍可能做微信小程序、macOS、Android 移植。
+- 所以本轮必须把“UI/输入”和“核心玩法命令”分开。
 
 本轮目标：
-- 占领成功/失败后的士兵行为收口。
-- 最小 Victory / Defeat 状态。
-- 临时 HUD 显示当前目标、候选、最近结果、胜负状态。
-- 保留 Q/O/U/P 验证能力。
+- 不再只靠 O 自动派第一个候选。
+- 临时 HUD 显示扩张候选列表。
+- 玩家可以通过 HUD 按钮选择某个候选并派兵。
+- O 快捷键改为复用同一个 command 服务，不能继续重复写路径/派兵逻辑。
 
-任务 A：占领后士兵行为收口
-- 当 Player 士兵成功占领 Neutral plot 后，本次派出的存活士兵应围绕新占领 plot 巡逻。
-- 如果兵力不足导致 capture blocked，本次派出的存活士兵应停留在目标附近巡逻，作为“失败后集结”状态。
-- 不要让士兵短暂折返到旧来源点。
-- 不重构 UnitCombat；优先在 dispatch/capture 到达回调附近小范围处理。
+任务 A：新增扩张命令服务
+- 新增 `StrategicExpansionCommandService` 或等价小服务。
+- 提供类似：
+  - `DispatchExpansionCandidate(MapData mapData, MapRenderer mapRenderer, string sourcePlotId, string targetPlotId)`
+  - 或 `DispatchExpansionCandidate(..., StrategicConnectionService.ExpansionPreview preview)`
+- 该服务负责：
+  - 验证 source/target 仍是合法 expansion candidate。
+  - 查找 road path。
+  - 计算 target required count。
+  - 调用 `StrategicDispatchService.DispatchToPlot(...)`。
+  - 返回 `ExpansionResult` 或等价结构化结果。
+- 该服务不能依赖键盘、鼠标、OnGUI 或平台 API。
 
-任务 B：最小胜负状态
-- 增加一个很小的 match/game result 状态服务或组件。
-- EnemyBase 被击败并完成敌方清场后，标记 Player Victory。
-- PlayerBase 被击败并完成蓝方清场后，标记 Defeat。
-- 重复触发 K/L 或死亡事件时不能重复刷屏。
-- 先用日志验证即可，不做正式结算界面。
+任务 B：HUD 候选按钮
+- 扩展临时 `GameHud`。
+- 显示当前 expansion previews 列表，至少显示前 4 个候选。
+- 每项显示：
+  - source -> target
+  - available / required
+  - enough / not enough
+  - Dispatch 按钮
+- 点击按钮调用任务 A 的 command 服务派兵。
+- HUD 不直接修改 map/building/unit，只调用 command 服务并显示返回结果。
 
-任务 C：最小可玩提示 HUD
-- 增加临时 in-game debug HUD 或简单 OnGUI 显示，不做正式美术 UI。
-- 显示：
-  - 当前目标：占领 Neutral plots / 击败 EnemyBase
-  - 当前扩张候选数量
-  - 最近一次 dispatch / capture 结果
-  - 当前胜负状态
-- HUD 必须是临时可删组件，不要把 UI 逻辑散落到战斗/建筑服务里。
+任务 C：O 快捷键复用 command 服务
+- `GameEntry` 的 O 分支改为：
+  - 获取第一个 expansion candidate / preview。
+  - 调用同一个 command 服务。
+- 不再在 `StrategicExpansionService` 和 `GameEntry` 中保留两套路径/派兵编排逻辑。
+- U 可以暂时保留为 main-base ruin debug 快捷键。
 
-任务 D：Q/O/U/P 验证保留
-- Q 仍只读，不派兵、不占领。
-- O 仍派第一个 expansion candidate。
-- U 仍从 main-base ruin 派第一个可连接 Neutral。
-- P 仍打印占领需求。
+任务 D：保持移植边界
+- HUD 仍标记为 temporary/debug。
+- 本轮不做正式美术 UI、不做世界点击 raycast、不做触摸输入实现。
+- 但结构要保证后续可替换为手机触摸按钮。
 
 任务 E：文档和验证
 - 更新 WORKLOG.md。
-- 记录 Play Mode 验证结果。
+- Play Mode 验证：
+  - HUD 能列出候选。
+  - 点击候选 Dispatch 能派兵。
+  - O 与 HUD 按钮使用同一条 command 路径。
+  - Q 仍只读。
+  - U/P/K/L 仍可验证。
+  - Console 无明显错误。
 - 记录是否新增 .meta，是否修改 ProjectSettings。
 
 禁止：
 - 不做正式 UI 美术。
-- 不做完整敌方 AI。
-- 不做资源、升级、区域奖励、传送阵。
-- 不做移植实现，但要保持移植边界。
-- 不大改 MapData。
-- 不重构 UnitCombat。
-- 不重构 PlotCaptureService。
+- 不做敌方 AI。
+- 不做资源/升级/区域奖励。
+- 不做移动端/微信/macOS/Android 移植实现。
 - 不修改 ProjectSettings。
-- 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
+- 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
 
 完成后 commit / push。
 ```

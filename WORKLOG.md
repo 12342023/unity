@@ -868,3 +868,41 @@ Play Mode 验证：
 7. L → 击败 PlayerBase → 只触发一次 Defeat → HUD 显示 Result: PlayerDefeat
 8. 重复 K/L 不重复触发
 9. Console 无错误
+
+### MVP-03.23 Codex Review：通过并发布 MVP-04.0
+
+操作人：Codex
+
+审查提交：
+
+```text
+d5b46ed feat: patrol after capture, victory/defeat state, and game HUD
+```
+
+结论：MVP-03.23 通过。
+
+已确认：
+
+- 派出士兵到达目标后切换 patrol center，不折返旧来源点。
+- Capture blocked 后士兵仍停留目标附近。
+- PlayerVictory / PlayerDefeat 有防重复。
+- 临时 HUD 显示目标、候选数量、最近结果、胜负状态。
+- 新增 `.meta` 已随代码提交。
+- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+当前完成度粗估：
+
+- 技术底座：约 75%。
+- 核心玩法闭环：约 65%。
+- 完整游戏体验：约 45%-50%。
+
+新发布任务：MVP-04.0 玩家正式操作第一步。
+
+任务范围：
+
+- 新增扩张 command 服务。
+- HUD 显示候选按钮并可派兵。
+- O 快捷键复用同一条 command 服务路径。
+- 继续保持后续触摸 UI / 移植边界。
+
+GitHub 上传状态：待本次 docs commit / push。
