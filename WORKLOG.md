@@ -905,4 +905,15 @@ d5b46ed feat: patrol after capture, victory/defeat state, and game HUD
 - O 快捷键复用同一条 command 服务路径。
 - 继续保持后续触摸 UI / 移植边界。
 
-GitHub 上传状态：待本次 docs commit / push。
+GitHub 上传状态：
+
+```text
+b2b3dbc docs: review mvp-03.23 and release mvp-04.0
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   d5b46ed..b2b3dbc  main -> main
+```
