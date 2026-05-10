@@ -2161,3 +2161,33 @@ Warning/Error 日志保留。玩法关键日志（dispatch、capture、enemy att
 - `Assets/Scripts/Buildings/BarracksSpawner.cs` — ifdef 守卫 spawn/wave 日志
 
 场景文件和 ProjectSettings：均未修改
+
+### MVP-04.7 返修：修正 release build unused local 风险
+
+操作人：Claude
+
+**修改内容**
+
+`Assets/Scripts/GameEntry.cs` 中 `SetupBuildings(mapData)` 的返回值接收放进 `#if UNITY_EDITOR || DEVELOPMENT_BUILD`：
+
+```diff
+- var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
++#if UNITY_EDITOR || DEVELOPMENT_BUILD
++        var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
++#else
++        SetupBuildings(mapData);
++#endif
+```
+
+release build 中 `playerBaseHp` / `enemyBaseHp` 变量不再出现，避免 unused local CS0219。
+
+**验证**
+
+```
+rg "hasHome|FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scripts
+→ 空结果（exit=1）
+```
+
+修改文件：仅 `Assets/Scripts/GameEntry.cs`
+
+场景文件和 ProjectSettings：均未修改

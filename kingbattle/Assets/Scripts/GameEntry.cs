@@ -46,8 +46,12 @@ public class GameEntry : MonoBehaviour
         mapRenderer = rendererObj.AddComponent<MapRenderer>();
         mapRenderer.Initialize(mapData);
 
-        // ── Create buildings and get health refs ──
+        // ── Create buildings ──
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
+#else
+        SetupBuildings(mapData);
+#endif
 
         // ── Test spawner (editor/development only) ──
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
