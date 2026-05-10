@@ -96,6 +96,21 @@ public class GameEntry : MonoBehaviour
             enemyController.TriggerAttack();
         }
 
+        // N = restart after match ended (debug, MVP-04.3)
+        if (Input.GetKeyDown(KeyCode.N) && MatchResultService.CurrentResult != MatchResult.None)
+        {
+            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (string.IsNullOrEmpty(sceneName))
+            {
+                Debug.Log("[GameEntry] Test shortcut N: no active scene name, cannot reload. Add the scene to Build Settings.");
+            }
+            else
+            {
+                Debug.Log($"[GameEntry] Test shortcut N: restarting via {sceneName}");
+                UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+            }
+        }
+
         // R = rebuild the first rebuildable ruin (skips main base ruins)
         if (Input.GetKeyDown(KeyCode.R) && mapData != null)
         {

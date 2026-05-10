@@ -40,6 +40,10 @@ namespace Combat
             if (mapData == null)
                 return Fail("MapData is null.");
 
+            // Reject if match already decided (MVP-04.3)
+            if (MatchResultService.CurrentResult != MatchResult.None)
+                return Fail($"Match ended ({MatchResultService.CurrentResult}), attack rejected.");
+
             var sourcePlot = mapData.GetPlot(sourcePlotId);
             if (sourcePlot == null)
                 return Fail($"Source plot '{sourcePlotId}' not found.");
@@ -124,6 +128,10 @@ namespace Combat
         {
             if (mapData == null)
                 return Fail("MapData is null.");
+
+            // Reject if match already decided (MVP-04.3)
+            if (MatchResultService.CurrentResult != MatchResult.None)
+                return Fail($"Match ended ({MatchResultService.CurrentResult}), attack rejected.");
 
             // ── Pick target: PlayerBase first, then any Player-owned frontier ──
             string targetId = null;

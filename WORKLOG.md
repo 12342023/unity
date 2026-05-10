@@ -1252,3 +1252,93 @@ Play Mode 验证：
 4. 重建 Granary → cap 上升，HUD 更新
 5. HUD Dispatch / O / Q / U / P / E / K / L 仍可用
 6. Console 无明显错误
+
+### MVP-04.3 胜负界面和一局结束体验
+
+操作人：Claude
+
+**任务 A — match end 命令收口**
+
+修改 `Assets/Scripts/Combat/StrategicExpansionCommandService.cs`：
+- `DispatchCandidate()` 顶部检查 `MatchResultService.CurrentResult`
+- match 已决定时返回 "Match ended, dispatch rejected."
+
+修改 `Assets/Scripts/Combat/EnemyAttackCommandService.cs`：
+- `DispatchAttack()` 和 `DispatchAttackToBestTarget()` 顶部检查 match 状态
+- HUD Dispatch、O、E 自然走到同一套拒绝逻辑
+
+**任务 B — 胜负结束面板**
+
+修改 `Assets/Scripts/UI/GameHud.cs`：
+- Victory/Defeat 时 HUD 切换为全屏宽结束面板
+- 显示大号 PLAYER VICTORY! / DEFEAT!
+- 显示最终 Player/Enemy Units/cap 和建筑统计
+- 显示 Restart 按钮
+- 正常对局 HUD 保持原有布局
+
+**任务 C — Restart debug**
+
+修改 `Assets/Scripts/GameEntry.cs`：
+- 新增 N debug 快捷键，match 结束后按 N 重新加载当前场景
+- 场景名称无效时输出提示
+- Restart 按钮也调用同一 scene reload 逻辑
+
+**任务 D — 结束后输入收口**
+
+- Victory/Defeat 后 HUD Dispatch 按钮不再显示（切换为结束面板）
+- O/E 通过 command 服务统一拒绝
+- EnemyPressureController 在 Update 和 TriggerAttack 中已检查 match 状态
+- K/L 作为 debug 触发胜负保留
+- Q/P 只读验证保留
+
+**任务 E — 回归清单**
+
+WORKLOG 更新包含 Play Mode 回归清单（见下文）。
+
+修改文件（3 个）：
+- `Assets/Scripts/Combat/StrategicExpansionCommandService.cs` — match-end 检查
+- `Assets/Scripts/Combat/EnemyAttackCommandService.cs` — match-end 检查
+- `Assets/Scripts/UI/GameHud.cs` — 结束面板 + restart 按钮
+- `Assets/Scripts/GameEntry.cs` — N restart 快捷键
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. K → 显示结束面板，PLAYER VICTORY! + 最终统计
+2. L → 显示结束面板，DEFEAT! + 最终统计
+3. Victory/Defeat 后 HUD Dispatch 按钮不显示
+4. Victory/Defeat 后 O/E 不执行
+5. N 或点击 Restart 按钮 → 场景重新加载，GameEntry 重启
+6. Q/P — 仍可只读验证
+7. Console 无明显错误
+
+## Play Mode 回归清单
+
+- Play 初始 HUD 显示目标、候选、人口、敌方压力
+- HUD Dispatch 可派兵
+- O 与 HUD Dispatch 同路径
+- Q 只读预览
+- U main-base ruin debug 派兵
+- supply cap 达到上限后 Barracks 停止产兵
+- Granary 摧毁/重建影响 cap，HUD 更新
+- E 触发敌方进攻
+- K 触发 Victory + 结束面板
+- L 触发 Defeat + 结束面板
+- Victory/Defeat 后不再执行 gameplay command
+- N 或 Restart 按钮重新开始
+- Console 无明显错误
+
+## 当前测试快捷键
+
+- `K`：击败 EnemyBase（触发 Victory）
+- `L`：击败 PlayerBase（触发 Defeat）
+- `E`：立即触发一次敌方进攻
+- `N`：match 结束后重新开始
+- `R`：重建第一个普通废墟，跳过大本营废墟
+- `T`：聚兵到第一个 main-base ruin
+- `Y`：打印 main-base ruin 可连接 Neutral
+- `U`：从 main-base ruin 派兵到第一个可连接 Neutral
+- `I`：打印 Player-owned frontier 可连接 Neutral
+- `O`：从第一个 Player-owned frontier 派兵到第一个相邻 Neutral
+- `P`：打印占领需求（只读）
+- `Q`：打印扩张预览（只读）

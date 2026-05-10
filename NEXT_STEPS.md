@@ -10,9 +10,9 @@
 
 当前进度判断：
 
-- 技术底座：约 82%。
-- 核心玩法闭环：约 76%。
-- 完整游戏体验：约 62%-65%。
+- 技术底座：约 85%。
+- 核心玩法闭环：约 80%。
+- 完整游戏体验：约 68%-72%。
 
 已经完成：
 
@@ -28,14 +28,16 @@
 - PlayerVictory / PlayerDefeat 最小胜负状态。
 - supply cap：base 8，每个 Granary +4。
 - Barracks / Tower / Granary 都已有最小作用。
+- Victory/Defeat 结束面板 + 最终统计。
+- match ended 后 gameplay command 统一拒绝。
+- N debug 快捷键 / Restart 按钮重启。
+- Play Mode 回归清单。
 
 ## 当前缺失
 
-- 胜利/失败后仍需要更明确的一局结束界面。
-- match ended 后 gameplay command 还需要统一拒绝。
-- 还缺 restart debug。
-- 还缺完整 Play Mode 回归清单。
-- 还缺数值调优。
+- 数值调优（出兵速度、人口上限、塔伤害、敌方进攻间隔）。
+- 正式输入整理（地图点击 / 目标选择高亮）。
+- Debug 快捷键集中整理。
 
 ## 四周冲刺路线
 
@@ -57,17 +59,19 @@
 
 ### Week 3：游戏性系统最小版
 
-状态：人口/补给与建筑作用已完成。
+状态：已完成。
 
 ### Week 4：打磨与交付
 
-当前进入一局结束体验。
+当前进行中。
 
-- 胜负结束面板。
-- match ended 后输入收口。
-- restart debug。
-- Play Mode 回归清单。
+已完成的：
+- 胜负结束面板 + match ended 输入收口 + restart debug + 回归清单。
+
+待完成：
 - 数值调优。
+- 正式输入整理。
+- 交付前清理（清理临时日志、隐藏 debug 快捷键、检查提交）。
 
 ## 当前正式任务：MVP-04.3 胜负界面和一局结束体验
 
