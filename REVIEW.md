@@ -10,7 +10,7 @@ Codex 已审查 Claude 最新提交：
 
 结论：**MVP-04.6 暂不通过，需要返修。**
 
-说明：Editor log 尾部目前没有 `error CS`，但最新代码的 Unity 6 API 替换仍有静态问题，下一次脚本编译/检查仍可能失败或继续产生 obsolete warnings。
+说明：最新 Editor log 已出现当前编译错误 `CS1503`。错误来源正是 `FindObjectsByType` 参数顺序写反，同时仍保留 obsolete `FindObjectsSortMode`。
 
 ## CODEX PROJECT REVIEW
 
@@ -103,13 +103,30 @@ Physics2D.OverlapCircle(...)
 
 ### 当前 Editor log 状态
 
-最新 log 尾部没有发现：
+最新 log 尾部发现 P1 编译错误：
 
-- `error CS`
-- `NullReferenceException`
-- `MissingReferenceException`
-- `GameStatusService does not exist`
-- `GUID could not be found`
+```text
+Assets/Scripts/Combat/EnemyAttackCommandService.cs(79,68): error CS1503:
+Argument 1: cannot convert from 'UnityEngine.FindObjectsSortMode' to 'UnityEngine.FindObjectsInactive'
+
+Assets/Scripts/Combat/EnemyAttackCommandService.cs(79,94): error CS1503:
+Argument 2: cannot convert from 'UnityEngine.FindObjectsInactive' to 'UnityEngine.FindObjectsSortMode'
+```
+
+同类 `CS1503` 还出现在：
+
+- `Assets/Scripts/Debug/DebugShortcutController.cs`
+- `Assets/Scripts/Buildings/FactionDefeatHandler.cs`
+- `Assets/Scripts/Combat/FactionStatsService.cs`
+- `Assets/Scripts/Combat/StrategicConnectionService.cs`
+- `Assets/Scripts/Combat/StrategicDispatchService.cs`
+- `Assets/Scripts/Combat/EnemyAttackCommandService.cs`
+
+同时仍有：
+
+- `FindObjectsSortMode` obsolete warning。
+- `Object.FindFirstObjectByType<T>(FindObjectsInactive)` obsolete warning。
+- `UnitCombat.hasHome` unused warning，非本轮阻塞，可后续清理。
 
 发现的非阻塞外部问题：
 
@@ -124,7 +141,7 @@ Unity Connect / Project ID request failed: HTTP 401
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-04.6 暂不通过，需要返修。
+Codex Review：MVP-04.6 暂不通过，需要返修。当前 Unity 6 编译失败，必须先修本任务，不能进入新玩法。
 
 问题 1：FindObjectsByType 替换不正确
 - 当前用了：
@@ -157,7 +174,7 @@ Codex Review：MVP-04.6 暂不通过，需要返修。
   - FindObjectsSortMode
   - FindFirstObjectByType
   - OverlapCircleNonAlloc
-- Unity Console 无 error CS。
+- Unity Console 无 error CS，尤其不能再有 CS1503。
 - Unity Console 无上述 obsolete warnings。
 - Play smoke test：点击派兵、HUD Dispatch、O、K/L/E/N、Victory 后不能继续派兵。
 - 记录 Unity Connect 401 是外部服务/auth 问题，不作为游戏阻塞。

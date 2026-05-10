@@ -11,8 +11,8 @@
 当前状态：
 
 - Unity 6 迁移文件已收口。
-- 最新 Editor log 尾部无 P1 编译错误。
-- MVP-04.6 warning cleanup 需要返修，因为 API 替换仍不彻底。
+- 最新 Editor log 尾部有 P1 编译错误 `CS1503`。
+- MVP-04.6 warning cleanup 必须先返修，因为当前 API 替换已导致 Unity 6 编译失败。
 
 ## 当前正式任务：MVP-04.6 warning cleanup 返修
 
@@ -20,6 +20,7 @@
 
 ```text
 彻底移除 Unity 6 obsolete API 残留，不改变玩法行为。
+同时修复当前 `FindObjectsByType` 参数顺序导致的 `CS1503` 编译错误。
 ```
 
 实现方向：
@@ -50,7 +51,7 @@
 
 ## Play Mode 回归清单
 
-- Unity Console 无 P1 编译错误。
+- Unity Console 无 P1 编译错误，尤其不能再有 `CS1503`。
 - Unity Console 无本轮目标 obsolete warnings。
 - Play 初始 HUD 显示目标、候选、人口、敌方压力。
 - 鼠标点击 Player-owned source 后高亮为蓝色，valid target 高亮为黄色。

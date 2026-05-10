@@ -18,6 +18,7 @@ Codex Review 结论：
 
 ```text
 MVP-04.6 暂不通过；FindObjectsByType / FindFirstObjectByType 替换仍需返修。
+当前 Unity 6 编译失败，Editor log 已出现 CS1503。
 ```
 
 ## 阻塞问题
@@ -34,6 +35,9 @@ Object.FindObjectsByType<T>(FindObjectsSortMode.None, FindObjectsInactive.Exclud
 
 - Unity 6 两参数 overload 顺序是 `FindObjectsInactive, FindObjectsSortMode`。
 - 继续使用 `FindObjectsSortMode` 本身也不能消除 obsolete warning。
+- 当前已经触发 `CS1503`：
+  - `Argument 1: cannot convert from 'UnityEngine.FindObjectsSortMode' to 'UnityEngine.FindObjectsInactive'`
+  - `Argument 2: cannot convert from 'UnityEngine.FindObjectsInactive' to 'UnityEngine.FindObjectsSortMode'`
 
 本轮要求改为：
 
@@ -73,7 +77,7 @@ Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
 ## 验证要求
 
 - `rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scripts` 无结果。
-- Unity Console 无 `error CS`。
+- Unity Console 无 `error CS`，尤其不能再有 `CS1503`。
 - Unity Console 无上述 obsolete warnings。
 - Play smoke test：
   - 点击派兵。
@@ -106,7 +110,7 @@ Project ID request failed ... HTTP error code 401
 ## 验收标准
 
 - 上述 API 搜索无残留。
-- Console 无编译错误。
+- Console 无编译错误，尤其不能再有 `CS1503`。
 - Console 无本轮目标 obsolete warnings。
 - Play smoke test 通过。
 - `WORKLOG.md` 已记录返修和验证。

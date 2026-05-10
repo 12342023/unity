@@ -1971,3 +1971,39 @@ GitHub 上传状态：
 
 - review/warning-fix-task commit: `6adba13 docs: review Unity 6 warning cleanup and request API fix`
 - push: 已上传到 `origin/main`
+
+### MVP-04.6 Codex Recheck：确认当前 Unity 6 编译失败
+
+操作人：Codex
+
+复查内容：
+
+- 检查 `Editor.log` 尾部。
+- 搜索 `Assets/Scripts` 中的 `FindObjectsSortMode`、`FindFirstObjectByType`、`OverlapCircleNonAlloc` 残留。
+
+结论：
+
+- 当前 Unity 6 编译失败。
+- 主要错误是 `FindObjectsByType` 参数顺序错误导致 `CS1503`。
+- `FindObjectsSortMode` 和 `FindFirstObjectByType` obsolete warning 仍存在。
+- `TowerAttack` 注释仍残留 `OverlapCircleNonAlloc`。
+
+关键错误：
+
+```text
+error CS1503: Argument 1: cannot convert from 'UnityEngine.FindObjectsSortMode' to 'UnityEngine.FindObjectsInactive'
+error CS1503: Argument 2: cannot convert from 'UnityEngine.FindObjectsInactive' to 'UnityEngine.FindObjectsSortMode'
+```
+
+涉及文件：
+
+- `Assets/Scripts/Debug/DebugShortcutController.cs`
+- `Assets/Scripts/Buildings/FactionDefeatHandler.cs`
+- `Assets/Scripts/Combat/FactionStatsService.cs`
+- `Assets/Scripts/Combat/StrategicConnectionService.cs`
+- `Assets/Scripts/Combat/StrategicDispatchService.cs`
+- `Assets/Scripts/Combat/EnemyAttackCommandService.cs`
+- `Assets/Scripts/UI/GameHud.cs`
+- `Assets/Scripts/Buildings/TowerAttack.cs`
+
+GitHub 上传状态：待本次 compile-error-recheck docs commit / push。
