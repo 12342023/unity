@@ -2045,7 +2045,10 @@ GitHub 上传状态：
 - 收敛明显高频、低价值 runtime logs。
 - 不改玩法、不改 ProjectSettings、不做正式 UI。
 
-GitHub 上传状态：待本次 review-and-next-task commit / push。
+GitHub 上传状态：
+
+- review-and-next-task commit: `714fe87 docs: approve Unity 6 API fix and assign cleanup`
+- push: 已上传到 `origin/main`
 
 ### MVP-04.6 返修：修正 Unity 6 API 参数顺序
 
