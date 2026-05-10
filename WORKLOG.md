@@ -1967,4 +1967,7 @@ Play smoke test：
 - Unity Console 无目标 obsolete warnings。
 - Play smoke test 通过。
 
-GitHub 上传状态：待本次 review/warning-fix-task commit / push。
+GitHub 上传状态：
+
+- review/warning-fix-task commit: `6adba13 docs: review Unity 6 warning cleanup and request API fix`
+- push: 已上传到 `origin/main`
