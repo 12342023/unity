@@ -218,6 +218,19 @@
   - blocked 日志显示最终 dispatched / required。
   - 验证不足人数不占领、足够人数可占领、重复按 U/O 不误触发旧 handler。
 
+GitHub 上传状态：
+
+```text
+09bb4dc docs: block mvp-03.20 capture count bug
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   1959d56..09bb4dc  main -> main
+```
+
 ## 当前待处理状态
 
 截至 MVP-03.20 任务发布前，工作区仍存在以下未提交/未跟踪变更：
