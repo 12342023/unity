@@ -1784,4 +1784,7 @@ Unity 要求 .meta 的 guid 字段必须是 32 位十六进制（匹配 `System.
 - 如需提交 ProjectSettings，必须说明原因。
 - 不做新玩法。
 
-GitHub 上传状态：待本次 review/migration-task commit / push。
+GitHub 上传状态：
+
+- review/migration-task commit: `8dd0dd8 docs: review Unity 6 GUID fix and request migration audit`
+- push: 已上传到 `origin/main`
