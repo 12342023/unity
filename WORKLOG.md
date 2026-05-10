@@ -770,3 +770,23 @@ e928142 docs: accelerate roadmap for four-week game target
 To https://github.com/12342023/unity.git
    f82cbd7..e928142  main -> main
 ```
+
+### 移植边界策略更新
+
+操作人：Codex
+
+用户补充：
+
+```text
+后面仍要考虑移植，因此加快进度的同时要保持边界清楚，精细打磨、考虑周全。
+```
+
+策略调整：
+
+- 四周内先做完整 Unity 小游戏，不实际开发移植版本。
+- 但所有新任务都必须保持后续微信小程序、macOS、Android 可替换边界。
+- 核心玩法逻辑、输入层、HUD/UI、平台能力分离。
+- 临时 HUD / 快捷键必须标明 debug / temporary，后续可替换为触摸 UI。
+- 不允许把平台判断散落到建筑、战斗、移动、地图脚本中。
+
+GitHub 上传状态：待本次 docs commit / push。
