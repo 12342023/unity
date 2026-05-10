@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-87dbb99 feat: expansion command service, HUD dispatch buttons, O reuses same path
+92bb7f7 feat: enemy pressure AI with timed attacks, E debug shortcut
 ```
 
-结论：**MVP-04.0 通过，允许进入 MVP-04.1**。
+结论：**MVP-04.1 通过，允许进入 MVP-04.2**。
 
-说明：扩张 command 服务、HUD 候选按钮、O 快捷键复用同一路径均已完成。未发现阻塞问题。
+说明：敌方进攻命令服务、定时压力控制器、HUD 敌方状态、E debug 快捷键均已完成。未发现阻塞问题。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,111 +24,111 @@ Findings:
 
 ### 已确认
 
-- `StrategicExpansionCommandService.DispatchCandidate(...)` 是 UI-free / platform-free 的扩张命令入口。
-- command 服务会验证 source/target 合法性、相邻关系、road path、占领需求，然后调用 `StrategicDispatchService.DispatchToPlot(...)`。
-- `GameHud` 只读 previews 和共享状态，点击按钮只调用 command 服务。
-- O 快捷键也调用 `StrategicExpansionCommandService.DispatchCandidate(...)`。
-- `StrategicExpansionService.ExpandNext(...)` 已委托给 command 服务，减少重复 path/dispatch 编排。
-- Q 仍只读，U/P/K/L 验证能力保留。
+- `EnemyAttackCommandService` 不依赖 HUD、键盘、鼠标、OnGUI 或平台 API。
+- `EnemyAttackCommandService.DispatchAttackToBestTarget(...)` 优先攻击 PlayerBase，找不到时回退到 Player-owned non-main-base plot。
+- `EnemyPressureController` 只负责计时和调用 enemy attack command。
+- MatchResult 已经 Victory/Defeat 后，敌方压力停止。
+- E debug 快捷键复用 `EnemyPressureController.TriggerAttack()`。
+- HUD 显示下一次敌方进攻倒计时和最近敌方行动。
+- 新增 `.meta` 已随代码提交。
 - `git show --check HEAD` 未发现 whitespace 或 patch 问题。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
-### 观察
+### 缺失检查
 
-HUD 现在使用 `OnGUI`，适合作为临时 debug UI。后续做正式 UI 或触摸输入时，应继续调用 command 服务，不要把按钮逻辑复制到玩法层。
+当前没有阻塞 bug，但作为完整游戏还缺这些关键项：
+
+- 没有最小资源/人口规则，单位会持续生成，缺少约束。
+- `Granary` 目前没有玩法作用，只是 visual + health。
+- `Tower` 已有攻击作用，但 HUD 没展示建筑收益/状态。
+- 没有胜负界面，当前只有 HUD 文字。
+- 没有数值调优/回归清单。
+- 工作区仍有未确认项：`.claude/`、`kingbattle/.idea/`、`kingbattle/ProjectSettings/SceneTemplateSettings.json`、`要求.md` 删除。
 
 ### 当前完成度判断
 
-- 技术底座：约 78%。
-- 核心玩法闭环：约 68%。
-- 完整游戏体验：约 50%-55%。
+- 技术底座：约 80%。
+- 核心玩法闭环：约 72%。
+- 完整游戏体验：约 55%-60%。
 
-现在玩家已经可以通过 HUD 选择扩张目标。下一步需要加入最小敌方压力，否则游戏仍偏测试沙盒。
-
-### 说明
-
-工作区仍有非本轮项：
-
-```text
-D 要求.md
-?? .claude/
-?? kingbattle/ProjectSettings/SceneTemplateSettings.json
-```
-
-这些不应随本轮提交，除非用户明确确认。
+现在游戏已经具备玩家派兵和敌方压力。下一步应该补“最小游戏性规则”：人口/补给、粮仓作用、HUD 规则状态，让它更像一局有约束的游戏。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-04.0 通过。
+Codex Review：MVP-04.1 通过。
 
-进入 MVP-04.1：敌方最小压力 AI。
+进入 MVP-04.2：游戏性最小系统第一步，人口/补给 + 建筑作用。
 
 项目目标：
 - 四周内先完成完整 Unity 小游戏。
 - 后续仍可能做微信小程序、macOS、Android 移植。
-- 所以 AI 决策、输入/UI、平台能力必须继续分离。
+- 所以规则计算、HUD、输入、平台能力必须继续分离。
 
 本轮目标：
-- 让敌人定时产生最低限度进攻压力。
-- 玩家不再只是主动扩张，也需要防守。
-- 先做 enemy attack，不做 enemy capture，不做完整 AI。
+- 给单位持续生成加一个最小约束。
+- 让 Granary 有明确玩法作用。
+- 在 HUD 中显示玩家和敌方的单位数量 / 人口上限。
+- 保持系统轻量，不做复杂资源经济。
 
-任务 A：新增敌方进攻命令服务
-- 新增 `EnemyAttackCommandService` 或等价小服务。
-- 提供类似：
-  - `DispatchEnemyAttack(MapData mapData, string sourcePlotId, string targetPlotId)`
-  - 或 `DispatchEnemyAttackToPlayerBase(MapData mapData)`
-- 服务职责：
-  - 验证 source 是 Enemy-owned plot。
-  - 验证 target 是 Player-owned plot，优先 PlayerBase，允许后续扩展到 Player frontier。
-  - 查找 road path。
-  - 找 source 附近存活 Enemy 士兵。
-  - 给这些士兵设置 push path。
-  - 返回结构化结果或 message。
-- 该服务不能依赖 HUD、键盘、鼠标、OnGUI 或平台 API。
-- 本轮不做 enemy capture；敌人只进攻玩家建筑/士兵。
+任务 A：新增轻量规则/统计服务
+- 新增 `GameRuleService`、`FactionStatsService` 或等价小服务。
+- 提供只读查询：
+  - 当前某 faction 存活单位数量。
+  - 当前某 faction 存活 Granary 数量。
+  - 当前某 faction 人口上限。
+- 建议规则：
+  - base supply cap = 8。
+  - 每个存活 Granary +4 supply cap。
+- 服务不能依赖 HUD、键盘、鼠标、OnGUI 或平台 API。
 
-任务 B：新增敌方压力控制器
-- 新增 `EnemyPressureController` 或等价 MonoBehaviour。
-- 由 `GameEntry` 初始化，持有 `MapData`。
-- 每隔一段时间触发一次敌方进攻，例如首次 8-12 秒，之后每 20-30 秒。
-- MatchResult 已经 Victory/Defeat 时停止触发。
-- 如果没有可用 Enemy 士兵、没有 road path、目标已不存在，要写清晰日志，不报错刷屏。
+任务 B：BarracksSpawner 接入人口上限
+- `BarracksSpawner` 在 SpawnUnit 前检查当前 faction 单位数是否达到 supply cap。
+- 达到上限时不生成新兵，并输出节流/清晰日志。
+- Player 和 Enemy 都使用同一规则。
+- 不要把 HUD 逻辑写进 BarracksSpawner。
+- 不要引入复杂资源、金币、粮食库存。
 
-任务 C：HUD 显示敌方压力状态
-- 扩展临时 `GameHud`，显示：
-  - 最近一次敌方行动结果，或
-  - 下一次敌方进攻倒计时。
-- 保持 HUD 只读状态 / 调用服务，不直接改 unit/map/building。
-- 可以在 `GameStatusService` 增加一个很小字段，例如 `LastEnemyActionResult`。
+任务 C：HUD 显示人口/建筑状态
+- 扩展临时 `GameHud`。
+- 显示：
+  - Player Units: current / cap。
+  - Enemy Units: current / cap。
+  - Player Granaries / Enemy Granaries。
+  - 可选：Towers count。
+- HUD 只读取规则/统计服务，不直接扫描和修改核心数据。
 
-任务 D：Debug 验证快捷键
-- 可新增一个 debug 快捷键，例如 `E`，立即触发一次 enemy attack。
-- E 也必须调用同一个 enemy command 服务或 controller 方法。
-- 不要让 E 写一套独立派兵逻辑。
+任务 D：建筑作用文档/日志
+- 在 WORKLOG 和必要注释中明确：
+  - Barracks = 生成士兵。
+  - Tower = 自动攻击敌方单位。
+  - Granary = 增加 supply cap。
+- 不做建筑升级，不做资源产出，不做区域奖励。
 
-任务 E：文档和验证
-- 更新 WORKLOG.md。
+任务 E：验证
 - Play Mode 验证：
-  - 敌方会按时间自动派兵进攻。
-  - E 能立即触发一次敌方进攻。
-  - Victory/Defeat 后敌方压力停止。
-  - HUD 显示敌方行动状态。
-  - 玩家 HUD Dispatch、O、Q、U、P、K、L 仍可用。
+  - 单位数量达到 cap 后，Barracks 停止生成。
+  - 摧毁 Granary 后 cap 下降，HUD 更新。
+  - 重建 Granary 后 cap 上升，HUD 更新。
+  - Player/Enemy 都遵守 supply cap。
+  - HUD Dispatch、O、Q、U、P、E、K、L 仍可用。
+  - Enemy pressure 仍能工作。
   - Console 无明显错误。
+- 更新 WORKLOG.md。
 - 记录是否新增 .meta，是否修改 ProjectSettings。
 
 禁止：
-- 不做 enemy capture。
-- 不做完整行为树 / 第三方 AI 框架。
-- 不做资源、升级、区域奖励。
+- 不做复杂经济系统。
+- 不做金币/粮食库存。
+- 不做建筑升级。
+- 不做区域奖励。
 - 不做正式 UI 美术。
 - 不做移动端/微信/macOS/Android 移植实现。
 - 不修改 ProjectSettings。
 - 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+- 不提交 `.claude/`、`kingbattle/.idea/`。
 
 完成后 commit / push。
 ```

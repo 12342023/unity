@@ -979,6 +979,54 @@ Play Mode 验证：
 7. K/L — 胜负结算不变
 8. Console 无错误
 
+### MVP-04.1 Codex Review：通过并发布 MVP-04.2
+
+操作人：Codex
+
+审查提交：
+
+```text
+92bb7f7 feat: enemy pressure AI with timed attacks, E debug shortcut
+```
+
+结论：MVP-04.1 通过。
+
+已确认：
+
+- `EnemyAttackCommandService` 不依赖 HUD、键盘、鼠标、OnGUI 或平台 API。
+- `EnemyPressureController` 只负责计时和调用 enemy attack command。
+- MatchResult 已经 Victory/Defeat 后，敌方压力停止。
+- E debug 快捷键复用 controller。
+- HUD 显示敌方进攻倒计时和最近敌方行动。
+- 新增 `.meta` 已随代码提交。
+- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+缺失检查：
+
+- 暂无阻塞 bug。
+- 完整游戏仍缺最小人口/资源规则。
+- `Granary` 目前没有玩法作用。
+- HUD 还没有显示单位上限和建筑收益。
+- 胜负界面、数值调优、回归清单仍未完成。
+
+当前完成度粗估：
+
+- 技术底座：约 80%。
+- 核心玩法闭环：约 72%。
+- 完整游戏体验：约 55%-60%。
+
+新发布任务：MVP-04.2 游戏性最小系统第一步。
+
+任务范围：
+
+- 新增规则/统计服务。
+- Barracks 接入 supply cap。
+- Granary 增加 supply cap。
+- HUD 显示双方 units/cap 和建筑收益。
+- 不做复杂经济、库存、升级、区域奖励。
+
+GitHub 上传状态：待本次 docs commit / push。
+
 ### MVP-04.0 Codex Review：通过并发布 MVP-04.1
 
 操作人：Codex
