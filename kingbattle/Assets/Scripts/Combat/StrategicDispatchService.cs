@@ -8,6 +8,19 @@ using UnityEngine;
 namespace Combat
 {
     /// <summary>
+    /// Structured result for a dispatch operation.
+    /// </summary>
+    public class DispatchResult
+    {
+        public string targetPlotId;
+        public int dispatchedCount;
+        public int requiredSoldierCount;
+        public bool hasEnoughSoldiers => dispatchedCount >= requiredSoldierCount;
+        public bool captureWillBeAttemptedOnArrival => hasEnoughSoldiers && dispatchedCount > 0;
+        public string message;
+    }
+
+    /// <summary>
     /// Handles dispatching nearby Player soldiers from a rally point
     /// to a target plot via the road network. On arrival, triggers
     /// PlotCaptureService.TryCapture only if dispatched count meets
@@ -33,12 +46,9 @@ namespace Combat
         /// of <paramref name="rallyPos"/>, clear their current orders, and send
         /// them along <paramref name="waypoints"/>.
         ///
-        /// The first soldier to arrive triggers a capture attempt only if
-        /// <paramref name="dispatchedCount"/> >= <paramref name="requiredSoldierCount"/>.
-        /// The dispatched count is counted internally and passed to the handler
-        /// via closure.
+        /// Returns a DispatchResult with structured status.
         /// </summary>
-        public static int DispatchToPlot(
+        public static DispatchResult DispatchToPlot(
             Vector3 rallyPos,
             List<Vector3> waypoints,
             string targetPlotId,
@@ -48,7 +58,13 @@ namespace Combat
             float gatherRadius = 5f)
         {
             if (waypoints == null || waypoints.Count < 2)
-                return 0;
+                return new DispatchResult
+                {
+                    targetPlotId = targetPlotId,
+                    dispatchedCount = 0,
+                    requiredSoldierCount = requiredSoldierCount,
+                    message = $"Path too short or null, cannot dispatch to {targetPlotId}."
+                };
 
             int totalDispatched = 0;
             bool captureConsidered = false; // shared across handlers via closure
@@ -70,6 +86,7 @@ namespace Combat
                 }
 
                 totalDispatched++; // increment BEFORE creating the handler
+                var capturedTarget = targetPlotId;
                 var capturedRequired = requiredSoldierCount;
 
                 // One-shot handler. totalDispatched is captured by reference —
@@ -85,11 +102,12 @@ namespace Combat
                         captureConsidered = true;
                         if (totalDispatched >= capturedRequired)
                         {
-                            PlotCaptureService.TryCapture(targetPlotId, mapData, mapRenderer, Faction.Player);
+                            Debug.Log($"[StrategicDispatchService] Capture attempt allowed: dispatched {totalDispatched}/{capturedRequired} to {capturedTarget}.");
+                            PlotCaptureService.TryCapture(capturedTarget, mapData, mapRenderer, Faction.Player);
                         }
                         else
                         {
-                            Debug.Log($"[StrategicDispatchService] Capture blocked: dispatched {totalDispatched}/{capturedRequired} to {targetPlotId}.");
+                            Debug.Log($"[StrategicDispatchService] Capture blocked: dispatched {totalDispatched}/{capturedRequired} to {capturedTarget}.");
                         }
                     }
                 };
@@ -99,12 +117,15 @@ namespace Combat
                 u.SetPushPath(new List<Vector3>(waypoints));
             }
 
-            if (totalDispatched > 0 && totalDispatched < requiredSoldierCount)
+            return new DispatchResult
             {
-                Debug.Log($"[StrategicDispatchService] Dispatched {totalDispatched}/{requiredSoldierCount} — capture will be blocked on arrival.");
-            }
-
-            return totalDispatched;
+                targetPlotId = targetPlotId,
+                dispatchedCount = totalDispatched,
+                requiredSoldierCount = requiredSoldierCount,
+                message = totalDispatched > 0
+                    ? $"dispatch {totalDispatched}/{requiredSoldierCount} to {targetPlotId}, willCapture={totalDispatched >= requiredSoldierCount}."
+                    : $"No soldiers near rally point to dispatch to {targetPlotId}."
+            };
         }
     }
 }

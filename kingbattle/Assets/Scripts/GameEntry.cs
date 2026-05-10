@@ -204,9 +204,9 @@ public class GameEntry : MonoBehaviour
                         Vector3 ruinPos = rallyRuin.transform.position;
                         var targetPlot = mapData.GetPlot(targetPlotId);
                         int required = PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot);
-                        int count = StrategicDispatchService.DispatchToPlot(
+                        var dispatchResult = StrategicDispatchService.DispatchToPlot(
                             ruinPos, waypoints, targetPlotId, mapData, mapRenderer, required);
-                        Debug.Log($"[GameEntry] Test shortcut U: dispatched {count}/{required} soldiers to {targetPlotId} ({string.Join("->", pathIds)}).");
+                        Debug.Log($"[GameEntry] Test shortcut U: {dispatchResult.message}");
                     }
                 }
             }

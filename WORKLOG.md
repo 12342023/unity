@@ -458,6 +458,45 @@ git commit -m "fix: use shared totalDispatched instead of per-iteration captured
 git push origin main
 ```
 
+### MVP-03.21 占领反馈与结果状态批量任务
+
+操作人：Claude
+
+**任务 A — DispatchResult 数据类型**
+新增 `DispatchResult` 类（在 `StrategicDispatchService.cs` 顶部）：
+- targetPlotId, dispatchedCount, requiredSoldierCount, hasEnoughSoldiers (computed), captureWillBeAttemptedOnArrival (computed), message
+- `DispatchToPlot()` 返回 `DispatchResult` 替代 `int`
+
+**任务 B — O/U 使用 DispatchResult**
+- `StrategicExpansionService.ExpandNext()` 使用 `dispatchResult.message` 填充 `ExpansionResult.message`
+-  GameEntry U 分支使用 `dispatchResult.message` 打印统一格式日志
+-  O/U 日志一致：`dispatch 3/2 to Crossroads, willCapture=True`
+
+**任务 C — 统一到达日志**
+- capture handler 到达后允许时：`"Capture attempt allowed: dispatched 3/2 to Crossroads."`
+- capture handler 到达后被 blocked：`"Capture blocked: dispatched 1/2 to Crossroads."`
+
+**任务 D — 验证**
+P/U/O 行为不变。不足人数 blocked，足够人数占领。
+
+修改文件（3 个）：
+- `Assets/Scripts/Combat/StrategicDispatchService.cs` — DispatchResult 类 + 返回类型改为 DispatchResult + 统一日志
+- `Assets/Scripts/Combat/StrategicExpansionService.cs` — 使用 DispatchResult
+- `Assets/Scripts/GameEntry.cs` — U 使用 DispatchResult 日志
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs \
+        kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: DispatchResult structured data, unified capture logs"
+git push origin main
+```
+
 修改 2 个文件：
 - `Assets/Scripts/Combat/StrategicConnectionService.cs` — 新增：
   - `ExpansionCandidate` 类（sourcePlotId, targetPlotId）

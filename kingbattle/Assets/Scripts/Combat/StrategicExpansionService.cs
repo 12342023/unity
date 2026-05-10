@@ -64,20 +64,17 @@ namespace Combat
             var targetPlot = mapData.GetPlot(candidate.targetPlotId);
             int required = PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot);
 
-            int count = StrategicDispatchService.DispatchToPlot(
+            var dispatchResult = StrategicDispatchService.DispatchToPlot(
                 sourcePos, waypoints, candidate.targetPlotId, mapData, mapRenderer, required);
 
             return new ExpansionResult
             {
-                success = count > 0,
+                success = dispatchResult.dispatchedCount > 0,
                 sourcePlotId = candidate.sourcePlotId,
                 targetPlotId = candidate.targetPlotId,
-                dispatchedCount = count,
+                dispatchedCount = dispatchResult.dispatchedCount,
                 requiredCount = required,
-                message = count > 0
-                    ? $"Dispatched {count}/{required} soldiers from {candidate.sourcePlotId} to {candidate.targetPlotId} (enough={count >= required})."
-                    : $"No soldiers near {candidate.sourcePlotId} to dispatch " +
-                      $"(requires {required})."
+                message = dispatchResult.message
             };
         }
     }
