@@ -1881,4 +1881,7 @@ Codex 小修：
 
 新发布任务：MVP-04.6 Unity 6 obsolete warning cleanup。
 
-GitHub 上传状态：待本次 review/warning-cleanup-task commit / push。
+GitHub 上传状态：
+
+- review/warning-cleanup-task commit: `028718d docs: review Unity 6 migration and release warning cleanup`
+- push: 已上传到 `origin/main`
