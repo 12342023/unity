@@ -2262,7 +2262,10 @@ Assets/Scripts/UI/GameHud.cs(108,13): error CS0815: Cannot assign void to an imp
 - UI 派兵仍走 `StrategicExpansionCommandService.DispatchCandidate`。
 - 未发现 UI 直接修改 map/building/unit 数据。
 
-GitHub 上传状态：待本次 ui-fix-task commit / push。
+GitHub 上传状态：
+
+- ui-fix-task commit: `8a69832 docs: review formal UI and request compile fix`
+- push: 已上传到 `origin/main`
 
 ### MVP-05.0 最小正式 UI
 
