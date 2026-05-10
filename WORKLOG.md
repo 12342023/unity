@@ -978,3 +978,42 @@ Play Mode 验证：
 6. U — 从 main-base ruin 派兵不变
 7. K/L — 胜负结算不变
 8. Console 无错误
+
+### MVP-04.0 Codex Review：通过并发布 MVP-04.1
+
+操作人：Codex
+
+审查提交：
+
+```text
+87dbb99 feat: expansion command service, HUD dispatch buttons, O reuses same path
+```
+
+结论：MVP-04.0 通过。
+
+已确认：
+
+- `StrategicExpansionCommandService.DispatchCandidate(...)` 是 UI-free / platform-free 的扩张命令入口。
+- HUD 候选按钮只调用 command 服务，不直接改核心数据。
+- O 快捷键复用同一个 command 服务。
+- `StrategicExpansionService.ExpandNext(...)` 已委托给 command 服务。
+- Q 仍只读，U/P/K/L 保留。
+- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+当前完成度粗估：
+
+- 技术底座：约 78%。
+- 核心玩法闭环：约 68%。
+- 完整游戏体验：约 50%-55%。
+
+新发布任务：MVP-04.1 敌方最小压力 AI。
+
+任务范围：
+
+- 新增敌方进攻 command 服务。
+- 新增敌方压力 controller，定时进攻。
+- HUD 显示敌方行动状态。
+- E debug 快捷键触发一次敌方进攻。
+- 本轮不做 enemy capture、不引入行为树框架。
+
+GitHub 上传状态：待本次 docs commit / push。

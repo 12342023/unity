@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-d5b46ed feat: patrol after capture, victory/defeat state, and game HUD
+87dbb99 feat: expansion command service, HUD dispatch buttons, O reuses same path
 ```
 
-结论：**MVP-03.23 通过，允许进入 MVP-04.0**。
+结论：**MVP-04.0 通过，允许进入 MVP-04.1**。
 
-说明：占领后士兵行为、最小胜负状态、临时 HUD 均已完成。未发现阻塞问题。
+说明：扩张 command 服务、HUD 候选按钮、O 快捷键复用同一路径均已完成。未发现阻塞问题。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,27 +24,26 @@ Findings:
 
 ### 已确认
 
-- `StrategicDispatchService` 在派出士兵到达目标后，将该士兵 patrol center / home position 切到目标 plot。
-- 足够兵力时仍走 `PlotCaptureService.TryCapture(...)`，不足兵力时 blocked。
-- blocked 后士兵也停留在目标附近巡逻，不回旧来源点。
-- `MatchResultService` 使用 `TryDeclareVictory()` / `TryDeclareDefeat()` 防止重复结算。
-- `FactionDefeatHandler` 在清场后声明 PlayerVictory / PlayerDefeat。
-- `GameHud` 是临时 `OnGUI` HUD，显示目标、候选数量、最近结果、胜负状态。
-- 新增 `.meta` 已随代码提交。
+- `StrategicExpansionCommandService.DispatchCandidate(...)` 是 UI-free / platform-free 的扩张命令入口。
+- command 服务会验证 source/target 合法性、相邻关系、road path、占领需求，然后调用 `StrategicDispatchService.DispatchToPlot(...)`。
+- `GameHud` 只读 previews 和共享状态，点击按钮只调用 command 服务。
+- O 快捷键也调用 `StrategicExpansionCommandService.DispatchCandidate(...)`。
+- `StrategicExpansionService.ExpandNext(...)` 已委托给 command 服务，减少重复 path/dispatch 编排。
+- Q 仍只读，U/P/K/L 验证能力保留。
 - `git show --check HEAD` 未发现 whitespace 或 patch 问题。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
 ### 观察
 
-`GameStatusService` 当前是轻量共享状态，短期可接受。后续如果状态变多，应该收口成只读 `GameState` / `HudViewModel`，避免 UI 状态散落到核心逻辑中。
+HUD 现在使用 `OnGUI`，适合作为临时 debug UI。后续做正式 UI 或触摸输入时，应继续调用 command 服务，不要把按钮逻辑复制到玩法层。
 
 ### 当前完成度判断
 
-- 技术底座：约 75%。
-- 核心玩法闭环：约 65%。
-- 完整游戏体验：约 45%-50%。
+- 技术底座：约 78%。
+- 核心玩法闭环：约 68%。
+- 完整游戏体验：约 50%-55%。
 
-现在已经能从测试入口推进到胜负状态，但还缺少正式玩家操作、敌方压力、简单经济/人口、打磨反馈。
+现在玩家已经可以通过 HUD 选择扩张目标。下一步需要加入最小敌方压力，否则游戏仍偏测试沙盒。
 
 ### 说明
 
@@ -63,72 +62,70 @@ D 要求.md
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.23 通过。
+Codex Review：MVP-04.0 通过。
 
-进入 MVP-04.0：玩家正式操作第一步，候选按钮 + gameplay command 边界。
+进入 MVP-04.1：敌方最小压力 AI。
 
 项目目标：
 - 四周内先完成完整 Unity 小游戏。
 - 后续仍可能做微信小程序、macOS、Android 移植。
-- 所以本轮必须把“UI/输入”和“核心玩法命令”分开。
+- 所以 AI 决策、输入/UI、平台能力必须继续分离。
 
 本轮目标：
-- 不再只靠 O 自动派第一个候选。
-- 临时 HUD 显示扩张候选列表。
-- 玩家可以通过 HUD 按钮选择某个候选并派兵。
-- O 快捷键改为复用同一个 command 服务，不能继续重复写路径/派兵逻辑。
+- 让敌人定时产生最低限度进攻压力。
+- 玩家不再只是主动扩张，也需要防守。
+- 先做 enemy attack，不做 enemy capture，不做完整 AI。
 
-任务 A：新增扩张命令服务
-- 新增 `StrategicExpansionCommandService` 或等价小服务。
+任务 A：新增敌方进攻命令服务
+- 新增 `EnemyAttackCommandService` 或等价小服务。
 - 提供类似：
-  - `DispatchExpansionCandidate(MapData mapData, MapRenderer mapRenderer, string sourcePlotId, string targetPlotId)`
-  - 或 `DispatchExpansionCandidate(..., StrategicConnectionService.ExpansionPreview preview)`
-- 该服务负责：
-  - 验证 source/target 仍是合法 expansion candidate。
+  - `DispatchEnemyAttack(MapData mapData, string sourcePlotId, string targetPlotId)`
+  - 或 `DispatchEnemyAttackToPlayerBase(MapData mapData)`
+- 服务职责：
+  - 验证 source 是 Enemy-owned plot。
+  - 验证 target 是 Player-owned plot，优先 PlayerBase，允许后续扩展到 Player frontier。
   - 查找 road path。
-  - 计算 target required count。
-  - 调用 `StrategicDispatchService.DispatchToPlot(...)`。
-  - 返回 `ExpansionResult` 或等价结构化结果。
-- 该服务不能依赖键盘、鼠标、OnGUI 或平台 API。
+  - 找 source 附近存活 Enemy 士兵。
+  - 给这些士兵设置 push path。
+  - 返回结构化结果或 message。
+- 该服务不能依赖 HUD、键盘、鼠标、OnGUI 或平台 API。
+- 本轮不做 enemy capture；敌人只进攻玩家建筑/士兵。
 
-任务 B：HUD 候选按钮
-- 扩展临时 `GameHud`。
-- 显示当前 expansion previews 列表，至少显示前 4 个候选。
-- 每项显示：
-  - source -> target
-  - available / required
-  - enough / not enough
-  - Dispatch 按钮
-- 点击按钮调用任务 A 的 command 服务派兵。
-- HUD 不直接修改 map/building/unit，只调用 command 服务并显示返回结果。
+任务 B：新增敌方压力控制器
+- 新增 `EnemyPressureController` 或等价 MonoBehaviour。
+- 由 `GameEntry` 初始化，持有 `MapData`。
+- 每隔一段时间触发一次敌方进攻，例如首次 8-12 秒，之后每 20-30 秒。
+- MatchResult 已经 Victory/Defeat 时停止触发。
+- 如果没有可用 Enemy 士兵、没有 road path、目标已不存在，要写清晰日志，不报错刷屏。
 
-任务 C：O 快捷键复用 command 服务
-- `GameEntry` 的 O 分支改为：
-  - 获取第一个 expansion candidate / preview。
-  - 调用同一个 command 服务。
-- 不再在 `StrategicExpansionService` 和 `GameEntry` 中保留两套路径/派兵编排逻辑。
-- U 可以暂时保留为 main-base ruin debug 快捷键。
+任务 C：HUD 显示敌方压力状态
+- 扩展临时 `GameHud`，显示：
+  - 最近一次敌方行动结果，或
+  - 下一次敌方进攻倒计时。
+- 保持 HUD 只读状态 / 调用服务，不直接改 unit/map/building。
+- 可以在 `GameStatusService` 增加一个很小字段，例如 `LastEnemyActionResult`。
 
-任务 D：保持移植边界
-- HUD 仍标记为 temporary/debug。
-- 本轮不做正式美术 UI、不做世界点击 raycast、不做触摸输入实现。
-- 但结构要保证后续可替换为手机触摸按钮。
+任务 D：Debug 验证快捷键
+- 可新增一个 debug 快捷键，例如 `E`，立即触发一次 enemy attack。
+- E 也必须调用同一个 enemy command 服务或 controller 方法。
+- 不要让 E 写一套独立派兵逻辑。
 
 任务 E：文档和验证
 - 更新 WORKLOG.md。
 - Play Mode 验证：
-  - HUD 能列出候选。
-  - 点击候选 Dispatch 能派兵。
-  - O 与 HUD 按钮使用同一条 command 路径。
-  - Q 仍只读。
-  - U/P/K/L 仍可验证。
+  - 敌方会按时间自动派兵进攻。
+  - E 能立即触发一次敌方进攻。
+  - Victory/Defeat 后敌方压力停止。
+  - HUD 显示敌方行动状态。
+  - 玩家 HUD Dispatch、O、Q、U、P、K、L 仍可用。
   - Console 无明显错误。
 - 记录是否新增 .meta，是否修改 ProjectSettings。
 
 禁止：
+- 不做 enemy capture。
+- 不做完整行为树 / 第三方 AI 框架。
+- 不做资源、升级、区域奖励。
 - 不做正式 UI 美术。
-- 不做敌方 AI。
-- 不做资源/升级/区域奖励。
 - 不做移动端/微信/macOS/Android 移植实现。
 - 不修改 ProjectSettings。
 - 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
