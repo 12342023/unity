@@ -259,3 +259,16 @@ L
 2. 检查 `要求.md` 删除是否合理。
 3. 继续保持 `SceneTemplateSettings.json` 未提交，除非用户明确要求处理。
 4. Claude 完成后由 Codex review，再决定是否进入 MVP-03.19。
+
+## 最近上传记录
+
+```text
+e8d5d5a docs: review mvp-03.17 and release mvp-03.18
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   9979941..e8d5d5a  main -> main
+```
