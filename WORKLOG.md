@@ -1016,4 +1016,15 @@ Play Mode 验证：
 - E debug 快捷键触发一次敌方进攻。
 - 本轮不做 enemy capture、不引入行为树框架。
 
-GitHub 上传状态：待本次 docs commit / push。
+GitHub 上传状态：
+
+```text
+2a711c7 docs: review mvp-04.0 and release mvp-04.1
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   87dbb99..2a711c7  main -> main
+```
