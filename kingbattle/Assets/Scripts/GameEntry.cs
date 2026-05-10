@@ -60,20 +60,20 @@ public class GameEntry : MonoBehaviour
         spawner.Initialize(mapData);
 #endif
 
-        // ── Temporary HUD ──
+        // ── Player input controller (created before HUD so it can be passed) ──
+        var inputObj = new GameObject("PlayerInputController");
+        var inputCtrl = inputObj.AddComponent<PlayerInputController>();
+        inputCtrl.Initialize(mapData, mapRenderer);
+
+        // ── Game HUD (Canvas/uGUI) ──
         var hudObj = new GameObject("GameHud");
         var hud = hudObj.AddComponent<GameHud>();
-        hud.Initialize(mapData, mapRenderer);
+        hud.Initialize(mapData, mapRenderer, inputCtrl);
 
         // ── Enemy pressure controller (MVP-04.1) ──
         var enemyCtrlObj = new GameObject("EnemyPressureController");
         enemyController = enemyCtrlObj.AddComponent<EnemyPressureController>();
         enemyController.Initialize(mapData);
-
-        // ── Player input controller (MVP-04.5) ──
-        var inputObj = new GameObject("PlayerInputController");
-        var inputCtrl = inputObj.AddComponent<PlayerInputController>();
-        inputCtrl.Initialize(mapData, mapRenderer);
 
         // ── Debug shortcut controller (editor/development only, MVP-04.5) ──
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

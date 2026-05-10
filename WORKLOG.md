@@ -2223,3 +2223,50 @@ GitHub 上传状态：
 
 - review-and-ui-task commit: `c0e3475 docs: approve cleanup and assign formal UI`
 - push: 已上传到 `origin/main`
+
+### MVP-05.0 最小正式 UI
+
+操作人：Claude
+
+**替换说明**
+
+将 `GameHud.cs` 从 OnGUI（`GUI.Box` / `GUILayout`）完全替换为运行时创建的 uGUI（Canvas / Text / Button）。
+
+OnGUI 版本被完全删除；新实现不依赖场景 prefab，全部由 `GameEntry.Start()` 创建。
+
+**UI 结构**
+
+```
+Canvas (Screen Space Overlay, CanvasScaler 1920x1080)
+├── HudPanel (left side, dark background, VerticalLayoutGroup)
+│   ├── ObjectiveText
+│   ├── EnemyTimerText + LastEnemyActionResult
+│   ├── LastActionText
+│   ├── StatsText (Units Player/Enemy, Granary/Tower counts)
+│   ├── SelectionText (conditional: selected source + target count)
+│   └── CandidateList (VerticalLayoutGroup, up to 4 rows)
+│       ├── [N] Source → Target: avail/req  [enough/short]  [Dsp]
+│       └── ...
+└── EndPanel (centred overlay, initially hidden)
+    ├── ResultText ("PLAYER VICTORY\!" / "DEFEAT\!")
+    ├── FinalStatsText
+    └── RestartButton
+```
+
+**UI / 业务边界**
+
+- UI 只读 `GameStatusService`、`MatchResultService`、`FactionStatsService`、`StrategicConnectionService`。
+- UI 派兵只调用 `StrategicExpansionCommandService.DispatchCandidate(...)`。
+- UI Restart 通过 `SceneManager.LoadScene` 加载当前场景。
+- UI 不直接改 `PlotData.faction`、building health、unit state。
+
+**缓存 PlayerInputController**
+
+- `GameHud.Initialize(MapData, MapRenderer, PlayerInputController)` 缓存输入控制器引用，消除每帧 `FindAnyObjectByType`。
+- `GameEntry` 在创建 HUD 前先创建 PlayerInputController，传入 HUD。
+
+修改文件（2 个）：
+- `Assets/Scripts/UI/GameHud.cs` — OnGUI → Canvas/uGUI 重写（约 285 行）
+- `Assets/Scripts/GameEntry.cs` — 调整 PlayerInputController / HUD 创建顺序
+
+场景文件和 ProjectSettings：均未修改
