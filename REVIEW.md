@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-ac2af48 feat: DispatchResult structured data, unified capture logs
+f82cbd7 feat: expansion previews with live soldier count
 ```
 
-结论：**MVP-03.21 通过，允许进入 MVP-03.22**。
+结论：**MVP-03.22 通过，允许进入 MVP-03.23**。
 
-说明：`StrategicDispatchService` 已返回结构化 `DispatchResult`，U/O 已使用统一 dispatch message；arrival handler 的 allowed / blocked 日志也已按 dispatched / required 输出。
+说明：Q 扩张预览、可派兵统计、required 注释修正均已完成。本轮没有发现阻塞问题。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,18 +24,27 @@ Findings:
 
 ### 已确认
 
-- `DispatchResult` 包含 target、dispatched、required、hasEnough、willCapture 和 message。
-- `DispatchToPlot(...)` 在路径无效、无兵、派兵成功时都返回结构化结果。
-- U 分支改用 `DispatchResult.message` 打印统一日志。
-- O 分支通过 `StrategicExpansionService.ExpandNext(...)` 继续输出统一 message。
-- arrival handler 的 `Capture attempt allowed` / `Capture blocked` 均显示 dispatched / required。
-- `captureConsidered` 仍防止同一轮派兵重复 TryCapture / 重复 blocked log。
-- `git show --check HEAD` 未发现 whitespace 或 patch 问题。
+- `StrategicConnectionService` 已增加 `ExpansionPreview`。
+- `GetExpansionPreviews(...)` 基于 `GetExpansionCandidates(...)` 返回所有候选预览。
+- 每个 preview 包含 source、target、required、available、hasEnough。
+- Q 快捷键只读打印，不派兵、不占领。
+- `StrategicExpansionService` 过期的 `preview only` 注释已修正。
+- `git diff --check` 未发现 whitespace 问题。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
 ### 观察
 
-`StrategicExpansionService` 中有一句关于 required count 的 `preview only` 注释已过期：required 现在已经传入 dispatch/capture 判定。它不是行为 bug，可以在下一轮顺手修正。
+`CountSoldiersNear(...)` 目前放在 `StrategicConnectionService` 中，短期可以接受；如果后面 dispatch 筛选条件继续扩展，可以再抽成单独 query service，避免统计与实际派兵规则漂移。
+
+### 当前目标调整
+
+用户已明确：
+
+```text
+不做移植版，目标是 4 周左右完成完整 Unity 小游戏，并要求加快节奏。
+```
+
+因此后续任务从“小步底层能力”调整为“每轮 3-5 个强相关任务，优先可玩闭环”。
 
 ### 说明
 
@@ -53,84 +62,65 @@ D 要求.md
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.21 通过。
+Codex Review：MVP-03.22 通过。
 
-进入 MVP-03.22：扩张预览与可派兵统计批量任务。
+项目目标调整：
+- 不做微信小程序、macOS、Android 移植。
+- 目标是在 4 周左右完成一个完整 Unity 小游戏。
+- 从现在开始加快节奏，每轮做 3-5 个强相关任务。
+- 但仍禁止大规模重构、无关系统、ProjectSettings 变更。
 
-背景：
-- U/O 已有结构化 DispatchResult。
-- P 能打印每个 plot 的占领需求。
-- O 当前会派第一个 expansion candidate。
-- 未来需要正式 UI / 移动端操作前，先要有只读扩张预览数据。
-- 用户希望加快进度，所以本轮打包 4 个强相关点。
+进入 MVP-03.23：四周冲刺第一轮，核心可玩闭环收口。
 
 本轮目标：
-- 为战略扩张增加只读预览数据。
-- 能看到每个 source -> target 候选需要多少兵、当前可派多少兵、是否足够占领。
-- 新增 Q 快捷键打印全部预览。
-- 不改变当前 O/U 的实际派兵与占领行为。
+- 占领成功/失败后的士兵行为收口。
+- 最小 Victory / Defeat 状态。
+- 临时 HUD 显示当前目标、候选、最近结果、胜负状态。
+- 保留 Q/O/U/P 验证能力。
 
-允许：
-任务 A：提取可派兵统计
-- 在 `StrategicDispatchService` 增加只读统计方法，或新增一个很小的 query service。
-- 统计条件必须与 `DispatchToPlot(...)` 当前派兵筛选一致：
-  - Player faction
-  - HealthComponent 未死亡
-  - 距离 rally/source 位置 <= gatherRadius
-- 统计方法不能 ClearPushPath、不能 Stop、不能注册 handler、不能修改任何状态。
+任务 A：占领后士兵行为收口
+- 当 Player 士兵成功占领 Neutral plot 后，本次派出的存活士兵应围绕新占领 plot 巡逻。
+- 如果兵力不足导致 capture blocked，本次派出的存活士兵应停留在目标附近巡逻，作为“失败后集结”状态。
+- 不要让士兵短暂折返到旧来源点。
+- 不重构 UnitCombat；优先在 dispatch/capture 到达回调附近小范围处理。
 
-任务 B：新增扩张预览数据
-- 在 `StrategicExpansionService` 增加 `ExpansionPreview` 或等价小数据类型。
-- 字段建议：
-  - sourcePlotId
-  - targetPlotId
-  - requiredSoldierCount
-  - availableSoldierCount
-  - hasEnoughSoldiers
-  - message
-- 增加 `GetExpansionPreviews(MapData mapData, float gatherRadius = 5f)` 或等价方法。
-- 预览来源使用 `StrategicConnectionService.GetExpansionCandidates(mapData)`。
-- 每个候选都计算 target required count，并统计 source 附近可派兵数量。
+任务 B：最小胜负状态
+- 增加一个很小的 match/game result 状态服务或组件。
+- EnemyBase 被击败并完成敌方清场后，标记 Player Victory。
+- PlayerBase 被击败并完成蓝方清场后，标记 Defeat。
+- 重复触发 K/L 或死亡事件时不能重复刷屏。
+- 先用日志验证即可，不做正式结算界面。
 
-任务 C：新增 Q 快捷键打印全部扩张预览
-- 在 `GameEntry.Update()` 增加 Q。
-- Q 只打印，不派兵、不占领、不改变状态。
-- 日志格式建议：
-  - `Crossroads -> Village: available 2/2, canCapture=True`
-  - `Crossroads -> Farmland: available 1/3, canCapture=False`
-- 没有候选时打印清晰提示。
+任务 C：最小可玩提示 HUD
+- 增加临时 in-game debug HUD 或简单 OnGUI 显示，不做正式美术 UI。
+- 显示：
+  - 当前目标：占领 Neutral plots / 击败 EnemyBase
+  - 当前扩张候选数量
+  - 最近一次 dispatch / capture 结果
+  - 当前胜负状态
+- HUD 必须是临时可删组件，不要把 UI 逻辑散落到战斗/建筑服务里。
 
-任务 D：修正过期注释
-- `StrategicExpansionService` 中 required count 的 `preview only` 注释已经过期。
-- 改成准确描述：required count 会传入 dispatch/capture 判定。
-- 不做额外重构。
-
-任务 E：验证
-- P 仍打印需求。
-- Q 能打印全部候选预览。
-- 连续按 Q 不派兵、不占领、不改变 plot faction。
-- O 仍派第一个候选。
+任务 D：Q/O/U/P 验证保留
+- Q 仍只读，不派兵、不占领。
+- O 仍派第一个 expansion candidate。
 - U 仍从 main-base ruin 派第一个可连接 Neutral。
-- U/O 足够人数可以占领，不足人数 blocked。
-- 更新 WORKLOG.md。
+- P 仍打印占领需求。
 
-必须保持：
-- K / L / R / T / Y / U / I / O 外部行为不变。
-- Q 是新的只读测试快捷键，不能触发派兵或占领。
-- 不改变当前 Neutral -> Player 捕获流程。
-- 不改变 `MapData.CreateFixedMap()`。
-- 不修改 `PlotCaptureService` 的 Player-only / no-main-base / Neutral-only 规则。
-- 不引入长期静态游戏状态。
+任务 E：文档和验证
+- 更新 WORKLOG.md。
+- 记录 Play Mode 验证结果。
+- 记录是否新增 .meta，是否修改 ProjectSettings。
+
+禁止：
+- 不做正式 UI 美术。
+- 不做完整敌方 AI。
+- 不做资源、升级、区域奖励、传送阵。
+- 不做移植。
+- 不大改 MapData。
+- 不重构 UnitCombat。
+- 不重构 PlotCaptureService。
 - 不修改 ProjectSettings。
 - 不提交 kingbattle/ProjectSettings/SceneTemplateSettings.json。
 
-禁止：
-- 不做正式选择目标 UI。
-- 不做自动扩张。
-- 不做资源、升级、区域奖励、传送阵、AI。
-- 不做占领进度条。
-- 不重构 UnitCombat。
-- 不重构无关建筑/移动/战斗代码。
-
-完成后更新 WORKLOG.md，说明 A/B/C/D/E 完成情况、修改文件、P/Q/U/O Play Mode 验证结果、是否新增 .meta、是否修改 ProjectSettings，并 commit / push。
+完成后 commit / push。
 ```

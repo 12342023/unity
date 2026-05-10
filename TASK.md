@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-发布 MVP-03.22：扩张预览与可派兵统计批量任务。
+发布 MVP-03.23：四周完整游戏冲刺第一轮。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,24 +11,44 @@ Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业�
 Claude 最新提交：
 
 ```text
-ac2af48 feat: DispatchResult structured data, unified capture logs
+f82cbd7 feat: expansion previews with live soldier count
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.21 通过；允许进入 MVP-03.22
+MVP-03.22 通过；项目目标切换为 4 周左右完成 Unity 完整小游戏，不做移植版。
 ```
 
-## 本轮目标
+## 四周目标
 
-继续采用“每轮 2-4 个强相关任务”的节奏。本轮不改正式 UI，先补“扩张预览 + 可派兵统计”，让后续选择目标、占领失败提示、移动端 UI 都有只读数据基础。
-
-目标：
+用户当前目标：
 
 ```text
-为战略扩张增加只读预览数据：候选 source -> target、占领需求、当前可派兵数量、是否足够占领。
+不做微信小程序 / macOS / Android 移植，集中 4 周左右做出一个完整 Unity 小游戏。
 ```
+
+开发节奏调整：
+
+- 每轮给 Claude 布置 3-5 个强相关任务。
+- 优先做“能玩的一条完整链路”，少做长期框架。
+- 保持 `GameEntry` 尽量变薄，但可以接受临时测试 HUD / 快捷键过渡。
+- 仍禁止大规模重构、无关系统、ProjectSettings 变更。
+
+## 已完成基础能力
+
+- 建筑被击败后变成废墟。
+- 敌方大本营被击败后敌方建筑变废墟、敌方士兵死亡。
+- 士兵可以围绕废墟巡逻。
+- 大本营废墟不能普通重建，但可以作为聚兵点。
+- U 可以从 main base ruin 派兵去第一个相邻 Neutral plot。
+- Neutral -> Player 最小占领主路径已实现。
+- O 可以从第一个 Player-owned frontier plot 派兵到第一个相邻 Neutral。
+- `StrategicDispatchService` 已返回 `DispatchResult`。
+- `StrategicConnectionService` 已提供 `ExpansionCandidate`。
+- `PlotCaptureRequirementService` 已提供 Small/Medium/Large = 1/2/3。
+- P 可打印占领需求。
+- Q 可打印全部扩张候选的 available / required / enough。
 
 ## 当前工作区注意事项
 
@@ -38,105 +58,61 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 
 该文件仍是未跟踪 Unity Editor 生成文件。除非用户明确批准，否则不要提交。
 
-## 已完成基础能力
+## MVP-03.23 批量允许范围
 
-- U 可以从 main base ruin 派兵去第一个相邻 Neutral plot。
-- U 到达 Crossroads 后可将 Crossroads 从 Neutral 改为 Player。
-- Crossroads 颜色会刷新为 Player 颜色。
-- Crossroads 变 Player 后，I 可以查询它相邻的 Neutral plot。
-- O 可以从第一个 Player-owned frontier plot 派兵到第一个相邻 Neutral。
-- O 到达目标后复用现有 capture 流程，将目标 Neutral 改为 Player。
-- U 派兵与 capture handler 管理已下沉到 `StrategicDispatchService`。
-- `StrategicConnectionService` 已提供 Player-owned frontier 查询。
-- `StrategicExpansionService` 已承接 O 的扩张编排。
-- `StrategicConnectionService` 已提供 `ExpansionCandidate` 和 `GetExpansionCandidates(mapData)`。
-- `PlotCaptureRequirementService` 已提供 Small/Medium/Large = 1/2/3。
-- P 可打印每个 plot 的占领需求。
-- O 日志已能显示 dispatched / required 预览。
-- `StrategicDispatchService.DispatchToPlot(...)` 已返回 `DispatchResult`。
-- U/O 日志已统一为 dispatched / required / willCapture。
-
-## 文档更正
-
-当前 `MapData.CreateFixedMap()` 中：
+本轮目标：
 
 ```text
-Village = Neutral
-Farmland = Neutral
+把当前“可验证机制”推进成更接近可玩的核心闭环：占领后行为、胜负状态、最小游戏提示。
 ```
 
-所以 Crossroads 被占领后，I 的合理输出应包含：
+任务 A：占领后士兵行为收口
 
-```text
-Village, Farmland
-```
+- 当 Player 士兵成功占领 Neutral plot 后，本次派出的存活士兵应围绕新占领 plot 巡逻。
+- 如果兵力不足导致 capture blocked，本次派出的存活士兵应停留在目标附近巡逻，作为“失败后集结”状态。
+- 不要让士兵短暂折返到旧来源点。
+- 不重构 `UnitCombat`；优先在 dispatch/capture 到达回调附近做小范围处理。
 
-不要把 Village 写成 Player，除非本轮代码显式改变了 `Village.faction`。
+任务 B：最小胜负状态
 
-## MVP-03.22 批量允许范围
+- 增加一个很小的 match/game result 状态服务或组件。
+- 当 EnemyBase 被击败并完成敌方清场后，标记 Player Victory。
+- 当 PlayerBase 被击败并完成蓝方清场后，标记 Defeat。
+- 重复触发 K/L 或死亡事件时不能重复刷屏。
+- 先用日志验证即可，不做正式结算界面。
 
-任务 A：提取可派兵统计
+任务 C：最小可玩提示 HUD
 
-- 在 `StrategicDispatchService` 增加只读统计方法，或新增一个很小的 query service。
-- 统计逻辑必须复用 `DispatchToPlot(...)` 的筛选条件：
-  - `Faction.Player`。
-  - `HealthComponent` 未死亡。
-  - 与 rally/source 位置距离 `<= gatherRadius`。
-- 统计方法不能清空路径、不能 Stop、不能注册 handler、不能改变游戏状态。
+- 增加临时 in-game debug HUD 或简单 `OnGUI` 显示，不做正式美术 UI。
+- 显示：
+  - 当前目标：占领 Neutral plots / 击败 EnemyBase。
+  - 当前扩张候选数量。
+  - 最近一次 dispatch / capture 结果。
+  - 当前胜负状态。
+- HUD 必须是临时可删组件，不要把 UI 逻辑散落到战斗/建筑服务里。
 
-任务 B：新增扩张预览数据
+任务 D：Q/O/U/P 验证保留
 
-- 在 `StrategicExpansionService` 增加 `ExpansionPreview` 或等价小数据类型。
-- 字段建议：
-  - sourcePlotId。
-  - targetPlotId。
-  - requiredSoldierCount。
-  - availableSoldierCount。
-  - hasEnoughSoldiers。
-  - message。
-- 增加 `GetExpansionPreviews(MapData mapData, float gatherRadius = 5f)` 或等价方法。
-- 预览来源应基于 `StrategicConnectionService.GetExpansionCandidates(mapData)`。
-- 每个候选都应计算 target 的 required count，并统计 source 附近可派兵数量。
+- Q 仍只读，不派兵、不占领。
+- O 仍派第一个 expansion candidate。
+- U 仍从 main-base ruin 派第一个可连接 Neutral。
+- P 仍打印占领需求。
 
-任务 C：新增 Q 快捷键打印全部扩张预览
+任务 E：更新文档
 
-- 在 `GameEntry.Update()` 增加 Q 测试快捷键。
-- Q 只打印，不派兵、不占领、不改变状态。
-- 日志格式建议：
-  - `Crossroads -> Village: available 2/2, canCapture=True`
-  - `Crossroads -> Farmland: available 1/3, canCapture=False`
-- 如果没有候选，打印清晰提示。
-
-任务 D：顺手修正误导注释
-
-- `StrategicExpansionService` 里关于 required count 的 `preview only` 注释已经过期。
-- 改成准确描述：required count 会传入 dispatch/capture 判定。
-- 不做额外重构。
-
-任务 E：验证
-
-- P 仍打印需求。
-- Q 能打印全部候选预览。
-- Q 连续按多次不派兵、不触发占领、不注册旧 handler。
-- O 仍按原逻辑派出第一个候选。
-- U 仍按原逻辑从 main-base ruin 派兵。
-- U/O 足够人数可以占领，不足人数 blocked。
-- 更新 `WORKLOG.md`。
+- 更新 `WORKLOG.md`，写明 A/B/C/D 完成情况。
+- 记录 Play Mode 验证结果。
+- 记录是否新增 `.meta`，是否修改 `ProjectSettings`。
 
 ## 禁止范围
 
-- 不改变 K / L / R / T / Y / U / I / O 的外部行为。
-- 不做正式派兵 UI。
-- 不做自动扩张。
-- 不做正式多目标选择策略。
-- 不做占领进度条。
-- 不做敌方反夺。
-- 不做资源、升级、区域奖励、传送阵、AI。
-- 不改变 `MapData.CreateFixedMap()`。
+- 不做正式 UI 美术。
+- 不做完整敌方 AI。
+- 不做资源、升级、区域奖励、传送阵。
+- 不做移动端/微信/macOS/Android 移植。
+- 不改变 `MapData.CreateFixedMap()`，除非为了胜负验证必须做极小配置并说明原因。
 - 不重构 `UnitCombat`。
-- 不重构 `StrategicDispatchService`。
 - 不重构 `PlotCaptureService`。
-- 不重构无关建筑、移动、战斗代码。
 - 不修改 `ProjectSettings`。
 - 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
 - 不提交 `Library/`、`Logs/`、`UserSettings/`。
@@ -144,19 +120,15 @@ Village, Farmland
 ## 验收标准
 
 - Play Mode：
-  - P 能打印每个 plot 的占领需求。
-  - Q 能打印所有扩张候选的 available / required / canCapture。
-  - Q 不派兵、不占领、不改变任何 plot faction。
-  - O/U 日志格式一致，包含 dispatched / required / willCapture。
-  - 到达后成功/失败日志清晰。
-  - 不足人数不占领。
-  - 足够人数可占领。
-  - 重复按 U/O 不触发旧 handler。
-- `StrategicDispatchService` handler 清理逻辑仍正确。
-- `PlotCaptureService` 的基本规则不变。
-- I 不派兵、不占领。
-- Y / U 原有行为不变。
-- R 仍跳过大本营废墟。
-- K / L 清场行为不变。
-- Console 无明显错误。
-- 仍未修改或提交 `ProjectSettings`。
+  - Q 能打印候选预览。
+  - O/U 足够人数占领后，士兵围绕新占领 plot 巡逻。
+  - O/U 不足人数 blocked 后，士兵不折返旧来源点。
+  - K 击败 EnemyBase 后只触发一次 Victory。
+  - L 击败 PlayerBase 后只触发一次 Defeat。
+  - 临时 HUD 能显示目标、候选数量、最近结果、胜负状态。
+  - Console 无明显错误。
+- 代码：
+  - `GameEntry` 不继续膨胀核心业务逻辑。
+  - 新状态服务保持小而清晰。
+  - 不引入长期全局复杂状态。
+  - 未修改或提交 `ProjectSettings`。

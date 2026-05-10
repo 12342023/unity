@@ -717,3 +717,45 @@ bfc6271 docs: review mvp-03.21 and release mvp-03.22
 To https://github.com/12342023/unity.git
    ac2af48..bfc6271  main -> main
 ```
+
+### MVP-03.22 Claude 实现审查：通过
+
+操作人：Codex
+
+审查提交：
+
+```text
+f82cbd7 feat: expansion previews with live soldier count
+```
+
+结论：MVP-03.22 通过。
+
+已确认：
+
+- `ExpansionPreview` / `GetExpansionPreviews` 已完成。
+- Q 快捷键只读打印候选预览。
+- required count 过期注释已修正。
+- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+用户目标调整：
+
+```text
+不做移植版，4 周左右完成完整 Unity 小游戏，并要求加快节奏。
+```
+
+执行调整：
+
+- 后续每轮默认给 Claude 布置 3-5 个强相关任务。
+- 优先做可玩闭环、正式操作、敌方压力、游戏性最小系统、打磨交付。
+- 保持不大规模重构、不改无关系统、不提交 ProjectSettings。
+
+新发布任务：MVP-03.23 四周冲刺第一轮。
+
+任务范围：
+
+- 占领成功/失败后的士兵行为收口。
+- 最小 Victory / Defeat 状态。
+- 临时 HUD 显示目标、候选数量、最近结果、胜负状态。
+- 保留 Q/O/U/P 验证能力。
+
+GitHub 上传状态：待本次 docs commit / push。
