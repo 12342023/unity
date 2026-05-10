@@ -2224,6 +2224,46 @@ GitHub 上传状态：
 - review-and-ui-task commit: `c0e3475 docs: approve cleanup and assign formal UI`
 - push: 已上传到 `origin/main`
 
+### MVP-05.0 Codex Review：暂不通过，发布 UI 返修
+
+操作人：Codex
+
+审查提交：
+
+```text
+780358a feat: replace OnGUI HUD with Canvas/uGUI runtime UI
+```
+
+结论：MVP-05.0 暂不通过。
+
+阻塞问题：
+
+- Unity 编译失败：
+
+```text
+Assets/Scripts/UI/GameHud.cs(95,13): error CS0815: Cannot assign void to an implicitly-typed variable
+Assets/Scripts/UI/GameHud.cs(100,13): error CS0815: Cannot assign void to an implicitly-typed variable
+Assets/Scripts/UI/GameHud.cs(108,13): error CS0815: Cannot assign void to an implicitly-typed variable
+```
+
+原因：
+
+- `CreateSeparator` 返回 `void`，但调用处写成 `var sep = CreateSeparator(...)`。
+
+其他返修点：
+
+- `UpdateHudUI()` 每帧调用 `RebuildCandidateRows()`，会每帧 Destroy/Recreate rows。
+- Dispatch 按钮仍显示 `Dsp`，不符合正式 UI 文案要求。
+
+已确认做对：
+
+- `GameHud` 已向 Canvas/uGUI 方向迁移。
+- `GameEntry` 已传入 `PlayerInputController`，避免每帧查找。
+- UI 派兵仍走 `StrategicExpansionCommandService.DispatchCandidate`。
+- 未发现 UI 直接修改 map/building/unit 数据。
+
+GitHub 上传状态：待本次 ui-fix-task commit / push。
+
 ### MVP-05.0 最小正式 UI
 
 操作人：Claude

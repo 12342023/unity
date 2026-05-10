@@ -5,113 +5,139 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-fd5a503 fix: release build unused local — move SetupBuildings tuple into ifdef
+780358a feat: replace OnGUI HUD with Canvas/uGUI runtime UI
 ```
 
-结论：**MVP-04.7 通过。**
+结论：**MVP-05.0 暂不通过，需要返修。**
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **FAIL**
 
 Findings:
 
 ```text
-无 P1 / P2 阻塞问题。
+[P1] GameHud.cs 编译失败：CreateSeparator 返回 void 却赋值给 var。
+[P2] Candidate rows 每帧 Destroy/Recreate，会造成 UI GC/抖动。
+[P3] Dispatch 按钮仍显示 Dsp，不符合正式 UI 文案要求。
 ```
 
-已验证：
+### [P1] `GameHud.cs` 编译失败
 
-- `GameEntry` 中 `SetupBuildings` 返回值接收已限制在 `UNITY_EDITOR || DEVELOPMENT_BUILD`。
-- release 分支直接调用 `SetupBuildings(mapData);`，避免 debug-only local 变量泄漏。
-- `rg "hasHome|FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" kingbattle/Assets/Scripts` 无结果。
-- `tail -320 Editor.log` 未发现 `error CS`、`warning CS`、`hasHome`、目标 obsolete API 残留。
-- `git show --check fd5a503` 无 whitespace 问题。
-- 未修改 `ProjectSettings`、场景文件、`Library/`、`Logs/`、`UserSettings/`。
+Unity Console / Editor log 当前错误：
 
-剩余非阻塞风险：
+```text
+Assets/Scripts/UI/GameHud.cs(95,13): error CS0815: Cannot assign void to an implicitly-typed variable
+Assets/Scripts/UI/GameHud.cs(100,13): error CS0815: Cannot assign void to an implicitly-typed variable
+Assets/Scripts/UI/GameHud.cs(108,13): error CS0815: Cannot assign void to an implicitly-typed variable
+```
 
-- 当前 `GameHud` 仍是 OnGUI debug 风格。
-- HUD 每次绘制会查找 `PlayerInputController`，正式 UI 阶段应缓存引用或通过 `Initialize` 传入。
-- 视觉表现仍偏开发调试，需要进入 MVP-05.0。
+问题代码：
 
-## 下一步 Review 建议
+```csharp
+var sep1 = CreateSeparator(hudPanelRoot);
+var sep2 = CreateSeparator(hudPanelRoot);
+var sep3 = CreateSeparator(hudPanelRoot);
+```
 
-进入 **MVP-05.0：最小正式 UI**。
+但 `CreateSeparator` 当前签名是：
 
-目标不是重做玩法，而是替换 debug OnGUI 表现层：
+```csharp
+private void CreateSeparator(GameObject parent)
+```
 
-- 使用 Unity UI Canvas / uGUI。
-- 运行时由 `GameEntry` 创建，不改 scene。
-- UI 只读状态、调用 command service。
-- 不让 UI 直接修改 map/building/unit 数据。
-- 保持后续 macOS / Android / 微信小程序移植边界清楚。
+最小修复：
 
-## 给 Claude 的新任务
+```csharp
+CreateSeparator(hudPanelRoot);
+CreateSeparator(hudPanelRoot);
+CreateSeparator(hudPanelRoot);
+```
+
+或让 `CreateSeparator` 返回 `GameObject` / `Text`。本轮建议用最小修复，不扩展。
+
+### [P2] Candidate rows 每帧重建
+
+当前 `Update()` 每帧调用 `UpdateHudUI()`，而 `UpdateHudUI()` 每帧调用：
+
+```csharp
+RebuildCandidateRows();
+```
+
+`RebuildCandidateRows()` 会 Destroy 旧 rows 并创建新 rows。这样在正式 UI 中会造成：
+
+- 每帧分配。
+- GC 噪音。
+- UI 可能抖动。
+- 按钮 listener 每帧重建。
+
+建议：
+
+- 只在 `RefreshData()` 后重建候选列表。
+- `HandleDispatchClick()` 后刷新数据并重建。
+- 普通每帧只更新状态文本、倒计时、选择提示。
+
+### [P3] 按钮仍是 debug 文案
+
+当前：
+
+```csharp
+var btnGo = new GameObject("DspBtn");
+var btnText = CreateLinkedText(btnGo, "Label", "Dsp", 11, TextAnchor.MiddleCenter);
+```
+
+要求：
+
+- 用户可见文字改为 `Dispatch`。
+- 按钮宽度相应加大，不要挤压。
+- GameObject 名称可以改为 `DispatchButton`。
+
+## 已确认做对的部分
+
+- `GameHud` 已从 OnGUI 改为运行时 Canvas/uGUI 方向。
+- `GameEntry` 已传入缓存的 `PlayerInputController`，避免每帧 `FindAnyObjectByType`。
+- UI 触发派兵仍走 `StrategicExpansionCommandService.DispatchCandidate`。
+- 没看到 UI 直接修改 `MapData` / `PlotData.faction` / building health / unit state。
+
+## 给 Claude 的返修任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-MVP-04.7 已通过。现在进入 MVP-05.0：最小正式 UI。
+MVP-05.0 暂不通过，当前 Unity 编译失败。请只做小返修，不要重写整个 UI。
 
-目标：
-把当前 OnGUI debug HUD 改成运行时创建的最小正式 uGUI / Canvas UI。
-不改玩法逻辑，不改 ProjectSettings，不改场景文件，不新增平台耦合。
+任务 1：修复 GameHud 编译错误
+- 当前错误：
+  Assets/Scripts/UI/GameHud.cs(95,13): error CS0815
+  Assets/Scripts/UI/GameHud.cs(100,13): error CS0815
+  Assets/Scripts/UI/GameHud.cs(108,13): error CS0815
+- 原因：CreateSeparator 返回 void，却写成 var sep = CreateSeparator(...)
+- 最小修复：
+  CreateSeparator(hudPanelRoot);
+  不要赋值给 var。
 
-任务 1：替换 GameHud 的 OnGUI 表现层
-- 当前 GameHud.cs 使用 OnGUI/GUILayout，标题还是 Game Status (debug)。
-- 请改成运行时创建 Canvas 的 uGUI UI。
-- 可以继续使用 GameEntry 创建 GameHud，不要要求手动拖 scene prefab。
-- 推荐结构：
-  - 顶部状态栏：目标、敌方进攻倒计时、最近操作。
-  - 左侧/右侧小面板：玩家/敌方单位数、人口上限、Granary/Tower 数。
-  - 底部或侧边候选列表：最多显示 4 个 expansion candidates，每项有 Dispatch 按钮。
-  - 选中提示：当前 selected source 和 highlighted targets 数量。
-  - 胜负面板：Victory / Defeat、最终统计、Restart 按钮。
-- 文案从 debug 口吻改成玩家可读口吻，不要出现 Game Status (debug)、Dsp 这类临时代码词。
+任务 2：避免 candidate rows 每帧 Destroy/Recreate
+- 当前 UpdateHudUI 每帧调用 RebuildCandidateRows。
+- 请改为只在 RefreshData 后、HandleDispatchClick 后，或者 candidate 数据变化时重建 rows。
+- 普通每帧只更新倒计时、状态文本、选择提示。
+- 不要引入复杂 diff 系统，保持简单。
 
-任务 2：保持 UI/业务边界
-- UI 只能读取：
-  - GameStatusService
-  - MatchResultService
-  - FactionStatsService
-  - StrategicConnectionService.GetExpansionPreviews
-  - PlayerInputController selection state
-- UI 触发派兵只能调用：
-  - StrategicExpansionCommandService.DispatchCandidate(...)
-- UI 触发 Restart 可以继续加载当前 scene。
-- UI 不得直接修改 PlotData、MapData faction、building health、unit state。
+任务 3：修正式 UI 文案
+- Dispatch 按钮不要显示 Dsp。
+- 改为 Dispatch，并适当加宽按钮。
+- GameObject 名称建议从 DspBtn 改为 DispatchButton。
 
-任务 3：减少每帧查找
-- 不要在每次 UI 刷新/绘制时 FindAnyObjectByType。
-- 让 GameEntry 把 PlayerInputController 传给 GameHud.Initialize，或者 GameHud 初始化时缓存一次。
-- 不要为此重构 PlayerInputController。
-
-任务 4：响应式和移植边界
-- Canvas 使用 Screen Space Overlay。
-- 使用 CanvasScaler，适配 16:9 和较窄屏。
-- UI 锚点清晰，不依赖固定像素绝对布局到处散落。
-- 不使用平台 API。
-- 不新增全局状态。
-
-任务 5：更新 WORKLOG.md
-- 记录修改文件。
-- 记录 UI 边界。
-- 记录验证结果。
-- 记录没有修改 ProjectSettings、场景文件、Library/Logs/UserSettings。
-
-验证：
-- Unity Console 无 error CS。
-- Play 初始显示正式 HUD，不再显示 OnGUI debug 框。
-- 点击地图派兵仍正常。
-- HUD Dispatch 按钮仍正常。
-- O 快捷键与 HUD Dispatch / 点击派兵同路径。
+任务 4：补验证和 WORKLOG
+- 触发 Unity 重新编译。
+- Console 无 error CS。
+- Play 初始显示 Canvas/uGUI HUD，不显示旧 OnGUI debug 框。
+- HUD Dispatch、点击地图派兵、O 快捷键仍正常。
 - K/L/E/N 在 Editor Play Mode 仍可用。
-- Victory/Defeat 后显示正式结束面板，Restart 可用。
-- Victory/Defeat 后点击、HUD Dispatch、O/E 不再执行 gameplay command。
+- Victory/Defeat 面板与 Restart 可用。
+- 更新 WORKLOG.md，记录返修和验证。
 
 禁止：
-- 不做新玩法。
+- 不重写整个 UI。
 - 不改战斗/占领/派兵 service 行为。
 - 不改 ProjectSettings。
 - 不提交 .claude、.idea、kingbattle.slnx、Library、Logs、UserSettings、要求.md 删除。
