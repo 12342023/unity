@@ -12,14 +12,14 @@ namespace Combat
     /// </summary>
     public static class GameBalanceConfig
     {
-        // ── Supply cap ────────────────────────────────────────────────
+        // Supply cap
         /// <summary>Base supply cap for every faction.</summary>
         public const int BaseSupplyCap = 8;
 
         /// <summary>Additional supply cap per alive Granary.</summary>
         public const int GranarySupplyBonus = 4;
 
-        // ── Enemy pressure timing (seconds) ───────────────────────────
+        // Enemy pressure timing (seconds)
         /// <summary>First enemy attack delay (min).</summary>
         public const float EnemyFirstAttackMin = 8f;
         /// <summary>First enemy attack delay (max).</summary>
@@ -29,7 +29,7 @@ namespace Combat
         /// <summary>Subsequent enemy attack interval (max).</summary>
         public const float EnemyRepeatAttackMax = 30f;
 
-        // ── Tower combat ──────────────────────────────────────────────
+        // Tower combat
         /// <summary>Damage per Tower attack.</summary>
         public const float TowerDamage = 15f;
         /// <summary>Tower attack range (world units).</summary>

@@ -5,12 +5,12 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-6c50000 feat: victory/defeat end panel, match-end command rejection, N restart
+f9e4641 docs: balance tuning document, GameBalanceConfig, regression checklist
 ```
 
-结论：**MVP-04.3 通过，允许进入 MVP-04.4**。
+结论：**MVP-04.4 通过，允许进入 MVP-04.5**。
 
-说明：胜负结束面板、match ended 后 command 拒绝、N/Restart 重启、回归清单均已完成。未发现阻塞问题。
+说明：调优文档、轻量 `GameBalanceConfig`、Play Mode 回归记录都已完成。未发现阻塞性玩法或架构问题。
 
 ## CODEX PROJECT REVIEW
 
@@ -24,104 +24,99 @@ Findings:
 
 ### 已确认
 
-- `StrategicExpansionCommandService.DispatchCandidate(...)` 在 match ended 后拒绝执行。
-- `EnemyAttackCommandService.DispatchAttack(...)` 和 `DispatchAttackToBestTarget(...)` 在 match ended 后拒绝执行。
-- Victory / Defeat 后 HUD 切换到结束面板，不再显示 Dispatch 按钮。
-- O / E 会自然走 command/controller 的拒绝路径，不再真正派兵。
-- N 快捷键和 Restart 按钮提供重启路径。
-- `NEXT_STEPS.md` 和 `WORKLOG.md` 已包含 Play Mode 回归清单。
-- `git show --check HEAD` 未发现 whitespace 或 patch 问题。
-- `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
+- `BALANCE.md` 已记录 supply cap、Barracks、unit、Tower、enemy pressure、plot capture 等关键数值。
+- `GameBalanceConfig` 只收口了 supply cap、enemy pressure、Tower 三组关键数值，范围符合任务要求。
+- `FactionStatsService`、`EnemyPressureController`、`BuildingFactory` 使用配置后行为等价于原常量。
+- `WORKLOG.md` 已记录 13 项 Play Mode 回归结果。
+- 本轮未修改或提交 `ProjectSettings`。
+- `git show --check HEAD` 曾发现 `BALANCE.md` 一处行尾空格；Codex 已用小补丁修复。
+- `GameBalanceConfig.cs` 新增注释中的非 ASCII 装饰字符已由 Codex 改为 ASCII 注释。
 
 ### 残余风险
 
-- Restart 依赖当前 scene name reload。如果当前场景未配置为可加载，Unity 可能需要后续单独处理；当前实现已有空 scene name 日志提示。
-- HUD 仍是临时 `OnGUI`，适合当前阶段，但不是最终 UI。
-- 数值还没有系统调优，当前只是能玩。
+- Play Mode 回归由 Claude 手动记录，Codex 当前无法自动运行 Unity Editor 验证。
+- 当前正式玩家输入仍依赖 HUD Dispatch 和 debug key，缺少地图点击选择/目标高亮。
+- `GameEntry.Update()` 仍塞有大量 debug 快捷键，后续移植前必须集中隔离。
+- `TestUnitSpawner` 仍保留 1-4 测试输入，后续应纳入 debug-only 边界。
 
 ### 当前完成度判断
 
-- 技术底座：约 85%。
-- 核心玩法闭环：约 80%。
-- 完整游戏体验：约 68%-72%。
+- 技术底座：约 87%。
+- 核心玩法闭环：约 83%。
+- 完整游戏体验：约 72%-75%。
 
-下一步应做 MVP-04.4：数值调优和回归清单，把“能跑通”推进到“能稳定试玩”。
+下一步应做 MVP-04.5：正式输入整理、地图点击派兵、目标高亮、debug 快捷键集中。
 
 ## 给 Claude 的下一条任务
 
 ```text
-请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
+请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md、BALANCE.md。
 
-Codex Review：MVP-04.3 通过。
+Codex Review：MVP-04.4 通过。
 
-进入 MVP-04.4：数值调优和回归清单。
+进入 MVP-04.5：正式输入整理、地图点击派兵、目标高亮、debug 快捷键集中。
 
 项目目标：
 - 四周内先完成完整 Unity 小游戏。
 - 后续仍可能做微信小程序、macOS、Android 移植。
-- 本轮是打磨/稳定轮，不是新系统开发轮。
+- 本轮重点是输入/反馈边界，不是新增玩法系统。
 
-本轮目标：
-- 梳理当前所有关键数值。
-- 执行 Play Mode 回归清单。
-- 只做必要的小范围数值调整。
-- 记录调优依据，方便后续继续打磨。
+任务 A：新增玩家输入控制器
+- 新增 `PlayerInputController` 或等价组件。
+- 只负责把鼠标点击/键盘正式输入翻译成 gameplay command。
+- 不直接修改 map/building/unit 内部状态。
+- 点击流程建议：
+  1. 点击 Player-owned 可扩张 source plot，选中 source。
+  2. 高亮该 source 可连接的 Neutral target。
+  3. 再点击一个高亮 Neutral target，调用 `StrategicExpansionCommandService.DispatchCandidate(...)`。
+  4. 派兵结果写入 `GameStatusService.LastActionResult`。
+- 如果点击无效地块，给出清晰 message，但不要报错刷屏。
+- match ended 后不允许派兵，仍走 command/service 的拒绝路径。
 
-任务 A：建立调优文档
-- 新增 `BALANCE.md` 或 `GAMEPLAY_TUNING.md`。
-- 记录当前关键数值：
-  - supply cap base / Granary bonus。
-  - Barracks spawn interval / rally threshold。
-  - unit health / damage / speed。
-  - Tower damage / range / interval。
-  - Enemy pressure first attack / repeat interval。
-  - Plot capture requirement Small / Medium / Large。
-- 写清楚当前目标体验：3-5 分钟能打一局，玩家有扩张和防守压力。
+任务 B：地图命中和高亮
+- 可以扩展 `MapRenderer`，维护 plotId -> GameObject/SpriteRenderer 查表。
+- 新增最小高亮能力：
+  - selected source。
+  - valid target。
+  - 清除高亮。
+- 高亮只改变视觉，不改变 `PlotData` faction 或玩法状态。
+- 可以新增只读 helper，例如 `TryGetPlotAtWorldPosition(...)`。
+- 不引入 TextMeshPro、新 Input System package 或第三方框架。
 
-任务 B：轻量配置收口
-- 可以新增 `GameBalanceConfig` 或等价静态配置类。
-- 只收口最明显的魔法数：
-  - supply cap base / Granary bonus。
-  - enemy pressure first/repeat interval。
-  - 可选：tower damage/range/interval。
-- 不要大规模重构所有数值。
-- 不要为了配置化改动太多业务代码。
+任务 C：HUD 与点击输入保持同一命令路径
+- HUD Dispatch、O debug、鼠标点击派兵都必须最终调用同一个 command service。
+- 不复制派兵/占领逻辑。
+- HUD 可以显示当前 selected source / valid target 数量，但不要做正式 UI 美术。
 
-任务 C：执行 Play Mode 回归清单
-- 按 `NEXT_STEPS.md` 的 Play Mode 回归清单逐项验证。
-- 记录通过/失败项到 WORKLOG.md。
-- 如果发现明显 bug，优先修 bug，而不是继续加功能。
+任务 D：debug 快捷键集中
+- 新增 `DebugShortcutController` 或等价组件。
+- 将 `GameEntry.Update()` 中 K/L/E/N/R/T/Y/U/I/O/P/Q 的 debug 输入迁移进去。
+- 迁移后快捷键行为保持不变。
+- `GameEntry` 只负责启动和 wiring，尽量不再承载大量输入分支。
+- `TestUnitSpawner` 的 1-4 测试输入可以先保留，但要在 WORKLOG 标记为后续 debug-only 清理项。
 
-任务 D：必要小范围调优
-- 如果 Play Mode 观察到明显问题，可以小范围调整：
-  - 敌方进攻过早/过晚。
-  - 产兵过快/过慢。
-  - supply cap 太高/太低。
-  - Tower 过强/过弱。
-- 每个调整数值都要在 WORKLOG.md 说明原因。
-
-任务 E：交付风险清单
-- 在 NEXT_STEPS.md 或 WORKLOG.md 增加“交付前剩余风险”：
-  - 正式 UI 还没做。
-  - debug 快捷键还没隐藏。
-  - 移植还没开始。
-  - ProjectSettings / 生成文件不能提交。
-
-验证：
-- Play Mode 回归清单至少跑一遍。
-- Console 无明显错误。
-- 如新增 `.meta`，随代码提交。
-- 不修改 ProjectSettings。
+任务 E：文档和验证
+- 更新 `WORKLOG.md`，记录实现内容和 Play Mode 验证。
+- 更新 `NEXT_STEPS.md`，把 MVP-04.5 完成/未完成项写清楚。
+- 回归验证至少包含：
+  - 点击 source 后出现 target 高亮。
+  - 点击高亮 target 后派兵。
+  - HUD Dispatch 仍可派兵。
+  - O 仍可派兵且同路径。
+  - Victory/Defeat 后点击和 O/HUD 都不再派兵。
+  - K/L/E/N/R/T/Y/U/I/O/P/Q 行为没有回归。
+  - Console 无明显错误。
 
 禁止：
-- 不做新玩法系统。
 - 不做正式 UI 美术。
 - 不做存档。
-- 不引入第三方框架。
-- 不做移动端/微信/macOS/Android 移植实现。
-- 不修改 ProjectSettings。
+- 不做移植实现。
+- 不引入新 input package。
+- 不重构 `UnitCombat`。
+- 不重构 `PlotCaptureService`。
+- 不修改 `ProjectSettings`。
 - 不提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
-- 不提交 `.claude/`、`kingbattle/.idea/`。
+- 不提交 `.claude/`、`kingbattle/.idea/`、Unity 生成目录。
 
 完成后 commit / push。
 ```

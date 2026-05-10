@@ -52,7 +52,7 @@
 | Attack range | 3.5 | `GameBalanceConfig.TowerAttackRange` (set in `BuildingFactory`) |
 | Attack interval | 1.5 s | `GameBalanceConfig.TowerAttackInterval` |
 
-*Tower only attacks units (objects with UnitCombat), not buildings. 15 damage vs 30 HP = kills a soldier in 2 hits.*  
+*Tower only attacks units (objects with UnitCombat), not buildings. 15 damage vs 30 HP = kills a soldier in 2 hits.*
 *Tower health = 80 (so a soldier takes 8 hits to destroy a tower).*
 
 ### Building Health
