@@ -1615,4 +1615,7 @@ a5bfe8a feat: click-to-dispatch map input, plot highlighting, debug shortcut con
 - 更新 `WORKLOG.md`。
 - 不做新功能。
 
-GitHub 上传状态：待本次 review/fix-task commit / push。
+GitHub 上传状态：
+
+- review/fix-task commit: `875fdcc docs: review mvp-04.5 and request compile fix`
+- push: 已上传到 `origin/main`
