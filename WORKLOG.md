@@ -534,6 +534,53 @@ Play Mode 验证：
 4. **O** — 同上，从 frontier plot 派兵
 5. Console 无错误
 
+### MVP-04.2 Codex Review：通过并发布 MVP-04.3
+
+操作人：Codex
+
+审查提交：
+
+```text
+d38fb3e feat: supply cap system and building roles (Granary +4 cap)
+```
+
+结论：MVP-04.2 通过。
+
+已确认：
+
+- `FactionStatsService` 是无状态只读查询服务，不依赖 HUD、输入或平台 API。
+- supply cap 规则已实现：base 8，每个存活 Granary +4。
+- `BarracksSpawner` 在生成单位前调用 `FactionStatsService.CanSpawn(faction)`。
+- Player 和 Enemy 都使用同一套 supply cap 规则。
+- HUD 显示 Player/Enemy units/cap、Granary/Tower 数量。
+- 新增 `.meta` 已随代码提交。
+- 未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+缺失检查：
+
+- 暂无阻塞 bug。
+- 胜利/失败后仍需要更明确的一局结束界面。
+- match ended 后 gameplay command 还需要统一拒绝。
+- 还缺 restart debug。
+- 还缺完整 Play Mode 回归清单和数值调优。
+
+当前完成度粗估：
+
+- 技术底座：约 82%。
+- 核心玩法闭环：约 76%。
+- 完整游戏体验：约 62%-65%。
+
+新发布任务：MVP-04.3 胜负界面和一局结束体验。
+
+任务范围：
+
+- gameplay command 入口统一检查 match ended。
+- Victory / Defeat 时 HUD 显示明显结束面板。
+- N debug 快捷键 restart。
+- Play Mode 回归清单雏形。
+
+GitHub 上传状态：待本次 docs commit / push。
+
 场景文件和 ProjectSettings：均未修改
 
 手动 git 推送：

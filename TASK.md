@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-发布 MVP-04.2：游戏性最小系统第一步，人口/补给 + 建筑作用。
+发布 MVP-04.3：胜负界面和一局结束体验。
 
 Codex 当前仍作为 Tech Lead 和 Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,13 +11,13 @@ Codex 当前仍作为 Tech Lead 和 Reviewer 工作，不直接大规模开发�
 Claude 最新提交：
 
 ```text
-92bb7f7 feat: enemy pressure AI with timed attacks, E debug shortcut
+d38fb3e feat: supply cap system and building roles (Granary +4 cap)
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-04.1 通过；允许进入 MVP-04.2。
+MVP-04.2 通过；允许进入 MVP-04.3。
 ```
 
 ## 四周目标
@@ -32,9 +32,9 @@ MVP-04.1 通过；允许进入 MVP-04.2。
 
 当前完成度粗估：
 
-- 技术底座：约 80%。
-- 核心玩法闭环：约 72%。
-- 完整游戏体验：约 55%-60%。
+- 技术底座：约 82%。
+- 核心玩法闭环：约 76%。
+- 完整游戏体验：约 62%-65%。
 
 ## 移植边界要求
 
@@ -55,8 +55,9 @@ MVP-04.1 通过；允许进入 MVP-04.2。
 - O 与 HUD Dispatch 已复用 `StrategicExpansionCommandService`。
 - 敌方会按时间自动派兵进攻，E 可立即触发。
 - 最小 PlayerVictory / PlayerDefeat 状态已完成。
-- Tower 已自动攻击敌方单位。
-- Granary 目前还没有玩法作用。
+- supply cap 已完成：base 8，每个 Granary +4。
+- Barracks 遵守 supply cap。
+- HUD 已显示双方 units/cap、Granary/Tower 数。
 
 ## 当前工作区注意事项
 
@@ -68,67 +69,66 @@ kingbattle/.idea/
 
 这些仍是未跟踪项。除非用户明确批准，否则不要提交。
 
-## MVP-04.2 批量允许范围
+## MVP-04.3 批量允许范围
 
 本轮目标：
 
 ```text
-增加最小人口/补给规则，让 Granary 有明确作用，并在 HUD 显示双方单位和建筑收益状态。
+收口一局结束体验：胜负显示更明确，match ended 后阻止继续 gameplay command，并提供最小 restart debug 能力。
 ```
 
-任务 A：新增轻量规则/统计服务
+任务 A：match end 命令收口
 
-- 新增 `GameRuleService`、`FactionStatsService` 或等价小服务。
-- 提供只读查询：
-  - 当前某 faction 存活单位数量。
-  - 当前某 faction 存活 Granary 数量。
-  - 当前某 faction 人口上限。
-- 建议规则：
-  - base supply cap = 8。
-  - 每个存活 Granary +4 supply cap。
-- 服务不能依赖 HUD、键盘、鼠标、OnGUI 或平台 API。
+- 在玩家扩张 command、敌方进攻 command 等 gameplay command 入口检查 `MatchResultService.CurrentResult`。
+- 如果 match 已经 PlayerVictory / PlayerDefeat，返回失败结果或清晰 message。
+- HUD Dispatch、O、E 都应自然走到同一套拒绝逻辑。
+- K/L 作为 debug 触发胜负可以保留。
 
-任务 B：BarracksSpawner 接入人口上限
+任务 B：胜负结束面板
 
-- `BarracksSpawner` 在 SpawnUnit 前检查当前 faction 单位数是否达到 supply cap。
-- 达到上限时不生成新兵，并输出节流/清晰日志。
-- Player 和 Enemy 都使用同一规则。
-- 不要把 HUD 逻辑写进 BarracksSpawner。
-- 不要引入复杂资源、金币、粮食库存。
+- 扩展临时 `GameHud` 或新增小型 `GameEndHud`。
+- Victory / Defeat 时显示更明显的结束区域：
+  - Result: Victory / Defeat。
+  - 最终 Player Units / Cap。
+  - 最终 Enemy Units / Cap。
+  - 简短提示：Press N to restart / 或 Restart 按钮。
+- 不做正式 UI 美术，不做复杂动画。
+- HUD 仍只读状态，不直接改核心数据。
 
-任务 C：HUD 显示人口/建筑状态
+任务 C：Restart debug 能力
 
-- 扩展临时 `GameHud`。
-- 显示：
-  - Player Units: current / cap。
-  - Enemy Units: current / cap。
-  - Player Granaries / Enemy Granaries。
-  - 可选：Towers count。
-- HUD 只读取规则/统计服务，不直接扫描和修改核心数据。
+- 新增一个 debug 快捷键，例如 `N`，在 match ended 后重启当前场景或重新初始化当前 GameEntry。
+- 优先选择最小、安全的方式。
+- 不要修改 ProjectSettings。
+- 如果用 SceneManager，需要确保当前场景可 reload；如果不可行，先用日志提示并在 WORKLOG 说明。
 
-任务 D：建筑作用文档/日志
+任务 D：结束后输入/按钮表现
 
-- 在 WORKLOG 和必要注释中明确：
-  - Barracks = 生成士兵。
-  - Tower = 自动攻击敌方单位。
-  - Granary = 增加 supply cap。
-- 不做建筑升级，不做资源产出，不做区域奖励。
+- match ended 后：
+  - HUD Dispatch 按钮不可用或点击返回 “match ended”。
+  - O/E 不再真正派兵。
+  - 敌方压力 controller 不再触发。
+  - Q/P 这类只读 debug 可以保留。
 
-任务 E：更新文档
+任务 E：回归清单雏形
 
-- 更新 `WORKLOG.md`，写明 A/B/C/D 完成情况。
-- 记录 Play Mode 验证结果。
-- 记录是否新增 `.meta`，是否修改 `ProjectSettings`。
+- 新增或更新 `NEXT_STEPS.md` / `WORKLOG.md`，列出 Play Mode 回归清单。
+- 至少包含：
+  - Play 初始 HUD。
+  - HUD Dispatch。
+  - supply cap。
+  - enemy pressure。
+  - Victory。
+  - Defeat。
+  - Restart debug。
 
 ## 禁止范围
 
-- 不做复杂经济系统。
-- 不做金币/粮食库存。
-- 不做建筑升级。
-- 不做区域奖励。
 - 不做正式 UI 美术。
+- 不做复杂菜单系统。
+- 不做存档。
 - 不做移动端/微信/macOS/Android 移植实现。
-- 不改变 `MapData.CreateFixedMap()`，除非为了验证必须做极小配置并说明原因。
+- 不改变 `MapData.CreateFixedMap()`。
 - 不重构 `UnitCombat`。
 - 不重构 `PlotCaptureService`。
 - 不修改 `ProjectSettings`。
@@ -139,16 +139,15 @@ kingbattle/.idea/
 ## 验收标准
 
 - Play Mode：
-  - 单位数量达到 cap 后，Barracks 停止生成。
-  - 摧毁 Granary 后 cap 下降，HUD 更新。
-  - 重建 Granary 后 cap 上升，HUD 更新。
-  - Player/Enemy 都遵守 supply cap。
-  - HUD Dispatch 仍可派兵。
-  - O/Q/U/P/E/K/L 仍可验证。
-  - Enemy pressure 仍能工作。
+  - Victory 后 HUD 显示明显结果。
+  - Defeat 后 HUD 显示明显结果。
+  - Victory/Defeat 后 HUD Dispatch、O、E 不再派兵。
+  - 敌方压力 controller 不再触发。
+  - Q/P 仍可只读验证。
+  - N 能 restart，或明确记录为什么暂不可做。
   - Console 无明显错误。
 - 代码：
-  - rule/stat 服务不依赖 UI / 输入 / 平台 API。
-  - BarracksSpawner 只调用规则服务，不承担 UI 状态展示。
-  - HUD 只读取规则/统计服务，不直接修改核心数据。
+  - gameplay command 统一检查 match ended。
+  - HUD 不直接修改核心数据。
+  - restart debug 不修改 ProjectSettings。
   - 未修改或提交 `ProjectSettings`。

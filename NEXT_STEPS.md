@@ -10,9 +10,9 @@
 
 当前进度判断：
 
-- 技术底座：约 80%。
-- 核心玩法闭环：约 72%。
-- 完整游戏体验：约 55%-60%。
+- 技术底座：约 82%。
+- 核心玩法闭环：约 76%。
+- 完整游戏体验：约 62%-65%。
 
 已经完成：
 
@@ -21,20 +21,21 @@
 - 敌方大本营被击败后的敌方清场。
 - 士兵生成、移动、巡逻、聚兵、派兵。
 - Neutral plot 占领主路径。
-- 占领需求 Small/Medium/Large。
 - HUD 候选按钮派兵。
 - O 与 HUD Dispatch 复用 command 服务。
 - 敌方定时进攻压力。
 - E debug 快捷键触发敌方进攻。
 - PlayerVictory / PlayerDefeat 最小胜负状态。
+- supply cap：base 8，每个 Granary +4。
+- Barracks / Tower / Granary 都已有最小作用。
 
 ## 当前缺失
 
-- 没有最小资源/人口规则，单位会持续生成。
-- Granary 没有玩法作用。
-- HUD 还没有显示人口/建筑收益。
-- 没有胜负界面，只有 HUD 文字。
-- 缺少数值调优和回归清单。
+- 胜利/失败后仍需要更明确的一局结束界面。
+- match ended 后 gameplay command 还需要统一拒绝。
+- 还缺 restart debug。
+- 还缺完整 Play Mode 回归清单。
+- 还缺数值调优。
 
 ## 四周冲刺路线
 
@@ -56,50 +57,40 @@
 
 ### Week 3：游戏性系统最小版
 
-当前进入第一步：人口/补给和建筑作用。
-
-- Barracks = 生成士兵。
-- Tower = 自动攻击敌方单位。
-- Granary = 增加 supply cap。
-- HUD 显示 units/cap 和建筑收益。
+状态：人口/补给与建筑作用已完成。
 
 ### Week 4：打磨与交付
 
-- UI 文案与状态反馈整理。
-- 音效/特效/颜色反馈最小打磨。
-- Play Mode 回归清单。
-- 清理测试快捷键或隐藏到 debug 模式。
-- 打包前检查：不提交 `Library/`、`Logs/`、`UserSettings/`、非必要 `ProjectSettings`。
+当前进入一局结束体验。
 
-## 当前正式任务：MVP-04.2 游戏性最小系统第一步
+- 胜负结束面板。
+- match ended 后输入收口。
+- restart debug。
+- Play Mode 回归清单。
+- 数值调优。
+
+## 当前正式任务：MVP-04.3 胜负界面和一局结束体验
 
 目标：
 
 ```text
-增加最小人口/补给规则，让 Granary 有明确作用，并在 HUD 显示双方单位和建筑收益状态。
+收口一局结束体验：胜负显示更明确，match ended 后阻止继续 gameplay command，并提供最小 restart debug 能力。
 ```
 
 实现方向：
 
 ```diff
-+ 新增 GameRuleService / FactionStatsService 或等价规则统计服务
-+ BarracksSpawner 接入 supply cap，达到上限停止产兵
-+ Granary 增加 supply cap
-+ HUD 显示 Player/Enemy units/cap 和 Granary/Tower 状态
-- 不做复杂经济系统
-- 不做金币/粮食库存
-- 不做建筑升级
-- 不做区域奖励
++ gameplay command 入口统一检查 match ended
++ Victory / Defeat 时 HUD 显示明显结束面板
++ N debug 快捷键 restart
++ Play Mode 回归清单雏形
+- 不做正式 UI 美术
+- 不做复杂菜单系统
+- 不做存档
 - 不修改 ProjectSettings
 ```
 
-## MVP-04.2 后的建议顺序
-
-### MVP-04.3 胜负界面和一局结束体验
-
-- HUD 或临时结算面板显示 Victory / Defeat。
-- 提供 restart / quit debug 按钮或提示。
-- 清理胜负后的输入状态。
+## MVP-04.3 后的建议顺序
 
 ### MVP-04.4 数值调优和回归清单
 
@@ -111,6 +102,28 @@
 
 - 如果时间允许，再做地图点击 / 目标选择高亮。
 - 将 debug 快捷键集中到 debug-only 区域。
+
+### MVP-04.6 交付前清理
+
+- 清理临时日志。
+- 隐藏或集中 debug 快捷键。
+- 检查不提交 `Library/`、`Logs/`、`UserSettings/`、非必要 `ProjectSettings`。
+
+## Play Mode 回归清单雏形
+
+- Play 初始 HUD 显示目标、候选、人口、敌方压力。
+- HUD Dispatch 可派兵。
+- O 与 HUD Dispatch 同路径。
+- Q 只读预览。
+- U main-base ruin debug 派兵。
+- supply cap 达到上限后 Barracks 停止产兵。
+- Granary 摧毁/重建会影响 cap。
+- E 触发敌方进攻。
+- K 触发 Victory。
+- L 触发 Defeat。
+- Victory/Defeat 后不再执行 gameplay command。
+- N restart debug。
+- Console 无明显错误。
 
 ## 长期提醒
 
