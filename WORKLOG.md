@@ -272,3 +272,29 @@ e8d5d5a docs: review mvp-03.17 and release mvp-03.18
 To https://github.com/12342023/unity.git
    9979941..e8d5d5a  main -> main
 ```
+
+### MVP-03.18 连地网络规则整理
+
+操作人：Claude
+
+已完成目标：新增 ExpansionCandidate 数据模型 + GetExpansionCandidates 查询。
+
+修改 2 个文件：
+- `Assets/Scripts/Combat/StrategicConnectionService.cs` — 新增：
+  - `ExpansionCandidate` 类（sourcePlotId, targetPlotId）
+  - `GetExpansionCandidates(MapData)` — 返回所有候选
+  - 规则：source 必须 Player-owned、非 main base；target 必须相邻 Neutral
+- `Assets/Scripts/Combat/StrategicExpansionService.cs` — 改为使用 candidates[0]
+  - `ExpansionResult` 补充 sourcePlotId, targetPlotId, dispatchedCount
+
+O/I/K/L/R/T/Y/U 行为不变。场景文件和 ProjectSettings 均未修改。
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/StrategicConnectionService.cs \
+        kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs \
+        WORKLOG.md TASK.md
+git commit -m "refactor: add ExpansionCandidate data model and GetExpansionCandidates query"
+git push origin main
+```

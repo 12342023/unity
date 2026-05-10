@@ -55,5 +55,36 @@ namespace Combat
             public string plotId;
             public List<string> connectableNeutralPlots;
         }
+
+        // ── Expansion candidates ────────────────────────────────────
+
+        /// <summary>A single expansion move: from a Player-owned plot
+        /// to an adjacent Neutral target.</summary>
+        public class ExpansionCandidate
+        {
+            public string sourcePlotId;
+            public string targetPlotId;
+        }
+
+        /// <summary>Returns all <see cref="ExpansionCandidate"/>s:
+        /// every Player-owned (non-main-base) plot paired with each
+        /// adjacent Neutral neighbour.</summary>
+        public static List<ExpansionCandidate> GetExpansionCandidates(MapData mapData)
+        {
+            var candidates = new List<ExpansionCandidate>();
+            var frontiers = GetPlayerFrontierPlots(mapData);
+            foreach (var f in frontiers)
+            {
+                foreach (var target in f.connectableNeutralPlots)
+                {
+                    candidates.Add(new ExpansionCandidate
+                    {
+                        sourcePlotId = f.plotId,
+                        targetPlotId = target
+                    });
+                }
+            }
+            return candidates;
+        }
     }
 }
