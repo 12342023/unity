@@ -385,7 +385,10 @@ Play Mode 验证：
 
 - 当前 `Editor.log` 尾部仍是旧编译记录，需 Unity 刷新/重新编译后确认无 `error CS` 和无 `UnitCombat.hasHome` warning。
 
-GitHub 上传状态：待本次 cleanup-review-fix-task commit / push。
+GitHub 上传状态：
+
+- cleanup-review-fix-task commit: `b1c98ca docs: review cleanup and request verification fix`
+- push: 已上传到 `origin/main`
 
 ### MVP-03.19 任务 C：O 日志携带 dispatched vs required 预览
 
