@@ -202,9 +202,11 @@ public class GameEntry : MonoBehaviour
                                 waypoints.Add(new Vector3(p.worldPosition.x, p.worldPosition.y, -0.2f));
                         }
                         Vector3 ruinPos = rallyRuin.transform.position;
+                        var targetPlot = mapData.GetPlot(targetPlotId);
+                        int required = PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot);
                         int count = StrategicDispatchService.DispatchToPlot(
-                            ruinPos, waypoints, targetPlotId, mapData, mapRenderer);
-                        Debug.Log($"[GameEntry] Test shortcut U: dispatched {count} soldiers to {targetPlotId} ({string.Join("->", pathIds)}).");
+                            ruinPos, waypoints, targetPlotId, mapData, mapRenderer, required);
+                        Debug.Log($"[GameEntry] Test shortcut U: dispatched {count}/{required} soldiers to {targetPlotId} ({string.Join("->", pathIds)}).");
                     }
                 }
             }

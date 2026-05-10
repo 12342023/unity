@@ -343,12 +343,55 @@ Play Mode 验证：
 1. K → T → U(占 Crossroads) → 按 **O** → 日志显示 `Dispatched N/2 soldiers from Crossroads to Village`
 2. 占领行为不变，到达即占领
 
+### MVP-03.20 占领需求接入批量任务
+
+操作人：Claude
+
+**任务 A — DispatchToPlot 支持 capture requirement**
+修改 `Assets/Scripts/Combat/StrategicDispatchService.cs`：
+- `DispatchToPlot()` 新增 `int requiredSoldierCount = 1` 参数
+- arrival capture handler 中 `capturedCount + 1 >= requiredSoldierCount` 时才调用 TryCapture
+- 不足时 log "Capture blocked: dispatched N/M to X"
+- handler self-cleanup 不变
+
+**任务 B — O 接入需求判定**
+修改 `Assets/Scripts/Combat/StrategicExpansionService.cs`：
+- `ExpandNext()` 将 `required` 传给 `DispatchToPlot`
+- `ExpansionResult` 新增 `hasEnoughDispatchedSoldiers`（computed）
+- O 日志显示 `dispatched N/M (enough=True/False)`
+
+**任务 C — U 接入需求判定**
+修改 `Assets/Scripts/GameEntry.cs`：
+- U 分支读取 `PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot)`
+- 传给 `DispatchToPlot(..., required)`
+- U 日志显示 `dispatched N/M`
+
+**任务 D — 验证日志**
+所有入口保持，P/I/U/O/Y/T/R/K/L 行为不变。
+
+Play Mode 验证：
+1. Play → T → 聚兵到 EnemyBase（如果不足 2 个蓝兵）
+2. U → 派兵到 Crossroads（需 2）→ 日志显示 `dispatched 1/2` → 到达后 `Capture blocked`
+3. 等更多蓝兵聚集 → 再次 U → dispatched 3/2 → 到达后占领成功，Crossroads 变蓝
+4. O → 从 Crossroads 派兵到 Village（需 1）→ dispatched 1/1 → 到达后占领
+5. P → 打印各 plot 需求不变
+6. Console 无错误
+
+修改文件（3 个）：
+- `Assets/Scripts/Combat/StrategicDispatchService.cs` — requiredSoldierCount + capture gate
+- `Assets/Scripts/Combat/StrategicExpansionService.cs` — 传递 required + hasEnoughDispatchedSoldiers
+- `Assets/Scripts/GameEntry.cs` — U 传递 required
+
+场景文件和 ProjectSettings：均未修改
+
 手动 git 推送：
 ```sh
 cd /Users/jianghao/unity
-git add kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs \
+git add kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs \
+        kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
         WORKLOG.md TASK.md
-git commit -m "feat: O log shows dispatched/required count (preview only, no capture change)"
+git commit -m "feat: capture requires minimum soldier count, U/O both enforce it"
 git push origin main
 ```
 

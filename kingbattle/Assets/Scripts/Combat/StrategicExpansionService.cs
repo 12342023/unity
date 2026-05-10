@@ -22,6 +22,7 @@ namespace Combat
             public string targetPlotId;
             public int dispatchedCount;
             public int requiredCount;
+            public bool hasEnoughDispatchedSoldiers => dispatchedCount >= requiredCount;
         }
 
         /// <summary>
@@ -64,7 +65,7 @@ namespace Combat
             int required = PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot);
 
             int count = StrategicDispatchService.DispatchToPlot(
-                sourcePos, waypoints, candidate.targetPlotId, mapData, mapRenderer);
+                sourcePos, waypoints, candidate.targetPlotId, mapData, mapRenderer, required);
 
             return new ExpansionResult
             {
@@ -74,7 +75,7 @@ namespace Combat
                 dispatchedCount = count,
                 requiredCount = required,
                 message = count > 0
-                    ? $"Dispatched {count}/{required} soldiers from {candidate.sourcePlotId} to {candidate.targetPlotId}."
+                    ? $"Dispatched {count}/{required} soldiers from {candidate.sourcePlotId} to {candidate.targetPlotId} (enough={count >= required})."
                     : $"No soldiers near {candidate.sourcePlotId} to dispatch " +
                       $"(requires {required})."
             };
