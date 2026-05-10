@@ -1506,3 +1506,69 @@ GitHub 上传状态：
 
 - docs/review commit: `855bc28 docs: review mvp-04.4 and release mvp-04.5`
 - push: 已上传到 `origin/main`
+
+### MVP-04.5 正式输入整理：地图点击派兵、目标高亮、debug 快捷键集中
+
+操作人：Claude
+
+**任务 A — 玩家输入控制器**
+
+新增 `Assets/Scripts/Input/PlayerInputController.cs`：
+- 鼠标左键点击 → 检测点击的 plot
+- 点击 Player-owned frontier 后选中 source，用 `MapRenderer.SetPlotHighlight` 高亮
+- 点击高亮目标 → 调用 `StrategicExpansionCommandService.DispatchCandidate`
+- 点击空白区域 → 清除选择
+- 不直接修改 map/building/unit
+- match 结束后不响应点击
+
+**任务 B — 地图命中和目标高亮**
+
+修改 `Assets/Scripts/Map/MapRenderer.cs`：
+- 新增 `plotRenderers` 字典（plotId → SpriteRenderer）
+- `GetPlotAtWorldPosition()` — 查询点击位置最近的 plot
+- `SetPlotHighlight()` / `ClearPlotHighlight()` / `ClearAllHighlights()` — 视觉高亮
+- 高亮只改变 SpriteRenderer.color，不改变 PlotData.faction
+
+**任务 C — 统一命令路径**
+
+HUD Dispatch、O debug 快捷键、地图点击派兵全部调用 `StrategicExpansionCommandService.DispatchCandidate`。
+同一个 service，同一个验证/寻路/派兵路径。
+
+**任务 D — debug 快捷键集中**
+
+新增 `Assets/Scripts/Debug/DebugShortcutController.cs`：
+- 从 `GameEntry.Update()` 迁移 K/L/E/N/R/T/Y/U/I/O/P/Q 全部 12 个 debug 快捷键
+- `GameEntry.Update()` 已清空，`GameEntry` 从约 390 行减少到 130 行
+
+修改 `Assets/Scripts/GameEntry.cs`：
+- 删除整个 Update() 方法
+- `SetupBuildings` 改为返回 `(HealthComponent, HealthComponent)` 用于初始化 controller
+- 新增 `PlayerInputController` 和 `DebugShortcutController` 初始化
+
+**任务 E — HUD 选择信息**
+
+修改 `Assets/Scripts/UI/GameHud.cs`：
+- 存在选中 source 时显示 "Selected: X | Targets: Y highlighted"
+
+修改文件（3 个）：
+- `Assets/Scripts/Map/MapRenderer.cs` — 高亮 + 坐标查询
+- `Assets/Scripts/UI/GameHud.cs` — 选择信息显示
+- `Assets/Scripts/GameEntry.cs` — 大幅精简，委托给新 controller
+
+新增文件（6 个）：
+- `Assets/Scripts/Input.meta`（新目录）
+- `Assets/Scripts/Input/PlayerInputController.cs` + `.meta`
+- `Assets/Scripts/Debug.meta`（新目录）
+- `Assets/Scripts/Debug/DebugShortcutController.cs` + `.meta`
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证：
+1. 点击 Player-owned 非大本营 plot → 高亮为蓝色，valid target 高亮为黄色
+2. 点击黄色 target → 派兵，选择清除，HUD Last Action 更新
+3. 点击空白区域 → 选择清除
+4. HUD Dispatch 仍可派兵
+5. O 仍可派兵且路径一致
+6. Victory/Defeat 后点击和 O/HUD 都不再派兵
+7. K/L/E/N/R/T/Y/U/I/O/P/Q 行为无回归
+8. Console 无明显错误

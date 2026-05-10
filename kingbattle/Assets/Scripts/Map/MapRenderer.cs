@@ -7,6 +7,7 @@ namespace Map
     /// <summary>
     /// Creates visual representations of plots and roads at runtime.
     /// All visuals are generated programmatically – no scene editing required.
+    /// Also provides plot hit-testing and highlighting for PlayerInputController.
     /// </summary>
     public class MapRenderer : MonoBehaviour
     {
@@ -17,6 +18,10 @@ namespace Map
         [SerializeField] private Color baseHighlightColor = new Color(1f, 0.8f, 0.2f);
         [SerializeField] private Color roadColor = new Color(0.5f, 0.5f, 0.5f);
 
+        [Header("Highlight colours (MVP-04.5)")]
+        [SerializeField] private Color selectedSourceColor = new Color(0.3f, 0.7f, 1.0f, 1f);
+        [SerializeField] private Color validTargetColor = new Color(0.8f, 0.9f, 0.2f, 1f);
+
         [Header("Sizes")]
         [SerializeField] private Vector2 smallPlotSize = new Vector2(1.5f, 1.5f);
         [SerializeField] private Vector2 mediumPlotSize = new Vector2(2.5f, 2.5f);
@@ -24,6 +29,9 @@ namespace Map
 
         private Sprite whiteSprite;
         private Sprite baseBorderSprite;
+
+        // Plot lookup
+        private readonly Dictionary<string, SpriteRenderer> plotRenderers = new();
 
         // ── Initialisation ──────────────────────────────────────────────
 
@@ -37,6 +45,71 @@ namespace Map
 
             foreach (var road in mapData.Roads)
                 CreateRoadVisual(road, mapData);
+        }
+
+        // ── Plot hit-testing (MVP-04.5) ────────────────────────────────
+
+        /// <summary>
+        /// Find the plotId whose world position is closest to <paramref name="worldPos"/>
+        /// within <paramref name="threshold"/> distance. Returns null if nothing is close enough.
+        /// </summary>
+        public string GetPlotAtWorldPosition(Vector3 worldPos, MapData mapData, float threshold = 1.5f)
+        {
+            string closestId = null;
+            float closestDist = threshold;
+
+            foreach (var plot in mapData.Plots)
+            {
+                Vector3 pPos = new Vector3(plot.worldPosition.x, plot.worldPosition.y, 0f);
+                float dist = Vector3.Distance(worldPos, pPos);
+                if (dist <= closestDist)
+                {
+                    closestDist = dist;
+                    closestId = plot.plotId;
+                }
+            }
+            return closestId;
+        }
+
+        // ── Highlighting (MVP-04.5) ────────────────────────────────────
+
+        /// <summary>Apply a temporary highlight colour to a plot visual.
+        /// Does not change the underlying PlotData.faction.</summary>
+        public void SetPlotHighlight(string plotId, Color color)
+        {
+            if (plotRenderers.TryGetValue(plotId, out var sr))
+            {
+                sr.color = color;
+                sr.sortingOrder = 5; // on top of normal plots
+            }
+        }
+
+        /// <summary>Revert a single plot to its faction's normal colour.</summary>
+        public void ClearPlotHighlight(string plotId, MapData mapData)
+        {
+            if (plotRenderers.TryGetValue(plotId, out var sr))
+            {
+                var plot = mapData?.GetPlot(plotId);
+                if (plot != null)
+                {
+                    sr.color = FactionToColor(plot.faction);
+                    sr.sortingOrder = 0;
+                }
+            }
+        }
+
+        /// <summary>Clear all plot highlights (revert to faction colours).</summary>
+        public void ClearAllHighlights(MapData mapData)
+        {
+            foreach (var kvp in plotRenderers)
+            {
+                var plot = mapData?.GetPlot(kvp.Key);
+                if (plot != null)
+                {
+                    kvp.Value.color = FactionToColor(plot.faction);
+                    kvp.Value.sortingOrder = 0;
+                }
+            }
         }
 
         // ── Sprite generation ───────────────────────────────────────────
@@ -63,7 +136,6 @@ namespace Map
                     int dy = Mathf.Abs(y - half);
                     int edgeDist = Mathf.Max(dx, dy);
 
-                    // Thick border (2px) on a transparent square
                     bool isBorder = edgeDist >= half - 2 && edgeDist <= half;
                     tex.SetPixel(x, y, isBorder ? Color.white : Color.clear);
                 }
@@ -89,13 +161,15 @@ namespace Map
             var size = PlotSizeToVector(plot.size);
             go.transform.localScale = new Vector3(size.x, size.y, 1f);
 
+            plotRenderers[plot.plotId] = sr;
+
             // ── Base highlight border ──
             if (plot.isMainBase)
             {
                 var border = new GameObject("BaseBorder");
                 border.transform.SetParent(go.transform);
                 border.transform.localPosition = Vector3.zero;
-                border.transform.localScale = Vector3.one * 1.15f; // slightly larger
+                border.transform.localScale = Vector3.one * 1.15f;
 
                 var borderSr = border.AddComponent<SpriteRenderer>();
                 borderSr.sprite = baseBorderSprite;
@@ -103,13 +177,12 @@ namespace Map
                 borderSr.sortingOrder = 1;
             }
 
-            // ── Build-slot markers (small dots) ──
+            // ── Build-slot markers ──
             for (int i = 0; i < plot.buildSlotCount; i++)
             {
                 var slot = new GameObject($"Slot_{i}");
                 slot.transform.SetParent(go.transform);
 
-                // Arrange slots in a row at the bottom of the plot
                 float spacing = 0.4f;
                 float totalWidth = (plot.buildSlotCount - 1) * spacing;
                 float slotX = -totalWidth / 2f + i * spacing;
@@ -122,9 +195,6 @@ namespace Map
                 slotSr.transform.localScale = new Vector3(0.12f, 0.12f, 1f);
                 slotSr.sortingOrder = 2;
             }
-
-            // ── Name label (just a sprite alt – no TextMeshPro dependency) ──
-            // For MVP we skip text labels to keep dependencies minimal.
         }
 
         // ── Road visuals ────────────────────────────────────────────────
@@ -154,23 +224,16 @@ namespace Map
 
         // ── Runtime plot colour refresh (used after capture) ─────────
 
-        /// <summary>Refresh a single plot's visual colour to match its
-        /// current faction (called after plot capture).</summary>
         public void RefreshPlotColor(string plotId, MapData mapData)
         {
             var plot = mapData?.GetPlot(plotId);
             if (plot == null) return;
 
-            var go = transform.Find($"Plot_{plotId}");
-            if (go == null)
+            if (plotRenderers.TryGetValue(plotId, out var sr))
             {
-                Debug.LogWarning($"[MapRenderer] Plot GameObject 'Plot_{plotId}' not found.");
-                return;
-            }
-
-            var sr = go.GetComponent<SpriteRenderer>();
-            if (sr != null)
                 sr.color = FactionToColor(plot.faction);
+                sr.sortingOrder = 0;
+            }
         }
 
         // ── Helpers ─────────────────────────────────────────────────────

@@ -1,32 +1,27 @@
-using System.Collections.Generic;
 using Buildings;
 using Combat;
 using Core;
 using Map;
-using Units;
 using UnityEngine;
 
 /// <summary>
-/// Thin scene startup script that bootstraps MVP-01 through MVP-02.1.
+/// Scene startup script that bootstraps the game.
 ///
 /// Responsibilities:
 /// 1. Creates fixed map data.
 /// 2. Renders map visually.
 /// 3. Creates buildings and links them.
-/// 4. Sets Barracks rally points and push targets.
-/// 5. Activates test spawner (Key 1-4).
+/// 4. Activates test spawner.
+/// 5. Initialises HUD, input, enemy AI, and debug shortcuts.
 ///
-/// Deliberately thin — only wires things up, no business logic.
+/// Does NOT contain game input logic — that is delegated to
+/// PlayerInputController and DebugShortcutController.
 /// </summary>
 public class GameEntry : MonoBehaviour
 {
-    // Test-shortcut references
-    private HealthComponent playerBaseHealth;
-    private HealthComponent enemyBaseHealth;
     private MapData mapData;
     private MapRenderer mapRenderer;
     private EnemyPressureController enemyController;
-
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
@@ -51,7 +46,7 @@ public class GameEntry : MonoBehaviour
         mapRenderer.Initialize(mapData);
 
         // ── Create buildings ──
-        SetupBuildings(mapData);
+        var (playerBaseHp, enemyBaseHp) = SetupBuildings(mapData);
 
         // ── Activate test spawner ──
         var spawnerObj = new GameObject("TestUnitSpawner");
@@ -68,272 +63,32 @@ public class GameEntry : MonoBehaviour
         enemyController = enemyCtrlObj.AddComponent<EnemyPressureController>();
         enemyController.Initialize(mapData);
 
-        Debug.Log("[GameEntry] MVP-02.1 ready. K=kill EnemyBase, L=kill PlayerBase.");
-    }
+        // ── Player input controller (MVP-04.5) ──
+        var inputObj = new GameObject("PlayerInputController");
+        var inputCtrl = inputObj.AddComponent<PlayerInputController>();
+        inputCtrl.Initialize(mapData, mapRenderer);
 
-    // ── Test shortcuts for MVP-03.2 faction defeat ─────────────────────
+        // ── Debug shortcut controller (MVP-04.5) ──
+        var debugObj = new GameObject("DebugShortcutController");
+        var debugCtrl = debugObj.AddComponent<DebugShortcutController>();
+        debugCtrl.Initialize(mapData, mapRenderer, enemyController, playerBaseHp, enemyBaseHp);
 
-    private void Update()
-    {
-        // K = instantly destroy EnemyBase (test faction defeat cleanup)
-        if (Input.GetKeyDown(KeyCode.K) && enemyBaseHealth != null && !enemyBaseHealth.IsDead)
-        {
-            Debug.Log("[GameEntry] Test shortcut K: destroying EnemyBase...");
-            enemyBaseHealth.TakeDamage(enemyBaseHealth.CurrentHealth);
-        }
-
-        // L = instantly destroy PlayerBase (test faction defeat cleanup)
-        if (Input.GetKeyDown(KeyCode.L) && playerBaseHealth != null && !playerBaseHealth.IsDead)
-        {
-            Debug.Log("[GameEntry] Test shortcut L: destroying PlayerBase...");
-            playerBaseHealth.TakeDamage(playerBaseHealth.CurrentHealth);
-        }
-
-        // E = trigger enemy attack immediately (debug, MVP-04.1)
-        if (Input.GetKeyDown(KeyCode.E) && enemyController != null)
-        {
-            Debug.Log("[GameEntry] Test shortcut E: triggering enemy attack...");
-            enemyController.TriggerAttack();
-        }
-
-        // N = restart after match ended (debug, MVP-04.3)
-        if (Input.GetKeyDown(KeyCode.N) && MatchResultService.CurrentResult != MatchResult.None)
-        {
-            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            if (string.IsNullOrEmpty(sceneName))
-            {
-                Debug.Log("[GameEntry] Test shortcut N: no active scene name, cannot reload. Add the scene to Build Settings.");
-            }
-            else
-            {
-                Debug.Log($"[GameEntry] Test shortcut N: restarting via {sceneName}");
-                UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
-            }
-        }
-
-        // R = rebuild the first rebuildable ruin (skips main base ruins)
-        if (Input.GetKeyDown(KeyCode.R) && mapData != null)
-        {
-            var ruins = FindObjectsByType<RuinComponent>(FindObjectsSortMode.None);
-            bool rebuilt = false;
-            foreach (var r in ruins)
-            {
-                if (r.IsMainBaseRuin(mapData)) continue; // skip main base
-                var result = BuildingRebuildService.Rebuild(r, mapData, Faction.Player);
-                if (result != null)
-                {
-                    Debug.Log("[GameEntry] Test shortcut R: rebuild OK.");
-                    rebuilt = true;
-                    break;
-                }
-            }
-            if (!rebuilt)
-                Debug.Log("[GameEntry] Test shortcut R: no rebuildable ruins.");
-        }
-
-        // T = rally all Player soldiers to the first main-base ruin (test MVP-03.10)
-        if (Input.GetKeyDown(KeyCode.T) && mapData != null)
-        {
-            var ruins = FindObjectsByType<RuinComponent>(FindObjectsSortMode.None);
-            RuinComponent rallyRuin = null;
-            foreach (var r in ruins)
-            {
-                if (r.CanUseAsRallyPoint(mapData))
-                {
-                    rallyRuin = r;
-                    break;
-                }
-            }
-            if (rallyRuin == null)
-            {
-                Debug.Log("[GameEntry] Test shortcut T: no main-base ruin found.");
-            }
-            else
-            {
-                Vector3 rallyPos = rallyRuin.transform.position;
-                int count = 0;
-                var units = FindObjectsByType<UnitCombat>(FindObjectsSortMode.None);
-                foreach (var u in units)
-                {
-                    if (u.faction != Faction.Player) continue;
-                    if (u.GetComponent<HealthComponent>().IsDead) continue;
-
-                    // Clear any active orders
-                    u.ClearPushPath();
-                    u.GetComponent<UnitMovement>()?.Stop();
-
-                    // Set patrol around the ruin with staggered angle
-                    var patrol = u.GetComponent<UnitPatrol>();
-                    if (patrol != null)
-                        patrol.Setup(new Vector3(rallyPos.x, rallyPos.y, -0.2f), 0.9f, (count % 12) * 30f);
-
-                    count++;
-                }
-                Debug.Log($"[GameEntry] Test shortcut T: rallied {count} soldiers to main-base ruin.");
-            }
-        }
-
-        // Y = print connectable neutral plots for main-base ruin (test MVP-03.11)
-        if (Input.GetKeyDown(KeyCode.Y) && mapData != null)
-        {
-            var ruins = FindObjectsByType<RuinComponent>(FindObjectsSortMode.None);
-            bool found = false;
-            foreach (var r in ruins)
-            {
-                if (!r.CanUseAsRallyPoint(mapData)) continue;
-                var plots = r.GetConnectableNeutralPlots(mapData);
-                if (plots.Count > 0)
-                {
-                    Debug.Log($"[GameEntry] Test shortcut Y: {r.sourcePlotId} can connect to: {string.Join(", ", plots)}");
-                    found = true;
-                }
-                else
-                {
-                    Debug.Log($"[GameEntry] Test shortcut Y: {r.sourcePlotId} has no neutral neighbours.");
-                    found = true;
-                }
-            }
-            if (!found)
-                Debug.Log("[GameEntry] Test shortcut Y: no main-base ruin found.");
-        }
-
-        // U = dispatch nearby Player soldiers from main-base ruin to first
-        //     connectable neutral plot (test MVP-03.12)
-        if (Input.GetKeyDown(KeyCode.U) && mapData != null)
-        {
-            // Find first main-base ruin
-            RuinComponent rallyRuin = null;
-            foreach (var r in FindObjectsByType<RuinComponent>(FindObjectsSortMode.None))
-            {
-                if (r.CanUseAsRallyPoint(mapData)) { rallyRuin = r; break; }
-            }
-            if (rallyRuin == null)
-            {
-                GameStatusService.LastActionResult = "U: no main-base ruin.";
-                Debug.Log("[GameEntry] Test shortcut U: no main-base ruin.");
-            }
-            else
-            {
-                var plots = rallyRuin.GetConnectableNeutralPlots(mapData);
-                if (plots.Count == 0)
-                {
-                    GameStatusService.LastActionResult = $"U: {rallyRuin.sourcePlotId} has no connectable neutral plots.";
-                    Debug.Log($"[GameEntry] Test shortcut U: {rallyRuin.sourcePlotId} has no connectable neutral plots.");
-                }
-                else
-                {
-                    string targetPlotId = plots[0];
-                    // Find path from ruin's plot to target plot
-                    var pathIds = RoadPathFinder.FindPath(mapData, rallyRuin.sourcePlotId, targetPlotId);
-                    if (pathIds == null || pathIds.Count < 2)
-                    {
-                        GameStatusService.LastActionResult = $"U: no road path to {targetPlotId}.";
-                        Debug.Log($"[GameEntry] Test shortcut U: no road path to {targetPlotId}.");
-                    }
-                    else
-                    {
-                        var waypoints = new System.Collections.Generic.List<Vector3>();
-                        foreach (var id in pathIds)
-                        {
-                            var p = mapData.GetPlot(id);
-                            if (p != null)
-                                waypoints.Add(new Vector3(p.worldPosition.x, p.worldPosition.y, -0.2f));
-                        }
-                        Vector3 ruinPos = rallyRuin.transform.position;
-                        var targetPlot = mapData.GetPlot(targetPlotId);
-                        int required = PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot);
-                        var dispatchResult = StrategicDispatchService.DispatchToPlot(
-                            ruinPos, waypoints, targetPlotId, mapData, mapRenderer, required);
-                        GameStatusService.LastActionResult = dispatchResult.message;
-                        Debug.Log($"[GameEntry] Test shortcut U: {dispatchResult.message}");
-                    }
-                }
-            }
-        }
-
-        // I = print Player-owned frontier plots with neutral neighbours (MVP-03.15)
-        if (Input.GetKeyDown(KeyCode.I) && mapData != null)
-        {
-            var frontiers = StrategicConnectionService.GetPlayerFrontierPlots(mapData);
-            if (frontiers.Count == 0)
-            {
-                Debug.Log("[GameEntry] Test shortcut I: no Player-owned frontier plot with neutral neighbours.");
-            }
-            else
-            {
-                foreach (var f in frontiers)
-                {
-                    Debug.Log($"[GameEntry] Test shortcut I: {f.plotId} can connect to: {string.Join(", ", f.connectableNeutralPlots)}");
-                }
-            }
-        }
-
-        // O = dispatch from first Player frontier plot to its first neutral neighbour
-        // Uses same command service as HUD dispatch buttons (MVP-04.0)
-        if (Input.GetKeyDown(KeyCode.O) && mapData != null)
-        {
-            var candidates = StrategicConnectionService.GetExpansionCandidates(mapData);
-            if (candidates.Count == 0)
-            {
-                GameStatusService.LastActionResult = "O: no expansion candidates.";
-                Debug.Log("[GameEntry] Test shortcut O: no expansion candidates.");
-            }
-            else
-            {
-                var c = candidates[0];
-                var result = StrategicExpansionCommandService.DispatchCandidate(
-                    mapData, mapRenderer, c.sourcePlotId, c.targetPlotId);
-                GameStatusService.LastActionResult = result.message;
-                Debug.Log($"[GameEntry] Test shortcut O: {result.message}");
-            }
-        }
-
-        // P = print capture requirements per plot (MVP-03.19)
-        if (Input.GetKeyDown(KeyCode.P) && mapData != null)
-        {
-            Debug.Log("[GameEntry] Test shortcut P: capture requirements:");
-            foreach (var plot in mapData.Plots)
-            {
-                int req = PlotCaptureRequirementService.GetRequiredSoldierCount(plot);
-                Debug.Log($"  {plot.plotId} ({plot.size}, {plot.faction}) → requires {req} soldier(s)");
-            }
-        }
-
-        // Q = print all expansion previews (MVP-03.22)
-        if (Input.GetKeyDown(KeyCode.Q) && mapData != null)
-        {
-            var previews = StrategicConnectionService.GetExpansionPreviews(mapData);
-            if (previews.Count == 0)
-            {
-                Debug.Log("[GameEntry] Test shortcut Q: no expansion previews.");
-            }
-            else
-            {
-                Debug.Log("[GameEntry] Test shortcut Q: expansion previews:");
-                foreach (var p in previews)
-                {
-                    Debug.Log($"  {p.sourcePlotId} → {p.targetPlotId}: avail={p.availableCount}, req={p.requiredCount}, enough={p.hasEnough}");
-                }
-            }
-        }
+        Debug.Log("[GameEntry] Ready. Debug keys: K/L/E/N/R/T/Y/U/I/O/P/Q. Click source plot → target plot to dispatch.");
     }
 
     // ── Building setup ─────────────────────────────────────────────────
 
-    private void SetupBuildings(MapData mapData)
+    /// <summary>Returns (playerBaseHealth, enemyBaseHealth).</summary>
+    private (HealthComponent, HealthComponent) SetupBuildings(MapData mapData)
     {
-        // Buildings register themselves via BuildingFactory → BuildingRegistry.
-        // No manual tracking needed here.
-
-        // ── Create building GameObjects ──
         var playerBarracks = CreateBuilding("PlayerBase",   mapData, Faction.Player, BuildingType.Barracks);
         var enemyBarracks  = CreateBuilding("EnemyBase",    mapData, Faction.Enemy,  BuildingType.Barracks);
-        var playerTower    = CreateBuilding("Crossroads",   mapData, Faction.Player, BuildingType.Tower);
-        var enemyTower     = CreateBuilding("EnemyOutpost", mapData, Faction.Enemy,  BuildingType.Tower);
-        var playerGranary  = CreateBuilding("Village",      mapData, Faction.Player, BuildingType.Granary);
+        CreateBuilding("Crossroads",   mapData, Faction.Player, BuildingType.Tower);
+        CreateBuilding("EnemyOutpost", mapData, Faction.Enemy,  BuildingType.Tower);
+        CreateBuilding("Village",      mapData, Faction.Player, BuildingType.Granary);
         // Farmland intentionally left empty
 
-        // ── Link Barracks to enemy targets, set rally points ──
+        // Link Barracks
         if (playerBarracks != null && enemyBarracks != null)
         {
             var pbSpawner = playerBarracks.GetComponent<BarracksSpawner>();
@@ -358,33 +113,32 @@ public class GameEntry : MonoBehaviour
             }
         }
 
-        // ── Faction defeat handlers (queries BuildingRegistry internally) ──
-        if (playerBarracks != null)
+        // Faction defeat handlers
+        HealthComponent playerBaseHp = playerBarracks?.GetComponent<HealthComponent>();
+        HealthComponent enemyBaseHp = enemyBarracks?.GetComponent<HealthComponent>();
+
+        if (playerBaseHp != null)
         {
-            playerBaseHealth = playerBarracks.GetComponent<HealthComponent>();
             var playerHandlerGo = new GameObject("PlayerDefeatHandler");
             var playerHandler = playerHandlerGo.AddComponent<FactionDefeatHandler>();
             playerHandler.Initialize(Faction.Player);
-            playerBaseHealth.OnDeath += (hc) => playerHandler.OnMainBaseDefeated();
+            playerBaseHp.OnDeath += (hc) => playerHandler.OnMainBaseDefeated();
         }
 
-        if (enemyBarracks != null)
+        if (enemyBaseHp != null)
         {
-            enemyBaseHealth = enemyBarracks.GetComponent<HealthComponent>();
             var enemyHandlerGo = new GameObject("EnemyDefeatHandler");
             var enemyHandler = enemyHandlerGo.AddComponent<FactionDefeatHandler>();
             enemyHandler.Initialize(Faction.Enemy);
-            enemyBaseHealth.OnDeath += (hc) => enemyHandler.OnMainBaseDefeated();
+            enemyBaseHp.OnDeath += (hc) => enemyHandler.OnMainBaseDefeated();
         }
 
         Debug.Log("[GameEntry] Buildings placed, defeat handlers active.");
+        return (playerBaseHp, enemyBaseHp);
     }
-
-    // ── Factory helpers ────────────────────────────────────────────────
 
     private static GameObject CreateBuilding(string plotId, MapData mapData, Faction faction, BuildingType type)
     {
         return BuildingFactory.CreateBuilding(plotId, mapData, faction, type);
     }
-
 }

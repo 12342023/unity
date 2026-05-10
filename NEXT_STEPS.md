@@ -10,9 +10,9 @@
 
 当前进度判断：
 
-- 技术底座：约 87%。
-- 核心玩法闭环：约 83%。
-- 完整游戏体验：约 72%-75%。
+- 技术底座：约 90%。
+- 核心玩法闭环：约 87%。
+- 完整游戏体验：约 78%-82%。
 
 已经完成：
 
@@ -34,43 +34,38 @@
 - Play Mode 回归清单。
 - `BALANCE.md` 数值调优文档。
 - `GameBalanceConfig` 轻量配置收口。
+- 地图点击 source/target 派兵 + 高亮。
+- HUD Dispatch / O / 点击派兵统一 command 路径。
+- Debug 快捷键集中到 DebugShortcutController。
+- `GameEntry` 大幅精简。
 
 ## 当前缺失
 
-- 地图点击 source/target 派兵还没做。
-- 目标选择高亮还没做。
-- Debug 快捷键还没集中。
-- `GameEntry.Update()` 仍承担太多 debug 输入。
-- `TestUnitSpawner` 仍保留 1-4 测试输入。
+- `TestUnitSpawner` 的 1-4 测试输入仍保留（标记为后续 debug-only 清理）。
 - 正式 UI 还没做。
 - 移植还没开始。
 
-## 当前正式任务：MVP-04.5 正式输入整理
+## 当前正式任务：MVP-04.6 交付前清理
 
 目标：
 
 ```text
-把玩家操作从 debug/HUD-only 推进到可点击地图的试玩输入，同时集中 debug 快捷键，为后续移动端/微信输入适配留边界。
+清理临时日志，隐藏或集中 debug 快捷键，完成交付前最后检查。
 ```
 
 实现方向：
 
 ```diff
-+ 新增 PlayerInputController 或等价组件
-+ 地图点击选择 source plot
-+ 高亮 selected source 和 valid neutral target
-+ 点击 target 后调用 StrategicExpansionCommandService
-+ HUD Dispatch / O / 点击派兵保持同一命令路径
-+ 新增 DebugShortcutController 集中 K/L/E/N/R/T/Y/U/I/O/P/Q
++ 清理或集中临时日志
++ Debug 快捷键标记 debug-only
++ 检查 TestUnitSpawner 是否还需要保留
++ 检查不提交项目生成目录
+- 不做新玩法系统
 - 不做正式 UI 美术
-- 不引入新 Input System package
-- 不复制派兵/占领逻辑
 - 不修改 ProjectSettings
 ```
 
-## MVP-04.5 后的建议顺序
-
-### MVP-04.6 交付前清理
+## MVP-04.6 后的建议顺序
 
 - 清理或集中临时日志。
 - 隐藏 debug 快捷键入口，保留 debug-only controller。
@@ -85,8 +80,9 @@
 ## Play Mode 回归清单
 
 - Play 初始 HUD 显示目标、候选、人口、敌方压力。
-- 鼠标点击 Player-owned source 后出现 target 高亮。
-- 鼠标点击高亮 Neutral target 后派兵。
+- 鼠标点击 Player-owned source 后高亮为蓝色，valid target 高亮为黄色。
+- 鼠标点击黄色 target 后派兵。
+- 点击空白区域清空选择。
 - HUD Dispatch 可派兵。
 - O 与 HUD Dispatch / 点击派兵同路径。
 - Q 只读预览。

@@ -101,6 +101,14 @@ public class GameHud : MonoBehaviour
         GUILayout.Label($"Units: Player {pUnits}/{pCap} | Enemy {eUnits}/{eCap}");
         GUILayout.Label($"Bldgs: Player G:{pGran} T:{pTow} | Enemy G:{eGran} T:{eTow}");
 
+        // ── Selection info (MVP-04.5) ──
+        var inputCtrl = FindFirstObjectByType<PlayerInputController>();
+        if (inputCtrl != null && inputCtrl.HasSelection)
+        {
+            GUILayout.Space(2);
+            GUILayout.Label($"Selected: {inputCtrl.SelectedSourcePlotId}  |  Targets: {inputCtrl.ValidTargets.Count} highlighted");
+        }
+
         // ── Candidate list ──
         GUILayout.Space(4);
         GUILayout.Label("── Expansion Candidates ──");
