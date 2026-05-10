@@ -26,7 +26,7 @@
 目标：
 
 ```text
-按 PlotSize 查询占领所需兵力，暂不改变当前 capture 行为。
+按 PlotSize 查询占领所需兵力，增加 P 验证日志，并让 O 结果带需求预览；暂不改变当前 capture 行为。
 ```
 
 实现方向：
@@ -34,7 +34,8 @@
 ```diff
 + 新增 PlotCaptureRequirementService 或等价服务
 + Small/Medium/Large 返回 1/2/3 或等价清晰规则
-+ 可增加 P 临时日志快捷键打印各 plot 占领需求
++ 增加 P 临时日志快捷键打印各 plot 占领需求
++ ExpansionResult / O 日志携带 dispatched vs required 预览
 - 不改变 K/L/R/T/Y/U/I/O 行为
 - 不做正式 UI
 - 不做自动扩张
@@ -47,7 +48,7 @@
 
 ### MVP-03.20 占领规则接入
 
-占领需求数据稳定后，再考虑：
+占领需求数据和预览日志稳定后，再考虑：
 
 - 是否按 dispatchedCount 判断能否占领。
 - 是否需要停留时间或占领进度。

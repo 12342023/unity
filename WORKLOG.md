@@ -197,11 +197,13 @@
 ### MVP-03.19 占领需求数据层
 
 - 当前发布任务：按 `PlotSize` 查询占领所需兵力。
-- 目标：
+- 用户希望后续每轮多布置一些任务，加快进度；从本轮开始默认打包 2-3 个强相关小任务。
+- 本轮批量目标：
   - 新增 `PlotCaptureRequirementService` 或等价服务。
   - Small / Medium / Large 返回 1 / 2 / 3 或等价清晰规则。
-  - 可以增加 P 临时日志快捷键打印各 plot 占领需求。
-  - 暂不接入实际 capture 判定。
+  - 增加 P 临时日志快捷键打印各 plot 占领需求。
+  - `ExpansionResult` / O 日志携带 dispatched vs required 预览。
+  - 暂不接入实际 capture 判定，当前到达即占领行为不变。
 
 ## 当前待处理状态
 

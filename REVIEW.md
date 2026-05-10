@@ -49,28 +49,43 @@ Findings:
 
 Codex Review：MVP-03.18 代码审查通过。
 
-进入 MVP-03.19：占领需求数据层。
+进入 MVP-03.19：占领需求数据层批量任务。
 
 背景：
+- 用户希望之后每轮多布置一些任务，加快进度。
 - 原始目标里有“大的区块需要更多兵去占领”。
 - 当前 `PlotCaptureService` 仍是一个 Player 士兵到达就占领。
 - 本轮只做数据层，不改变当前占领行为。
 
 本轮目标：
 - 新增占领需求查询服务，让代码能按 PlotSize 查询占领所需兵力。
+- 增加 P 日志验证。
+- 让 O 的结果里带上 dispatched / required 预览数据。
 - 不接入 `PlotCaptureService`，不改变 O/U 到达即占领。
 
 允许：
+任务 A：占领需求服务
 - 新增 `PlotCaptureRequirementService` 或等价小服务，建议放在 `kingbattle/Assets/Scripts/Combat/`。
-- 提供方法，例如：
+- 提供方法：
   - `GetRequiredSoldierCount(PlotData plot)`
-  - 或 `GetRequiredSoldierCount(PlotSize size)`
+  - `GetRequiredSoldierCount(PlotSize size)`
 - 建议最小规则：
   - Small = 1
   - Medium = 2
   - Large = 3
 - 对 null plot 做安全处理。
-- 可以在 `GameEntry` 增加一个临时日志快捷键，例如 `P`，打印所有 plot 的 capture requirement，便于 Play Mode 验证。
+
+任务 B：Play Mode 验证入口
+- 在 `GameEntry` 增加临时日志快捷键 `P`，打印所有 plot 的 capture requirement。
+- 日志至少包含 plotId、PlotSize、requiredSoldierCount。
+
+任务 C：扩张结果预览数据
+- `StrategicExpansionService.ExpansionResult` 可以补充：
+  - `requiredSoldierCount`
+  - `hasEnoughDispatchedSoldiers` 或等价 bool
+- `ExpandNext(...)` 可以计算 `dispatchedCount >= requiredSoldierCount`，仅用于日志/预览。
+- O 日志可以带上 dispatched / required。
+
 - 如果新增脚本，必须提交对应 `.meta`。
 - 更新 WORKLOG.md。
 
@@ -89,9 +104,9 @@ Codex Review：MVP-03.18 代码审查通过。
 - 不做自动扩张。
 - 不做资源、升级、区域奖励、传送阵、AI。
 - 不做占领进度条。
-- 不把占领需求接入实际 capture 判定。
+- 不把占领需求接入实际 capture 判定；本轮只做数据与日志预览。
 - 不重构 UnitCombat。
 - 不重构无关建筑/移动/战斗代码。
 
-完成后更新 WORKLOG.md，说明修改文件、P/I/O Play Mode 验证结果、是否新增 .meta、是否修改 ProjectSettings，并 commit / push。
+完成后更新 WORKLOG.md，说明三项任务完成情况、修改文件、P/I/O Play Mode 验证结果、是否新增 .meta、是否修改 ProjectSettings，并 commit / push。
 ```
