@@ -10,31 +10,32 @@
 
 当前状态：
 
-- Unity 6 P1 编译阻塞已解除。
-- Unity 6 migration 文件已收口提交。
-- 下一步清理 Unity 6 obsolete API warnings。
+- Unity 6 迁移文件已收口。
+- 最新 Editor log 尾部无 P1 编译错误。
+- MVP-04.6 warning cleanup 需要返修，因为 API 替换仍不彻底。
 
-## 当前正式任务：MVP-04.6 Unity 6 warning cleanup
+## 当前正式任务：MVP-04.6 warning cleanup 返修
 
 目标：
 
 ```text
-清理 Unity 6 API obsolete warnings，不改变玩法行为。
+彻底移除 Unity 6 obsolete API 残留，不改变玩法行为。
 ```
 
 实现方向：
 
 ```diff
-+ TowerAttack 替换 OverlapCircleNonAlloc
-+ FindObjectsByType<T>(FindObjectsSortMode.None) 替换为 Unity 6 推荐 overload
-+ GameHud 替换 FindFirstObjectByType
-+ Play smoke test
-- 不做新玩法
-- 不改 ProjectSettings
-- 不提交 IDE/生成文件
+- Object.FindObjectsByType<T>(FindObjectsSortMode.None, FindObjectsInactive.Exclude)
++ Object.FindObjectsByType<T>(FindObjectsInactive.Exclude)
+
+- Object.FindFirstObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
++ Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
+
+- TowerAttack 注释中的 OverlapCircleNonAlloc
++ TowerAttack 注释改为 OverlapCircle + reusable buffer
 ```
 
-## MVP-04.6 后建议顺序
+## 返修后建议顺序
 
 ### MVP-04.7 交付前清理
 
@@ -68,5 +69,6 @@
 - 正式 UI 还没做，目前仍是 debug OnGUI。
 - `TestUnitSpawner` 的 1-4 测试输入后续需要清理或标记 debug-only。
 - Runtime logs 偏多，交付前需要收敛。
+- Unity Connect 401 属于外部服务/auth，暂不阻塞 gameplay。
 - 移植还没开始，但边界需要持续保持。
 - `ProjectSettings`、`.idea/`、`.claude/`、Unity 生成目录不能随便提交。

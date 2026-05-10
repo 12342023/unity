@@ -1928,3 +1928,43 @@ Play smoke test：
 4. K/L/E/N/R/T/Y/U/I/O/P/Q 无回归
 5. Victory 后不能再派兵
 6. Console 无 error CS，无上述 obsolete warnings
+
+### MVP-04.6 Codex Review：暂不通过，发布 warning cleanup 返修
+
+操作人：Codex
+
+审查提交：
+
+```text
+12bbb01 fix: Unity 6 obsolete API warnings — OverlapCircle, FindObjectsByType, FindFirstObjectByType
+```
+
+结论：MVP-04.6 暂不通过。
+
+已检查：
+
+- 最新 Editor log 尾部无 `error CS`。
+- 最新 Editor log 尾部无 `NullReferenceException` / `MissingReferenceException`。
+- 最新 Editor log 尾部有 Unity Connect / Project ID 401，属于外部服务/auth，不是 gameplay 编译阻塞。
+
+阻塞返修点：
+
+1. `FindObjectsByType` 写法仍不正确：
+   - 当前：`Object.FindObjectsByType<T>(FindObjectsSortMode.None, FindObjectsInactive.Exclude)`
+   - Unity 6 overload 顺序是 `FindObjectsInactive, FindObjectsSortMode`
+   - 为彻底消除 warning，应改为：`Object.FindObjectsByType<T>(FindObjectsInactive.Exclude)`
+
+2. `GameHud` 仍使用 `FindFirstObjectByType`：
+   - 当前：`Object.FindFirstObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)`
+   - 应改为：`Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)` 或轻量缓存。
+
+3. `TowerAttack` 注释仍写 `OverlapCircleNonAlloc`，需要同步改为新 API 描述。
+
+要求 Claude 返修后验证：
+
+- `rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scripts` 无结果。
+- Unity Console 无 `error CS`。
+- Unity Console 无目标 obsolete warnings。
+- Play smoke test 通过。
+
+GitHub 上传状态：待本次 review/warning-fix-task commit / push。

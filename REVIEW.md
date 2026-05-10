@@ -5,111 +5,168 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-31da520 chore: Unity 6 migration — packages, URP, project settings
+12bbb01 fix: Unity 6 obsolete API warnings — OverlapCircle, FindObjectsByType, FindFirstObjectByType
 ```
 
-结论：**Unity 6 迁移文件收口通过，允许进入 Unity 6 obsolete warning cleanup。**
+结论：**MVP-04.6 暂不通过，需要返修。**
 
-说明：提交范围合理，包含 Unity 6 必需的 Packages、URP、Graphics、ShaderGraph、ProjectVersion 和默认 Volume 资源；未提交 `.claude/`、`.idea/`、`kingbattle.slnx`、`SceneTemplateSettings.json`、`MultiplayerManager.asset`、`要求.md`。
+说明：Editor log 尾部目前没有 `error CS`，但最新代码的 Unity 6 API 替换仍有静态问题，下一次脚本编译/检查仍可能失败或继续产生 obsolete warnings。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **FAIL**
 
 Findings:
 
 ```text
-无阻塞问题。
+[P1] FindObjectsByType 参数顺序错误，并且仍使用 FindObjectsSortMode。
+[P2] GameHud 仍使用 FindFirstObjectByType，未按任务要求改为 FindAnyObjectByType 或缓存。
+[P3] TowerAttack 注释仍写 OverlapCircleNonAlloc。
 ```
 
-### 已确认
+### [P1] `FindObjectsByType` 参数顺序错误，且仍使用 obsolete enum
 
-- `Packages/manifest.json` / `packages-lock.json` 已迁移到 Unity 6 / URP 17 对应包版本。
-- `ProjectSettings/ProjectVersion.txt` 已记录 `6000.4.6f1`。
-- URP/Graphics/ShaderGraph 相关 asset 属于 Unity 6 自动序列化迁移范围。
-- `Assets/DefaultVolumeProfile.asset` 和 `.meta` 是 URP 自动生成的默认 Volume 资源，随 URP 迁移提交合理。
-- 最新 Editor log 尾部未发现 P1 编译错误。
-- Play 已跑到实际 gameplay / Victory 日志。
+问题写法：
 
-### Codex 小修
+```csharp
+Object.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None, FindObjectsInactive.Exclude)
+```
 
-`git show --check HEAD` 发现 Unity 生成 YAML 里有 6 处行尾空格。Codex 已做纯格式修复，涉及：
-
-- `kingbattle/Assets/DefaultVolumeProfile.asset.meta`
-- `kingbattle/Assets/Settings/UniversalRP.asset`
-- `kingbattle/Assets/UniversalRenderPipelineGlobalSettings.asset`
-
-修复后 `git diff --check` 通过。
-
-### 当前仍未提交且应继续排除
+本机 Unity 6 XML API 显示重载顺序是：
 
 ```text
-要求.md deletion
-.claude/
-kingbattle/.idea/
-kingbattle/ProjectSettings/MultiplayerManager.asset
-kingbattle/ProjectSettings/SceneTemplateSettings.json
-kingbattle/kingbattle.slnx
+Object.FindObjectsByType<T>(FindObjectsInactive, FindObjectsSortMode)
+Object.FindObjectsByType<T>(FindObjectsInactive)
+Object.FindObjectsByType<T>()
 ```
 
-这些不属于本轮需要入仓的 Unity 6 migration 文件。
+也就是说如果要传两个参数，顺序应是：
 
-### 下一步
+```csharp
+Object.FindObjectsByType<UnitCombat>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
+```
 
-进入 **MVP-04.6：Unity 6 obsolete warning cleanup**。
+但更重要的是：之前 Unity 6 warning 明确说 `FindObjectsSortMode` 也 obsolete，建议使用不带 `FindObjectsSortMode` 的 overload。因此本轮应该改成：
 
-目标：只清理 Unity 6 API 过时警告，不做玩法改动。
+```csharp
+Object.FindObjectsByType<UnitCombat>(FindObjectsInactive.Exclude)
+```
 
-## 给 Claude 的下一条任务
+需要修复的文件：
+
+- `Assets/Scripts/Debug/DebugShortcutController.cs`
+- `Assets/Scripts/Combat/StrategicConnectionService.cs`
+- `Assets/Scripts/Combat/StrategicDispatchService.cs`
+- `Assets/Scripts/Combat/FactionStatsService.cs`
+- `Assets/Scripts/Combat/EnemyAttackCommandService.cs`
+- `Assets/Scripts/Buildings/FactionDefeatHandler.cs`
+
+### [P2] `GameHud` 仍使用 `FindFirstObjectByType`
+
+当前代码：
+
+```csharp
+Object.FindFirstObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
+```
+
+之前 Unity 6 warning 指出 `FindFirstObjectByType` 本身已 deprecated，因为依赖 instance ID ordering。任务要求是：
+
+```text
+改成 FindAnyObjectByType<PlayerInputController>() 或更好的引用缓存。
+```
+
+建议最小修复：
+
+```csharp
+Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
+```
+
+### [P3] `TowerAttack` 注释仍写旧 API
+
+当前注释：
+
+```csharp
+/// Uses Physics2D.OverlapCircleNonAlloc for efficient enemy scanning.
+```
+
+但代码已经改为：
+
+```csharp
+Physics2D.OverlapCircle(...)
+```
+
+建议把注释改成：
+
+```csharp
+/// Uses Physics2D.OverlapCircle with a reusable buffer for enemy scanning.
+```
+
+### 当前 Editor log 状态
+
+最新 log 尾部没有发现：
+
+- `error CS`
+- `NullReferenceException`
+- `MissingReferenceException`
+- `GameStatusService does not exist`
+- `GUID could not be found`
+
+发现的非阻塞外部问题：
+
+```text
+Unity Connect / Project ID request failed: HTTP 401
+```
+
+这属于 Unity services/auth，不是当前游戏编译阻塞。
+
+## 给 Claude 的返修任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：Unity 6 迁移文件收口通过。
+Codex Review：MVP-04.6 暂不通过，需要返修。
 
-进入 MVP-04.6：Unity 6 obsolete warning cleanup。
+问题 1：FindObjectsByType 替换不正确
+- 当前用了：
+  Object.FindObjectsByType<T>(FindObjectsSortMode.None, FindObjectsInactive.Exclude)
+- Unity 6 的参数顺序是 FindObjectsInactive 在前。
+- 但为了真正消除 obsolete warning，本轮不要再使用 FindObjectsSortMode。
+- 请改为：
+  Object.FindObjectsByType<T>(FindObjectsInactive.Exclude)
 
-本轮只清理 Unity 6 API obsolete warnings，不做新玩法，不重构业务系统。
+涉及文件：
+- DebugShortcutController.cs
+- StrategicConnectionService.cs
+- StrategicDispatchService.cs
+- FactionStatsService.cs
+- EnemyAttackCommandService.cs
+- FactionDefeatHandler.cs
 
-需要处理：
-1. Physics2D.OverlapCircleNonAlloc obsolete
-   - 文件：Assets/Scripts/Buildings/TowerAttack.cs
-   - 改成 Unity 6 推荐的 Physics2D.OverlapCircle / 等价新 API。
-   - 保持 Tower 行为不变：扫描敌方 UnitCombat，按 interval 攻击。
+问题 2：GameHud 仍使用 FindFirstObjectByType
+- 当前：
+  Object.FindFirstObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
+- 请改为：
+  Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)
+- 或者轻量缓存引用，但不要重构 HUD。
 
-2. FindObjectsByType<T>(FindObjectsSortMode.None) obsolete
-   - 涉及：
-     - DebugShortcutController.cs
-     - StrategicConnectionService.cs
-     - StrategicDispatchService.cs
-     - FactionStatsService.cs
-     - EnemyAttackCommandService.cs
-     - FactionDefeatHandler.cs
-   - 改成 Unity 6 推荐 overload，例如 FindObjectsByType<T>(FindObjectsInactive.Exclude) 或项目中最合适的新 API。
-   - 不改变查询语义：仍只找当前 active scene 中的运行时对象。
-
-3. FindFirstObjectByType<T>() obsolete
-   - 文件：GameHud.cs
-   - 改成 FindAnyObjectByType<PlayerInputController>() 或更好的引用缓存。
-   - 优先小改，避免重构 HUD。
+问题 3：TowerAttack 注释仍写 OverlapCircleNonAlloc
+- 改成描述 OverlapCircle + reusable buffer。
 
 验证：
-- Unity Console 无 obsolete warnings 中上述三类。
+- rg 搜索不能再出现：
+  - FindObjectsSortMode
+  - FindFirstObjectByType
+  - OverlapCircleNonAlloc
 - Unity Console 无 error CS。
-- Play smoke test：
-  - 点击 source/target 派兵。
-  - HUD Dispatch。
-  - O。
-  - K/L/E/N。
-  - Victory 后不能继续派兵。
-- 更新 WORKLOG.md，记录每个 API 替换点和验证结果。
+- Unity Console 无上述 obsolete warnings。
+- Play smoke test：点击派兵、HUD Dispatch、O、K/L/E/N、Victory 后不能继续派兵。
+- 记录 Unity Connect 401 是外部服务/auth 问题，不作为游戏阻塞。
+- 更新 WORKLOG.md。
 
 禁止：
 - 不做新玩法。
-- 不做正式 UI。
 - 不改 ProjectSettings。
-- 不提交 .claude、.idea、kingbattle.slnx、Library、Logs、UserSettings。
-- 不提交 要求.md 删除。
+- 不提交 .claude、.idea、kingbattle.slnx、Library、Logs、UserSettings、要求.md 删除。
 
 完成后 commit / push。
 ```
