@@ -78,7 +78,7 @@ public class DebugShortcutController : MonoBehaviour
         // R = rebuild first rebuildable ruin (skips main base ruins)
         if (Input.GetKeyDown(KeyCode.R))
         {
-            var ruins = Object.FindObjectsByType<RuinComponent>(FindObjectsSortMode.None, FindObjectsInactive.Exclude);
+            var ruins = Object.FindObjectsByType<RuinComponent>(FindObjectsInactive.Exclude);
             bool rebuilt = false;
             foreach (var r in ruins)
             {
@@ -98,7 +98,7 @@ public class DebugShortcutController : MonoBehaviour
         // T = rally all Player soldiers to first main-base ruin
         if (Input.GetKeyDown(KeyCode.T))
         {
-            var ruins = Object.FindObjectsByType<RuinComponent>(FindObjectsSortMode.None, FindObjectsInactive.Exclude);
+            var ruins = Object.FindObjectsByType<RuinComponent>(FindObjectsInactive.Exclude);
             RuinComponent rallyRuin = null;
             foreach (var r in ruins)
             {
@@ -116,7 +116,7 @@ public class DebugShortcutController : MonoBehaviour
             {
                 Vector3 rallyPos = rallyRuin.transform.position;
                 int count = 0;
-                var units = Object.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None, FindObjectsInactive.Exclude);
+                var units = Object.FindObjectsByType<UnitCombat>(FindObjectsInactive.Exclude);
                 foreach (var u in units)
                 {
                     if (u.faction != Faction.Player) continue;
@@ -137,7 +137,7 @@ public class DebugShortcutController : MonoBehaviour
         // Y = print connectable neutral plots for main-base ruin
         if (Input.GetKeyDown(KeyCode.Y))
         {
-            var ruins = Object.FindObjectsByType<RuinComponent>(FindObjectsSortMode.None, FindObjectsInactive.Exclude);
+            var ruins = Object.FindObjectsByType<RuinComponent>(FindObjectsInactive.Exclude);
             bool found = false;
             foreach (var r in ruins)
             {
@@ -162,7 +162,7 @@ public class DebugShortcutController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.U))
         {
             RuinComponent rallyRuin = null;
-            foreach (var r in Object.FindObjectsByType<RuinComponent>(FindObjectsSortMode.None, FindObjectsInactive.Exclude))
+            foreach (var r in Object.FindObjectsByType<RuinComponent>(FindObjectsInactive.Exclude))
             {
                 if (r.CanUseAsRallyPoint(mapData)) { rallyRuin = r; break; }
             }

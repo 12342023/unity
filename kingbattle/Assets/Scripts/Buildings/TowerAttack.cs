@@ -6,7 +6,7 @@ namespace Buildings
 {
     /// <summary>
     /// Tower building: automatically attacks the nearest enemy unit within range.
-    /// Uses Physics2D.OverlapCircleNonAlloc for efficient enemy scanning.
+    /// Uses Physics2D.OverlapCircle with reusable ContactFilter2D and buffer for efficient enemy scanning.
     /// </summary>
     [RequireComponent(typeof(HealthComponent))]
     public class TowerAttack : MonoBehaviour

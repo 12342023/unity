@@ -102,7 +102,7 @@ public class GameHud : MonoBehaviour
         GUILayout.Label($"Bldgs: Player G:{pGran} T:{pTow} | Enemy G:{eGran} T:{eTow}");
 
         // ── Selection info (MVP-04.5) ──
-        var inputCtrl = Object.FindFirstObjectByType<PlayerInputController>(FindObjectsInactive.Exclude);
+        var inputCtrl = Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude);
         if (inputCtrl != null && inputCtrl.HasSelection)
         {
             GUILayout.Space(2);

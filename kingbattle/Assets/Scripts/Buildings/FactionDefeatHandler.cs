@@ -40,7 +40,7 @@ namespace Buildings
             }
 
             // ── Kill all surviving units of this faction ──
-            var allHealth = Object.FindObjectsByType<HealthComponent>(FindObjectsSortMode.None, FindObjectsInactive.Exclude);
+            var allHealth = Object.FindObjectsByType<HealthComponent>(FindObjectsInactive.Exclude);
             foreach (var h in allHealth)
             {
                 if (h.faction == faction && !h.IsDead && h.GetComponent<UnitCombat>() != null)

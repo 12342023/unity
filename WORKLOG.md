@@ -2010,3 +2010,41 @@ GitHub 上传状态：
 
 - compile-error-recheck docs commit: `4fab409 docs: record Unity 6 compile error recheck`
 - push: 已上传到 `origin/main`
+
+### MVP-04.6 返修：修正 Unity 6 API 参数顺序
+
+操作人：Claude
+
+**返修内容**
+
+1. `FindObjectsByType` 签名修正（12 处，7 个文件）：
+   - `Object.FindObjectsByType<T>(FindObjectsSortMode.None, FindObjectsInactive.Exclude)`
+   → `Object.FindObjectsByType<T>(FindObjectsInactive.Exclude)`
+   - Unity 6 的 overload 顺序为 `(FindObjectsInactive, FindObjectsSortMode)`，旧写法产生 CS1503。
+
+2. `GameHud.cs` 修正：
+   - `Object.FindFirstObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)`
+   → `Object.FindAnyObjectByType<PlayerInputController>(FindObjectsInactive.Exclude)`
+   - Unity 6 中 `FindFirstObjectByType` 无 `FindObjectsInactive` overload。
+
+3. `TowerAttack.cs` 注释同步：
+   - `Uses Physics2D.OverlapCircleNonAlloc` → `Uses Physics2D.OverlapCircle with reusable ContactFilter2D`
+
+**验证**
+
+```
+rg "FindObjectsSortMode|FindFirstObjectByType|OverlapCircleNonAlloc" Assets/Scripts
+→ 空结果（exit=1）
+```
+
+修改文件（8 个）：
+- `Buildings/TowerAttack.cs`
+- `Buildings/FactionDefeatHandler.cs`
+- `Combat/EnemyAttackCommandService.cs`
+- `Combat/FactionStatsService.cs`
+- `Combat/StrategicDispatchService.cs`
+- `Combat/StrategicConnectionService.cs`
+- `Debug/DebugShortcutController.cs`
+- `UI/GameHud.cs`
+
+场景文件和 ProjectSettings：均未修改

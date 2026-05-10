@@ -107,7 +107,7 @@ namespace Combat
         private static int CountSoldiersNear(Vector3 worldPos, float gatherRadius)
         {
             int count = 0;
-            foreach (var u in Object.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None, FindObjectsInactive.Exclude))
+            foreach (var u in Object.FindObjectsByType<UnitCombat>(FindObjectsInactive.Exclude))
             {
                 if (u.faction != Faction.Player) continue;
                 if (u.GetComponent<HealthComponent>().IsDead) continue;
