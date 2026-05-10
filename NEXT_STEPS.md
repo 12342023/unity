@@ -20,40 +20,40 @@
 - O 已能从第一个 Player-owned frontier plot 派兵到第一个相邻 Neutral，并触发占领。
 - O 的扩张编排已下沉到 `StrategicExpansionService`。
 - 扩张 source/target 已整理成 `ExpansionCandidate` 候选数据。
+- 占领需求数据层已完成，P 可打印 Small/Medium/Large 对应需求，O 日志可显示 dispatched / required。
 
-## 当前正式任务：MVP-03.19 占领需求数据层
+## 当前正式任务：MVP-03.20 占领需求接入
 
 目标：
 
 ```text
-按 PlotSize 查询占领所需兵力，增加 P 验证日志，并让 O 结果带需求预览；暂不改变当前 capture 行为。
+U/O 派兵数量不足目标需求时不占领，满足需求时保持现有到达占领。
 ```
 
 实现方向：
 
 ```diff
-+ 新增 PlotCaptureRequirementService 或等价服务
-+ Small/Medium/Large 返回 1/2/3 或等价清晰规则
-+ 增加 P 临时日志快捷键打印各 plot 占领需求
-+ ExpansionResult / O 日志携带 dispatched vs required 预览
++ StrategicDispatchService 支持 requiredSoldierCount
++ O 传入 target required count
++ U 传入 target required count
++ P/O/U 日志可验证需求和派兵数量
 - 不改变 K/L/R/T/Y/U/I/O 行为
 - 不做正式 UI
 - 不做自动扩张
-- 不接入实际 capture 判定
+- 不做占领进度条
 - 不做资源、升级、区域奖励、传送阵、AI
 - 不修改 ProjectSettings
 ```
 
-## MVP-03.19 后的建议顺序
+## MVP-03.20 后的建议顺序
 
-### MVP-03.20 占领规则接入
+### MVP-03.21 占领反馈批量任务
 
-占领需求数据和预览日志稳定后，再考虑：
+占领需求接入稳定后，再打包做：
 
-- 是否按 dispatchedCount 判断能否占领。
-- 是否需要停留时间或占领进度。
-- 是否允许多士兵加速。
-- 是否允许敌方反夺。
+- 占领失败时士兵巡逻/停留行为整理。
+- 占领成功/失败日志统一。
+- 为未来 UI 准备只读状态数据。
 
 ### 后续
 

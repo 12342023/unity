@@ -196,18 +196,28 @@
 
 ### MVP-03.19 占领需求数据层
 
-- 当前发布任务：按 `PlotSize` 查询占领所需兵力。
 - 用户希望后续每轮多布置一些任务，加快进度；从本轮开始默认打包 2-3 个强相关小任务。
-- 本轮批量目标：
-  - 新增 `PlotCaptureRequirementService` 或等价服务。
-  - Small / Medium / Large 返回 1 / 2 / 3 或等价清晰规则。
-  - 增加 P 临时日志快捷键打印各 plot 占领需求。
+- 已完成：
+  - 新增 `PlotCaptureRequirementService`。
+  - Small / Medium / Large 返回 1 / 2 / 3。
+  - P 快捷键打印各 plot 占领需求。
   - `ExpansionResult` / O 日志携带 dispatched vs required 预览。
-  - 暂不接入实际 capture 判定，当前到达即占领行为不变。
+  - 当前实际 capture 判定未改变。
+- Codex review 通过，并发布 MVP-03.20。
+
+### MVP-03.20 占领需求接入
+
+- 当前发布任务：把占领需求接入 U/O 实际 capture 判定。
+- 批量目标：
+  - `StrategicDispatchService.DispatchToPlot(...)` 支持 requiredSoldierCount。
+  - O 传入 target required count。
+  - U 传入 target required count。
+  - dispatchedCount 不足时到达后不占领，并打印清晰日志。
+  - P/O/U 日志可验证派兵数量和需求。
 
 ## 当前待处理状态
 
-截至 MVP-03.19 任务发布前，工作区仍存在以下未提交/未跟踪变更：
+截至 MVP-03.20 任务发布前，工作区仍存在以下未提交/未跟踪变更：
 
 ```text
 D  要求.md
@@ -222,6 +232,10 @@ D  要求.md
 ## 最近关键提交
 
 ```text
+569c321 feat: show dispatched versus required capture count
+404b86c feat: PlotCaptureRequirementService + P shortcut prints capture requirements
+6002750 docs: record expanded mvp-03.19 batch
+3fc6cb5 docs: expand mvp-03.19 task batch
 692c4a7 refactor: add ExpansionCandidate data model and GetExpansionCandidates query
 c995889 docs: record mvp-03.18 task push
 e8d5d5a docs: review mvp-03.17 and release mvp-03.18
@@ -269,10 +283,10 @@ L
 
 ## 下一步
 
-1. Claude 执行 MVP-03.19。
+1. Claude 执行 MVP-03.20。
 2. 检查 `要求.md` 删除是否合理。
 3. 继续保持 `SceneTemplateSettings.json` 未提交，除非用户明确要求处理。
-4. Claude 完成后由 Codex review，再决定是否进入 MVP-03.20。
+4. Claude 完成后由 Codex review，再决定是否进入 MVP-03.21。
 
 ## 最近上传记录
 
