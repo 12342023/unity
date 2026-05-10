@@ -179,38 +179,40 @@
 
 ### MVP-03.17 扩张编排服务
 
-- Claude 已在工作区完成但尚未经过 Codex review。
 - 目标：将 O 的 source/target/path/dispatch 编排从 `GameEntry` 下沉到 `StrategicExpansionService`。
-- 当前 Claude 记录的实现：
-  - 新增 `kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs`
-  - 新增对应 `.meta`
-  - 修改 `kingbattle/Assets/Scripts/GameEntry.cs`
-  - O 分支简化为调用 `StrategicExpansionService.ExpandNext(mapData, mapRenderer)` 并打印结果。
-- 需要下一轮 Codex review 后再决定是否通过。
+- 新增 `kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs` 与对应 `.meta`。
+- `GameEntry` 的 O 分支简化为调用 `StrategicExpansionService.ExpandNext(mapData, mapRenderer)` 并打印结果。
+- O 外部行为保持不变。
+- Codex review 通过，并发布 MVP-03.18。
+
+### MVP-03.18 连地网络规则整理
+
+- 当前发布任务：将可扩张 source/target 整理成显式候选数据。
+- 目标：
+  - 在 `StrategicConnectionService` 增加 `ExpansionCandidate` 或等价数据。
+  - 增加 `GetExpansionCandidates(MapData)` 或等价查询。
+  - `StrategicExpansionService` 改为使用第一个 candidate 派兵。
+  - O 外部行为保持不变。
 
 ## 当前待处理状态
 
-截至本次压缩前，工作区存在未提交变更：
+截至 MVP-03.18 任务发布前，工作区仍存在以下未提交/未跟踪变更：
 
 ```text
-M  WORKLOG.md
-M  kingbattle/Assets/Scripts/GameEntry.cs
 D  要求.md
-?? kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs
-?? kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs.meta
 ?? kingbattle/ProjectSettings/SceneTemplateSettings.json
 ```
 
 说明：
 
-- 本次压缩只应提交 `WORKLOG.md`。
-- `GameEntry.cs`、`StrategicExpansionService.cs`、`.meta` 属于 Claude 的 MVP-03.17 实现，待 review。
 - `要求.md` 被删除需要单独确认，不应在本次压缩中顺手提交。
 - `SceneTemplateSettings.json` 仍默认不提交。
 
 ## 最近关键提交
 
 ```text
+9979941 refactor: extract O expansion orchestration to StrategicExpansionService
+cc96991 docs: compress worklog
 a3bdb55 docs: record mvp-03.17 task push
 914a3ae docs: review mvp-03.16 and release mvp-03.17
 d76e602 feat: O shortcut dispatches from frontier plot to adjacent neutral
@@ -253,7 +255,7 @@ L
 
 ## 下一步
 
-1. Codex review Claude 的 MVP-03.17 实现。
+1. Claude 执行 MVP-03.18。
 2. 检查 `要求.md` 删除是否合理。
 3. 继续保持 `SceneTemplateSettings.json` 未提交，除非用户明确要求处理。
-4. Review 通过后更新 `REVIEW.md`、`TASK.md`、`NEXT_STEPS.md`，发布下一轮小步任务。
+4. Claude 完成后由 Codex review，再决定是否进入 MVP-03.19。
