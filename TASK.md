@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-发布 MVP-03.18：连地网络规则整理 - 显式扩张候选数据。
+发布 MVP-03.19：占领需求数据层。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,23 +11,23 @@ Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业�
 Claude 最新提交：
 
 ```text
-9979941 refactor: extract O expansion orchestration to StrategicExpansionService
+692c4a7 refactor: add ExpansionCandidate data model and GetExpansionCandidates query
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.17 代码审查通过；允许进入 MVP-03.18
+MVP-03.18 代码审查通过；允许进入 MVP-03.19
 ```
 
 ## 本轮目标
 
-不做新玩法，只整理连地扩张的数据层候选，方便后续正式 UI 和多目标选择。
+不做新玩法，只补占领需求数据层，为后续“大区块需要更多兵占领”做准备。
 
 目标：
 
 ```text
-将“可扩张 source/target”整理成显式候选数据；O 仍只选择第一个候选，外部行为不变。
+按 PlotSize 查询占领所需兵力；暂不接入实际 capture 判定。
 ```
 
 ## 当前工作区注意事项
@@ -49,6 +49,7 @@ kingbattle/ProjectSettings/SceneTemplateSettings.json
 - U 派兵与 capture handler 管理已下沉到 `StrategicDispatchService`。
 - `StrategicConnectionService` 已提供 Player-owned frontier 查询。
 - `StrategicExpansionService` 已承接 O 的扩张编排。
+- `StrategicConnectionService` 已提供 `ExpansionCandidate` 和 `GetExpansionCandidates(mapData)`。
 
 ## 文档更正
 
@@ -67,21 +68,19 @@ Village, Farmland
 
 不要把 Village 写成 Player，除非本轮代码显式改变了 `Village.faction`。
 
-## MVP-03.18 允许范围
+## MVP-03.19 允许范围
 
-- 可以在 `StrategicConnectionService` 增加小数据类型，例如 `ExpansionCandidate`：
-  - sourcePlotId。
-  - targetPlotId。
-- 可以增加方法，例如 `GetExpansionCandidates(MapData mapData)`。
-- 候选规则：
-  - source 必须是 Player-owned。
-  - source 不能是 main base。
-  - target 必须是相邻 `Faction.Neutral`。
-  - 查询不改变任何 faction。
-  - 输出顺序保持当前 plot / neighbor 遍历顺序，确保 O 行为不变。
-- `StrategicExpansionService.ExpandNext(...)` 改为使用第一个 `ExpansionCandidate`。
-- `ExpansionResult` 可以补充 `sourcePlotId`、`targetPlotId`、`dispatchedCount` 字段。
-- 保持 I 现有输出行为不变。
+- 新增 `PlotCaptureRequirementService` 或等价小服务，建议放在 `kingbattle/Assets/Scripts/Combat/`。
+- 提供方法，例如：
+  - `GetRequiredSoldierCount(PlotData plot)`。
+  - 或 `GetRequiredSoldierCount(PlotSize size)`。
+- 建议最小规则：
+  - Small = 1。
+  - Medium = 2。
+  - Large = 3。
+- 对 null plot 做安全处理。
+- 可以在 `GameEntry` 增加临时日志快捷键，例如 `P`，打印所有 plot 的 capture requirement，便于验证。
+- 新增脚本必须提交对应 `.meta`。
 - 更新 `WORKLOG.md`。
 
 ## 禁止范围
@@ -90,6 +89,7 @@ Village, Farmland
 - 不做正式派兵 UI。
 - 不做自动扩张。
 - 不做正式多目标选择策略。
+- 不把占领需求接入实际 capture 判定。
 - 不做占领进度条。
 - 不做敌方反夺。
 - 不做资源、升级、区域奖励、传送阵、AI。
@@ -105,16 +105,11 @@ Village, Farmland
 ## 验收标准
 
 - Play Mode：
-  - K -> T -> Y -> U。
-  - U 到达 Crossroads 后，Crossroads 变 Player。
-  - I 能打印 Crossroads 可连接的 Neutral，例如 Village / Farmland。
-  - O 能从 Crossroads 附近派 Player 士兵到第一个 Neutral target。
-  - O 到达后 target 从 Neutral 变 Player，并刷新颜色。
-- `StrategicConnectionService.GetExpansionCandidates(mapData)` 或等价方法返回显式 source/target 候选。
-- `StrategicExpansionService` 通过候选数据派兵，而不是直接索引 frontier 内部结构。
-- 新增查询不持有长期静态游戏状态。
-- O 不应占领 Enemy plot。
-- O 不应占领 main base plot。
+  - P 能打印每个 plot 的占领需求，例如 Small/Medium/Large 对应 1/2/3。
+  - I/O 原有行为不变。
+- 新服务可按 PlotSize 或 PlotData 返回需求值。
+- 新服务不持有长期静态游戏状态。
+- 当前 Neutral -> Player capture 行为不变。
 - I 不派兵、不占领。
 - Y / U 原有行为不变。
 - R 仍跳过大本营废墟。

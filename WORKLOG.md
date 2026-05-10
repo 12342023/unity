@@ -187,16 +187,25 @@
 
 ### MVP-03.18 连地网络规则整理
 
-- 当前发布任务：将可扩张 source/target 整理成显式候选数据。
+- 新增 `ExpansionCandidate` 数据模型。
+- 新增 `StrategicConnectionService.GetExpansionCandidates(mapData)`。
+- `StrategicExpansionService` 改为使用第一个 candidate 派兵。
+- `ExpansionResult` 补充 `sourcePlotId`、`targetPlotId`、`dispatchedCount`。
+- O/I/K/L/R/T/Y/U 行为不变。
+- Codex review 通过，并发布 MVP-03.19。
+
+### MVP-03.19 占领需求数据层
+
+- 当前发布任务：按 `PlotSize` 查询占领所需兵力。
 - 目标：
-  - 在 `StrategicConnectionService` 增加 `ExpansionCandidate` 或等价数据。
-  - 增加 `GetExpansionCandidates(MapData)` 或等价查询。
-  - `StrategicExpansionService` 改为使用第一个 candidate 派兵。
-  - O 外部行为保持不变。
+  - 新增 `PlotCaptureRequirementService` 或等价服务。
+  - Small / Medium / Large 返回 1 / 2 / 3 或等价清晰规则。
+  - 可以增加 P 临时日志快捷键打印各 plot 占领需求。
+  - 暂不接入实际 capture 判定。
 
 ## 当前待处理状态
 
-截至 MVP-03.18 任务发布前，工作区仍存在以下未提交/未跟踪变更：
+截至 MVP-03.19 任务发布前，工作区仍存在以下未提交/未跟踪变更：
 
 ```text
 D  要求.md
@@ -211,6 +220,9 @@ D  要求.md
 ## 最近关键提交
 
 ```text
+692c4a7 refactor: add ExpansionCandidate data model and GetExpansionCandidates query
+c995889 docs: record mvp-03.18 task push
+e8d5d5a docs: review mvp-03.17 and release mvp-03.18
 9979941 refactor: extract O expansion orchestration to StrategicExpansionService
 cc96991 docs: compress worklog
 a3bdb55 docs: record mvp-03.17 task push
@@ -255,10 +267,10 @@ L
 
 ## 下一步
 
-1. Claude 执行 MVP-03.18。
+1. Claude 执行 MVP-03.19。
 2. 检查 `要求.md` 删除是否合理。
 3. 继续保持 `SceneTemplateSettings.json` 未提交，除非用户明确要求处理。
-4. Claude 完成后由 Codex review，再决定是否进入 MVP-03.19。
+4. Claude 完成后由 Codex review，再决定是否进入 MVP-03.20。
 
 ## 最近上传记录
 
