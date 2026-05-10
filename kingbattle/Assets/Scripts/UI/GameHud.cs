@@ -38,6 +38,7 @@ public class GameHud : MonoBehaviour
     // Candidate list root (for clearing/recreating rows)
     private Transform candidateListParent;
     private readonly List<CandidateRowUI> candidateRows = new();
+    private bool candidatesDirty = true; // rebuild on first frame
 
     // End-panel texts
     private Text endResultText;
@@ -92,12 +93,12 @@ public class GameHud : MonoBehaviour
         // Status section
         objectiveText = CreateText(hudPanelRoot, "Objective", "Capture neutral plots → Defeat Enemy base", 14, TextAnchor.UpperLeft);
 
-        var sep1 = CreateSeparator(hudPanelRoot);
+        CreateSeparator(hudPanelRoot);
 
         enemyTimerText = CreateText(hudPanelRoot, "EnemyTimer", "", 13, TextAnchor.UpperLeft);
         actionText = CreateText(hudPanelRoot, "Action", "", 13, TextAnchor.UpperLeft);
 
-        var sep2 = CreateSeparator(hudPanelRoot);
+        CreateSeparator(hudPanelRoot);
 
         statsText = CreateText(hudPanelRoot, "Stats", "", 13, TextAnchor.UpperLeft);
 
@@ -105,7 +106,7 @@ public class GameHud : MonoBehaviour
         selectionText = CreateText(hudPanelRoot, "Selection", "", 13, TextAnchor.UpperLeft);
         selectionText.gameObject.SetActive(false);
 
-        var sep3 = CreateSeparator(hudPanelRoot);
+        CreateSeparator(hudPanelRoot);
 
         CreateText(hudPanelRoot, "CandidateHeader", "── Expansion Targets ──", 13, TextAnchor.UpperLeft);
 
@@ -150,6 +151,7 @@ public class GameHud : MonoBehaviour
     {
         if (mapData == null) return;
         cachedPreviews = StrategicConnectionService.GetExpansionPreviews(mapData);
+        candidatesDirty = true;
     }
 
     // ── Update loop ────────────────────────────────────────────────────
@@ -175,8 +177,14 @@ public class GameHud : MonoBehaviour
                 UpdateEndPanel(result);
         }
 
-        // Always update HUD content (even while end panel is shown,
-        // so stats are up-to-date when we switch back)
+        // Rebuild candidate rows only when data changed
+        if (candidatesDirty)
+        {
+            candidatesDirty = false;
+            RebuildCandidateRows();
+        }
+
+        // Always update HUD text content
         UpdateHudUI();
     }
 
@@ -242,8 +250,6 @@ public class GameHud : MonoBehaviour
             selectionText.gameObject.SetActive(false);
         }
 
-        // Candidate rows
-        RebuildCandidateRows();
     }
 
     // ── Candidate rows ─────────────────────────────────────────────────
@@ -315,16 +321,16 @@ public class GameHud : MonoBehaviour
             statusLe.minWidth = 42;
 
             // Dispatch button
-            var btnGo = new GameObject("DspBtn");
+            var btnGo = new GameObject("DispatchBtn");
             btnGo.transform.SetParent(rowGo.transform, false);
             var btn = btnGo.AddComponent<Button>();
             var btnImage = btnGo.AddComponent<Image>();
             btnImage.color = new Color(0.2f, 0.5f, 0.2f);
             btn.targetGraphic = btnImage;
 
-            var btnText = CreateLinkedText(btnGo, "Label", "Dsp", 11, TextAnchor.MiddleCenter);
+            var btnText = CreateLinkedText(btnGo, "Label", "Dispatch", 11, TextAnchor.MiddleCenter);
             var btnLe = btnGo.AddComponent<LayoutElement>();
-            btnLe.minWidth = 38;
+            btnLe.minWidth = 62;
             btnLe.minHeight = 20;
 
             // Capture by value for closure
@@ -377,6 +383,7 @@ public class GameHud : MonoBehaviour
         GameStatusService.LastActionResult = result.message;
         Debug.Log($"[GameHud] Dispatch: {result.message}");
         RefreshData();
+        candidatesDirty = true;
 
         if (result.dispatchedCount == 0)
             Debug.Log($"[GameHud] Dispatch to {targetPlotId} failed: {result.message}");

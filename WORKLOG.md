@@ -2313,3 +2313,26 @@ Canvas (Screen Space Overlay, CanvasScaler 1920x1080)
 - `Assets/Scripts/GameEntry.cs` — 调整 PlayerInputController / HUD 创建顺序
 
 场景文件和 ProjectSettings：均未修改
+
+### MVP-05.0 返修：修复 CS0815、每帧重建、按钮文案
+
+操作人：Claude
+
+**修复内容**
+
+1. CS0815 编译错误：
+   - `CreateSeparator()` 返回 `void`，但之前用了 `var sep1 = CreateSeparator(...)`
+   - 改为直接调用 `CreateSeparator(hudPanelRoot);`
+
+2. Candidate rows 不再每帧 Destroy/Recreate：
+   - 新增 `candidatesDirty` 标记
+   - `RebuildCandidateRows()` 只在该标记为 `true` 时执行
+   - `RefreshData()` 和 `HandleDispatchClick()` 设置标记
+
+3. Dispatch 按钮文案：
+   - `Dsp` → `Dispatch`
+   - 按钮宽度 `38` → `62`
+
+修改文件：仅 `Assets/Scripts/UI/GameHud.cs`
+
+场景文件和 ProjectSettings：均未修改
