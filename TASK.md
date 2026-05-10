@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-发布 MVP-03.20：占领需求接入批量任务。
+发布 MVP-03.20 修复包：占领需求判定收口。
 
 Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,24 +11,23 @@ Codex 当前仍作为 Tech Lead / Reviewer 工作，不直接大规模开发业�
 Claude 最新提交：
 
 ```text
-404b86c feat: PlotCaptureRequirementService + P shortcut prints capture requirements
-569c321 feat: show dispatched versus required capture count
+MVP-03.20 本地未提交实现
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-03.19 代码审查通过；允许进入 MVP-03.20
+MVP-03.20 暂不通过；必须修复 requirement 判定
 ```
 
 ## 本轮目标
 
-继续采用“每轮 2-3 个强相关任务”的节奏。MVP-03.20 把占领需求接入实际 U/O 捕获判定，但仍不做 UI、占领进度条、资源、升级或 AI。
+继续采用“每轮 2-3 个强相关任务”的节奏，但当前有阻塞 bug，先做修复包。
 
 目标：
 
 ```text
-U/O 派兵数量不足目标 plot 需求时，到达后不占领；满足需求时保持现有到达后占领。
+修复 U/O 派兵数量满足目标需求时仍可能无法占领的问题。
 ```
 
 ## 当前工作区注意事项
@@ -72,37 +71,32 @@ Village, Farmland
 
 不要把 Village 写成 Player，除非本轮代码显式改变了 `Village.faction`。
 
-## MVP-03.20 批量允许范围
+## MVP-03.20 修复范围
 
-任务 A：派兵服务支持 capture requirement
+任务 A：修复总派兵数判定
 
-- 在 `StrategicDispatchService.DispatchToPlot(...)` 增加可选参数，例如 `requiredSoldierCount = 1`。
-- arrival capture handler 里只有 `dispatchedCount >= requiredSoldierCount` 才调用 `PlotCaptureService.TryCapture(...)`。
-- 如果不足，打印清晰日志，例如 `Capture blocked: dispatched 1/2 to Crossroads`。
-- 必须保持 capture handler 清理逻辑不泄漏、不重复触发。
+- `StrategicDispatchService.DispatchToPlot(...)` 必须用本次最终 totalDispatched 判断是否满足 `requiredSoldierCount`。
+- 不允许使用每个士兵注册 handler 时的局部序号作为派兵总数。
+- 第一个到达的士兵触发 capture 时，应按 `totalDispatched >= requiredSoldierCount` 判定。
 
-任务 B：O 接入需求判定
+任务 B：保持 handler 生命周期
 
-- `StrategicExpansionService.ExpandNext(...)` 查询 target plot 的 required count。
-- 调用 `StrategicDispatchService.DispatchToPlot(...)` 时传入 required count。
-- `ExpansionResult` 保留或补充：
-  - dispatchedCount。
-  - requiredCount。
-  - hasEnoughDispatchedSoldiers。
-- O 日志继续显示 dispatched / required。
+- 每个 handler 到达后仍移除自身。
+- `captureConsidered` 仍防止重复 TryCapture / 重复 blocked log。
+- 重复按 U/O 时旧 handler 仍要被移除。
 
-任务 C：U 接入需求判定
+任务 C：日志和结果字段一致
 
-- `GameEntry` 的 U 分支查询 target plot 的 required count。
-- 调用 `StrategicDispatchService.DispatchToPlot(...)` 时传入 required count。
-- U 日志显示 dispatched / required。
+- blocked 日志必须显示最终 totalDispatched / requiredSoldierCount。
+- O 的 `ExpansionResult.hasEnoughDispatchedSoldiers` 必须等价于 `dispatchedCount >= requiredCount`。
+- U 日志继续显示 dispatched / required。
 
-任务 D：验证入口保持
+任务 D：Play Mode 验证
 
-- P 继续打印每个 plot 的占领需求。
-- I/O/U 现有测试入口保留。
+- 不足人数：dispatched 1/2，到达后不占领，Console 有 blocked log。
+- 足够人数：dispatched 3/2，第一个兵到达也必须占领成功。
+- 重复按 U/O 不应出现旧 handler 误触发。
 
-- 新增脚本必须提交对应 `.meta`。
 - 更新 `WORKLOG.md`。
 
 ## 禁止范围
@@ -131,6 +125,7 @@ Village, Farmland
   - U 日志显示 dispatched / required。
   - 当 dispatchedCount >= requiredCount 时，目标仍能被占领。
   - 当 dispatchedCount < requiredCount 时，目标不应被占领，并有清晰日志。
+  - 足够人数场景下，第一名士兵到达也不能错误 blocked。
 - `StrategicDispatchService` handler 清理逻辑仍正确。
 - `PlotCaptureService` 的基本规则不变。
 - I 不派兵、不占领。

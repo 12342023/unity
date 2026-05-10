@@ -22,21 +22,21 @@
 - 扩张 source/target 已整理成 `ExpansionCandidate` 候选数据。
 - 占领需求数据层已完成，P 可打印 Small/Medium/Large 对应需求，O 日志可显示 dispatched / required。
 
-## 当前正式任务：MVP-03.20 占领需求接入
+## 当前正式任务：MVP-03.20 占领需求判定修复
 
 目标：
 
 ```text
-U/O 派兵数量不足目标需求时不占领，满足需求时保持现有到达占领。
+修复 capture gate 使用局部序号导致足够派兵仍可能不占领的问题。
 ```
 
 实现方向：
 
 ```diff
-+ StrategicDispatchService 支持 requiredSoldierCount
-+ O 传入 target required count
-+ U 传入 target required count
-+ P/O/U 日志可验证需求和派兵数量
++ StrategicDispatchService 使用最终 totalDispatched 判定需求
++ handler 清理和 captureConsidered 逻辑保持正确
++ blocked 日志显示最终 dispatched/required
++ P/O/U 日志继续可验证需求和派兵数量
 - 不改变 K/L/R/T/Y/U/I/O 行为
 - 不做正式 UI
 - 不做自动扩张

@@ -2,91 +2,86 @@
 
 ## Review 状态
 
-Codex 已审查 Claude 最新提交：
+Codex 已审查 Claude 当前工作区实现：
 
 ```text
-404b86c feat: PlotCaptureRequirementService + P shortcut prints capture requirements
-569c321 feat: show dispatched versus required capture count
+MVP-03.20 本地未提交实现
 ```
 
-结论：**MVP-03.19 代码审查通过，允许进入 MVP-03.20**。
+结论：**MVP-03.20 暂不通过，需要修复 capture requirement 判定**。
 
-说明：占领需求数据层、P 验证日志、O 的 dispatched / required 预览均已完成；当前实际 capture 判定仍未改变。
+说明：Claude 已把需求值接入 U/O，但 `StrategicDispatchService` 使用了“注册 handler 时的单兵序号”来判定是否满足需求，会导致派出人数足够时仍可能被第一名到达士兵错误阻止占领。
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **FAIL**
 
 Findings:
 
 ```text
-无阻塞问题。
+[P1] 派出人数足够时仍可能无法占领。
+File: kingbattle/Assets/Scripts/Combat/StrategicDispatchService.cs
+Problem: handler 内使用 capturedCount + 1 判断需求。capturedCount 是每个士兵注册 handler 时的循环序号，不是最终 dispatchedCount。若派出 3 个兵、目标需求 2，第一名注册的士兵先到达时会按 1/2 判定失败，并设置 captureConsidered=true，后续士兵到达也不会再触发占领。
+Fix: handler 应使用本次 DispatchToPlot 的最终派出总数判断，例如 foreach 结束后确定 totalDispatched，再让所有 handler 闭包读取同一个 finalTotal / canCapture 值；或者只在 count 统计完成后注册 handler。必须保证第一次到达时用的是总派兵数，而不是当前士兵序号。
 ```
 
 ### 已确认
 
-- 新增 `kingbattle/Assets/Scripts/Combat/PlotCaptureRequirementService.cs`。
-- 新增脚本 `.meta` 已提交。
-- `GetRequiredSoldierCount(PlotSize)` 返回 Small=1、Medium=2、Large=3。
-- `GetRequiredSoldierCount(PlotData)` 对 null 返回 0。
-- `GameEntry` 新增 P 临时日志快捷键，打印每个 plot 的占领需求。
-- `StrategicExpansionService.ExpansionResult` 已补充 `requiredCount`。
-- O 日志已显示 dispatched / required 预览，例如 `Dispatched 3/2 soldiers...`。
-- 当前 `PlotCaptureService` 的到达即占领逻辑未被改变。
-- K / L / R / T / Y / U / I / O 外部行为未被改动。
-- `MapData.CreateFixedMap()` 未被改动。
+- P 快捷键和占领需求服务已存在。
+- O/U 已开始传入 required count。
+- 问题集中在 `StrategicDispatchService.DispatchToPlot(...)` 的 arrival capture gate。
 - `kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍未提交。
 
 ### 观察
 
-需求数据已经可用，下一步可以把它接入实际 U/O capture 判定。为加快进度，本轮可以打包处理：派兵服务支持需求判定、U/O 都传入需求值、日志提示不足兵力，但仍不做 UI、进度条、资源系统。
+这不是文案问题，而是核心占领判定错误。必须先修复再进入下一轮功能。
 
 ### 说明
 
-`git show --check HEAD` 本轮未发现问题。`kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍是未跟踪 Unity Editor 生成文件，不应提交。
+当前代码未提交；本轮只发布修复要求。`kingbattle/ProjectSettings/SceneTemplateSettings.json` 仍是未跟踪 Unity Editor 生成文件，不应提交。
 
 ## 给 Claude 的下一条任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-Codex Review：MVP-03.19 代码审查通过。
+Codex Review：MVP-03.20 暂不通过。
 
-进入 MVP-03.20：占领需求接入批量任务。
+进入 MVP-03.20 修复包：占领需求判定收口。
 
 背景：
-- `PlotCaptureRequirementService` 已提供 Small/Medium/Large 的需求值。
-- O 日志已能显示 dispatched / required。
-- 当前真正占领仍由 `StrategicDispatchService` 到达后直接调用 `PlotCaptureService.TryCapture(...)`。
-- 本轮开始把需求值接入实际 U/O 捕获判定。
+- 你已把 required count 传入 `StrategicDispatchService.DispatchToPlot(...)`。
+- 但当前 capture handler 用 `capturedCount + 1` 判定需求，capturedCount 是当前士兵注册时的序号，不是最终派兵总数。
+- 这会导致 dispatchedCount >= requiredCount 时仍可能占领失败。
 
 本轮目标：
-- U/O 派兵时，如果派出的 Player 士兵数量低于目标 plot 需求，则到达后不占领。
-- 如果派兵数量满足需求，则保持现有到达后占领行为。
-- 增加清晰日志，便于 Play Mode 验证。
+- 修复 requirement 判定，让 arrival handler 使用本次派出的最终总数。
+- 保持 U/O/P 行为和日志。
+- 不做新玩法。
 
 允许：
-任务 A：派兵服务支持 capture requirement
-- 在 `StrategicDispatchService.DispatchToPlot(...)` 增加可选参数，例如 `requiredSoldierCount = 1`。
-- 在注册 arrival capture handler 时，只有 `dispatchedCount >= requiredSoldierCount` 才调用 `PlotCaptureService.TryCapture(...)`。
-- 如果不足，打印清晰日志，例如 `Capture blocked: dispatched 1/2 to Crossroads`。
-- 必须保持 handler 清理逻辑不泄漏、不重复触发。
+任务 A：修复总数判定
+- `StrategicDispatchService.DispatchToPlot(...)` 必须使用最终 totalDispatched 判断是否满足 `requiredSoldierCount`。
+- 不要用每个士兵注册 handler 时的局部序号做判定。
+- 可选实现：
+  - 先收集符合条件的 units 到列表，得到 totalDispatched，再注册 handlers。
+  - 或保留循环，但让 handler 闭包读取 foreach 完成后的 `count` / finalTotal。
+- 第一个到达的士兵触发 capture 时，应按 `totalDispatched >= requiredSoldierCount` 判定。
 
-任务 B：O 接入需求判定
-- `StrategicExpansionService.ExpandNext(...)` 把目标 plot 的 required count 传给 `StrategicDispatchService.DispatchToPlot(...)`。
-- `ExpansionResult` 补充或保留：
-  - dispatchedCount
-  - requiredCount
-  - hasEnoughDispatchedSoldiers
-- O 日志继续显示 dispatched / required。
+任务 B：保持 one-shot handler 清理
+- 每个 handler 到达后仍要移除自身。
+- `captureConsidered` 仍应防止重复 TryCapture / 重复 blocked log。
+- 重复按 U/O 时旧 handler 仍要被移除。
 
-任务 C：U 接入需求判定
-- `GameEntry` 的 U 分支也查询 target plot required count，并传给 `StrategicDispatchService.DispatchToPlot(...)`。
-- U 日志显示 dispatched / required。
+任务 C：日志和结果字段一致
+- blocked 日志必须显示最终 `totalDispatched/requiredSoldierCount`。
+- O 的 `ExpansionResult.hasEnoughDispatchedSoldiers` 必须等价于 `dispatchedCount >= requiredCount`。
+- U 日志继续显示 dispatched / required。
 
-任务 D：验证日志
-- P 继续可打印每个 plot 的需求。
-- I/O/U 现有测试入口保留。
+任务 D：Play Mode 反向验证
+- 不足人数：例如 dispatched 1/2，到达后不占领，Console 有 blocked log。
+- 足够人数：例如 dispatched 3/2，第一个兵到达也必须占领成功。
+- 重复按 U/O 不应出现旧 handler 误触发。
 - 更新 WORKLOG.md。
 
 必须保持：
@@ -106,5 +101,5 @@ Codex Review：MVP-03.19 代码审查通过。
 - 不重构 UnitCombat。
 - 不重构无关建筑/移动/战斗代码。
 
-完成后更新 WORKLOG.md，说明 A/B/C/D 完成情况、修改文件、P/U/O Play Mode 验证结果、是否新增 .meta、是否修改 ProjectSettings，并 commit / push。
+完成后更新 WORKLOG.md，说明 A/B/C/D 修复情况、修改文件、P/U/O Play Mode 验证结果、是否新增 .meta、是否修改 ProjectSettings，并 commit / push。
 ```

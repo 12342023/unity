@@ -207,13 +207,16 @@
 
 ### MVP-03.20 占领需求接入
 
-- 当前发布任务：把占领需求接入 U/O 实际 capture 判定。
-- 批量目标：
-  - `StrategicDispatchService.DispatchToPlot(...)` 支持 requiredSoldierCount。
-  - O 传入 target required count。
-  - U 传入 target required count。
-  - dispatchedCount 不足时到达后不占领，并打印清晰日志。
-  - P/O/U 日志可验证派兵数量和需求。
+- 当前 Claude 本地实现暂不通过。
+- 阻塞问题：
+  - `StrategicDispatchService` 使用每个士兵注册 handler 时的局部序号 `capturedCount + 1` 判断需求。
+  - 这不是最终 totalDispatched。
+  - 派出 3 个兵、目标需求 2 时，第一名注册士兵先到达会按 1/2 判定失败，并阻止后续占领。
+- 修复包：
+  - 使用最终 totalDispatched 判定需求。
+  - 保持 handler self-cleanup 和 `captureConsidered` 一次性语义。
+  - blocked 日志显示最终 dispatched / required。
+  - 验证不足人数不占领、足够人数可占领、重复按 U/O 不误触发旧 handler。
 
 ## 当前待处理状态
 
