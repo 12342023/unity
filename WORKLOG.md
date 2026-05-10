@@ -758,4 +758,15 @@ f82cbd7 feat: expansion previews with live soldier count
 - 临时 HUD 显示目标、候选数量、最近结果、胜负状态。
 - 保留 Q/O/U/P 验证能力。
 
-GitHub 上传状态：待本次 docs commit / push。
+GitHub 上传状态：
+
+```text
+e928142 docs: accelerate roadmap for four-week game target
+```
+
+推送结果：
+
+```text
+To https://github.com/12342023/unity.git
+   f82cbd7..e928142  main -> main
+```
