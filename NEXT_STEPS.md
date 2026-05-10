@@ -5,64 +5,55 @@
 项目目标：
 
 ```text
-4 周左右完成一个完整 Unity 小游戏；本阶段不实际开发微信小程序、macOS、Android 移植版本，但继续保持后续移植边界。
+4 周左右完成一个完整 Unity 小游戏；当前用户使用 Unity 6。
 ```
 
-当前进度判断：
+当前优先级：
 
-- 技术底座：约 88%。
-- 核心玩法闭环：约 84%。
-- 完整游戏体验：约 74%-78%。
+```text
+先让 Unity 6 编译通过，再继续玩法/交付清理。
+```
 
-说明：MVP-04.5 功能方向正确，但当前提交有编译阻塞，需要先返修。
+## 当前阻塞
 
-## 已完成方向
+- `GameStatusService.cs.meta` GUID 无效，Unity 忽略 `GameStatusService.cs`。
+- 大量 `GameStatusService does not exist` 是连锁错误。
+- ShaderGraph package 在 `Library/PackageCache` 下报 `GUID could not be found`，疑似 package cache/package version 问题。
 
-- 建筑摧毁、废墟、重建基础。
-- 大本营废墟聚兵。
-- 敌方大本营被击败后的敌方清场。
-- 士兵生成、移动、巡逻、聚兵、派兵。
-- Neutral plot 占领主路径。
-- HUD 候选按钮派兵。
-- O 与 HUD Dispatch 复用 command 服务。
-- 敌方定时进攻压力。
-- PlayerVictory / PlayerDefeat 最小胜负状态。
-- supply cap：base 8，每个 Granary +4。
-- Barracks / Tower / Granary 都已有最小作用。
-- Victory/Defeat 结束面板 + 最终统计。
-- match ended 后 gameplay command 统一拒绝。
-- `BALANCE.md` 数值调优文档。
-- `GameBalanceConfig` 轻量配置收口。
-- 地图点击 source/target 派兵 + 高亮已实现，但需先修编译。
-- Debug 快捷键集中到 `DebugShortcutController`，但需回归验证。
-
-## 当前正式任务：MVP-04.5 返修
+## 当前正式任务：Unity 6 编译返修
 
 目标：
 
 ```text
-修复 GameEntry 缺少 Units namespace 的编译问题，并重新验证 MVP-04.5。
+修复 meta/package 导致的 Unity 6 编译阻塞。
 ```
 
 实现方向：
 
 ```diff
-+ GameEntry.cs 补 using Units;
-+ Unity Console 编译错误清零
-+ 重新跑点击派兵 / HUD / O / debug 快捷键回归
-+ WORKLOG.md 记录修复和验证
-- 不做新功能
-- 不修改 ProjectSettings
++ 修复 GameStatusService.cs.meta 的 32 位 GUID
++ 重新导入 Unity，确认 GameStatusService 连锁错误消失
++ 如 ShaderGraph package 仍报错，再处理 PackageCache/Package Manager
++ 记录 Unity 6 obsolete warnings
+- 不做新玩法
+- 不提交 Library / Logs / UserSettings
+- 不提交 ProjectSettings，除非明确确认
 ```
 
-## 返修后建议顺序
+## 编译通过后建议顺序
 
-### MVP-04.6 交付前清理
+### MVP-04.5 Review 恢复
 
-- 清理或集中临时日志。
-- 隐藏 debug 快捷键入口，保留 debug-only controller。
-- 检查 `TestUnitSpawner` 是否还需要保留。
-- 检查不提交 `Library/`、`Logs/`、`UserSettings/`、非必要 `ProjectSettings`。
+- 重新 review 点击派兵、高亮、debug 快捷键集中。
+- 确认 `71311bc fix: add missing using Units; in GameEntry.cs` 后没有新增阻塞。
+
+### MVP-04.6 Unity 6 cleanup
+
+- 清理 Unity 6 obsolete warnings：
+  - `FindObjectsByType<T>(FindObjectsSortMode)`。
+  - `FindFirstObjectByType<T>()`。
+  - `Physics2D.OverlapCircleNonAlloc`。
+- 仍要保持小步提交，不做玩法重构。
 
 ### MVP-05.0 最小正式 UI
 
@@ -71,7 +62,7 @@
 
 ## Play Mode 回归清单
 
-- Unity Console 无编译错误。
+- Unity Console 无 P1 编译错误。
 - Play 初始 HUD 显示目标、候选、人口、敌方压力。
 - 鼠标点击 Player-owned source 后高亮为蓝色，valid target 高亮为黄色。
 - 鼠标点击黄色 target 后派兵。
@@ -91,7 +82,7 @@
 
 ## 交付前剩余风险
 
-- 当前先修编译阻塞。
+- Unity 6 package/cache 状态还未收口。
 - 正式 UI 还没做，目前仍是 debug OnGUI。
 - `TestUnitSpawner` 的 1-4 测试输入后续需要清理或标记 debug-only。
 - 移植还没开始，但边界需要持续保持。
@@ -102,4 +93,3 @@
 - 现在不做移植实现，但后续仍可能做微信小程序、macOS、Android，因此业务逻辑边界必须持续清楚。
 - 平台能力不要散落在建筑、战斗、移动脚本中。
 - 输入层只负责发命令；未来触摸、鼠标、键盘应该能替换适配。
-- 当前最重要的是“可玩闭环优先”，但不能用平台耦合换速度。

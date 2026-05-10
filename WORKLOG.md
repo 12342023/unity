@@ -1620,6 +1620,76 @@ GitHub 上传状态：
 - review/fix-task commit: `875fdcc docs: review mvp-04.5 and request compile fix`
 - push: 已上传到 `origin/main`
 
+### Unity 6 编译错误整理：发布返修任务
+
+操作人：Codex
+
+当前 Unity 版本：
+
+```text
+Unity 6000.4.6f1
+```
+
+读取日志：
+
+```text
+/Users/jianghao/Library/Logs/Unity/Editor.log
+```
+
+结论：当前阻塞主要是 Unity 6 导入/编译问题，不是玩法逻辑问题。
+
+错误 1：`GameStatusService.cs.meta` GUID 无效
+
+```text
+Assets/Scripts/Combat/GameStatusService.cs.meta
+guid: bcdef23456789012345678901234567890
+```
+
+- 当前 guid 长度为 34，不是 Unity 要求的 32 位 hex。
+- Unity 忽略 `GameStatusService.cs`。
+- 因此产生大量 `GameStatusService does not exist` 连锁错误。
+
+代表性连锁错误：
+
+- `PlayerInputController.cs`
+- `StrategicExpansionService.cs`
+- `FactionDefeatHandler.cs`
+- `StrategicExpansionCommandService.cs`
+- `EnemyAttackCommandService.cs`
+- `EnemyPressureController.cs`
+- `DebugShortcutController.cs`
+- `GameEntry.cs`
+- `GameHud.cs`
+- `StrategicDispatchService.cs`
+
+错误 2：ShaderGraph package `GUID` 类型缺失
+
+```text
+Library/PackageCache/com.unity.shadergraph... BuiltInCanvasSubTarget.cs: GUID could not be found
+Library/PackageCache/com.unity.shadergraph... TargetSetupContext.cs: GUID could not be found
+```
+
+判断：package cache 或 package version 与 Unity 6000.4.6f1 不匹配。先修 meta，再看是否仍存在。
+
+Unity 6 warnings：
+
+- `Physics2D.OverlapCircleNonAlloc` obsolete。
+- `FindObjectsByType<T>(FindObjectsSortMode)` obsolete。
+- `FindFirstObjectByType<T>()` obsolete。
+
+新发布任务：Unity 6 编译返修。
+
+要求：
+
+- 修复 `GameStatusService.cs.meta` GUID。
+- 重新导入 Unity，确认 `GameStatusService does not exist` 消失。
+- 如 ShaderGraph package 错误仍存在，再处理 PackageCache/Package Manager。
+- 记录但本轮不大范围修 obsolete warnings。
+- 不提交 `Library/`、`Logs/`、`UserSettings/`、`.idea/`、`.claude/`。
+- 不提交 `ProjectSettings`，除非 Codex/用户明确确认 Unity 6 迁移文件可以入仓。
+
+GitHub 上传状态：待本次 Unity 6 error task commit / push。
+
 ### MVP-04.5 返修：修复 GameEntry 编译错误
 
 操作人：Claude
