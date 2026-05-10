@@ -10,11 +10,13 @@
 
 当前进度判断：
 
-- 技术底座：约 90%。
-- 核心玩法闭环：约 87%。
-- 完整游戏体验：约 78%-82%。
+- 技术底座：约 88%。
+- 核心玩法闭环：约 84%。
+- 完整游戏体验：约 74%-78%。
 
-已经完成：
+说明：MVP-04.5 功能方向正确，但当前提交有编译阻塞，需要先返修。
+
+## 已完成方向
 
 - 建筑摧毁、废墟、重建基础。
 - 大本营废墟聚兵。
@@ -24,48 +26,38 @@
 - HUD 候选按钮派兵。
 - O 与 HUD Dispatch 复用 command 服务。
 - 敌方定时进攻压力。
-- E debug 快捷键触发敌方进攻。
 - PlayerVictory / PlayerDefeat 最小胜负状态。
 - supply cap：base 8，每个 Granary +4。
 - Barracks / Tower / Granary 都已有最小作用。
 - Victory/Defeat 结束面板 + 最终统计。
 - match ended 后 gameplay command 统一拒绝。
-- N debug 快捷键 / Restart 按钮重启。
-- Play Mode 回归清单。
 - `BALANCE.md` 数值调优文档。
 - `GameBalanceConfig` 轻量配置收口。
-- 地图点击 source/target 派兵 + 高亮。
-- HUD Dispatch / O / 点击派兵统一 command 路径。
-- Debug 快捷键集中到 DebugShortcutController。
-- `GameEntry` 大幅精简。
+- 地图点击 source/target 派兵 + 高亮已实现，但需先修编译。
+- Debug 快捷键集中到 `DebugShortcutController`，但需回归验证。
 
-## 当前缺失
-
-- `TestUnitSpawner` 的 1-4 测试输入仍保留（标记为后续 debug-only 清理）。
-- 正式 UI 还没做。
-- 移植还没开始。
-
-## 当前正式任务：MVP-04.6 交付前清理
+## 当前正式任务：MVP-04.5 返修
 
 目标：
 
 ```text
-清理临时日志，隐藏或集中 debug 快捷键，完成交付前最后检查。
+修复 GameEntry 缺少 Units namespace 的编译问题，并重新验证 MVP-04.5。
 ```
 
 实现方向：
 
 ```diff
-+ 清理或集中临时日志
-+ Debug 快捷键标记 debug-only
-+ 检查 TestUnitSpawner 是否还需要保留
-+ 检查不提交项目生成目录
-- 不做新玩法系统
-- 不做正式 UI 美术
++ GameEntry.cs 补 using Units;
++ Unity Console 编译错误清零
++ 重新跑点击派兵 / HUD / O / debug 快捷键回归
++ WORKLOG.md 记录修复和验证
+- 不做新功能
 - 不修改 ProjectSettings
 ```
 
-## MVP-04.6 后的建议顺序
+## 返修后建议顺序
+
+### MVP-04.6 交付前清理
 
 - 清理或集中临时日志。
 - 隐藏 debug 快捷键入口，保留 debug-only controller。
@@ -79,6 +71,7 @@
 
 ## Play Mode 回归清单
 
+- Unity Console 无编译错误。
 - Play 初始 HUD 显示目标、候选、人口、敌方压力。
 - 鼠标点击 Player-owned source 后高亮为蓝色，valid target 高亮为黄色。
 - 鼠标点击黄色 target 后派兵。
@@ -98,8 +91,8 @@
 
 ## 交付前剩余风险
 
+- 当前先修编译阻塞。
 - 正式 UI 还没做，目前仍是 debug OnGUI。
-- Debug 快捷键需要集中到 debug-only controller。
 - `TestUnitSpawner` 的 1-4 测试输入后续需要清理或标记 debug-only。
 - 移植还没开始，但边界需要持续保持。
 - `ProjectSettings`、`.idea/`、`.claude/`、Unity 生成目录不能随便提交。

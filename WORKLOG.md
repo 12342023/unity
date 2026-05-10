@@ -1572,3 +1572,47 @@ Play Mode 验证：
 6. Victory/Defeat 后点击和 O/HUD 都不再派兵
 7. K/L/E/N/R/T/Y/U/I/O/P/Q 行为无回归
 8. Console 无明显错误
+
+### MVP-04.5 Codex Review：暂不通过，发布返修任务
+
+操作人：Codex
+
+审查提交：
+
+```text
+a5bfe8a feat: click-to-dispatch map input, plot highlighting, debug shortcut consolidation
+```
+
+结论：MVP-04.5 暂不通过。
+
+阻塞问题：
+
+- `GameEntry.cs` 创建 `TestUnitSpawner`。
+- `TestUnitSpawner` 位于 `namespace Units`。
+- 当前 `GameEntry.cs` 缺少 `using Units;`。
+- 预期 Unity 编译错误：`The type or namespace name 'TestUnitSpawner' could not be found`。
+
+建议最小修复：
+
+```diff
+ using Map;
++using Units;
+ using UnityEngine;
+```
+
+已确认的非阻塞部分：
+
+- `PlayerInputController` 边界基本正确，只发 command。
+- `MapRenderer` 高亮不改变 `PlotData.faction`。
+- HUD Dispatch、O、点击派兵都调用 `StrategicExpansionCommandService.DispatchCandidate(...)`。
+- K/L/E/N/R/T/Y/U/I/O/P/Q 已集中到 `DebugShortcutController`。
+- 本轮未提交 `kingbattle/ProjectSettings/SceneTemplateSettings.json`。
+
+返修要求：
+
+- 修复编译。
+- 重新跑 MVP-04.5 点击派兵 / HUD / O / debug 快捷键回归。
+- 更新 `WORKLOG.md`。
+- 不做新功能。
+
+GitHub 上传状态：待本次 review/fix-task commit / push。
