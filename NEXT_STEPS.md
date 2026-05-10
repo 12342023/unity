@@ -11,41 +11,41 @@
 当前优先级：
 
 ```text
-先让 Unity 6 编译通过，再继续玩法/交付清理。
+先把 Unity 6 迁移文件边界收口，再继续玩法/交付清理。
 ```
 
-## 当前阻塞
+## 当前状态
 
-- `GameStatusService.cs.meta` GUID 无效，Unity 忽略 `GameStatusService.cs`。
-- 大量 `GameStatusService does not exist` 是连锁错误。
-- ShaderGraph package 在 `Library/PackageCache` 下报 `GUID could not be found`，疑似 package cache/package version 问题。
+- `GameStatusService.cs.meta` GUID 已修复。
+- Unity 6 P1 编译阻塞已解除。
+- Editor log 尾部已进入正常 gameplay / Victory 日志。
+- 工作区仍有 Unity 6 自动改出的 Packages / URP / ProjectSettings / asset 文件。
 
-## 当前正式任务：Unity 6 编译返修
+## 当前正式任务：Unity 6 迁移文件收口
 
 目标：
 
 ```text
-修复 meta/package 导致的 Unity 6 编译阻塞。
+判断哪些 Unity 6 迁移文件必须提交，哪些必须排除，避免把 IDE/生成文件或无关 ProjectSettings 混入仓库。
 ```
 
 实现方向：
 
 ```diff
-+ 修复 GameStatusService.cs.meta 的 32 位 GUID
-+ 重新导入 Unity，确认 GameStatusService 连锁错误消失
-+ 如 ShaderGraph package 仍报错，再处理 PackageCache/Package Manager
-+ 记录 Unity 6 obsolete warnings
++ 分类当前未提交 Unity 6 文件
++ 解释 Packages / URP / ProjectSettings 迁移原因
++ 只提交必要文件
++ 不提交 .claude / .idea / slnx / Library / Logs / UserSettings
 - 不做新玩法
-- 不提交 Library / Logs / UserSettings
-- 不提交 ProjectSettings，除非明确确认
+- 不盲目提交所有 ProjectSettings
 ```
 
-## 编译通过后建议顺序
+## 收口后建议顺序
 
 ### MVP-04.5 Review 恢复
 
 - 重新 review 点击派兵、高亮、debug 快捷键集中。
-- 确认 `71311bc fix: add missing using Units; in GameEntry.cs` 后没有新增阻塞。
+- 确认 Unity 6 下 smoke test 通过。
 
 ### MVP-04.6 Unity 6 cleanup
 
@@ -82,9 +82,10 @@
 
 ## 交付前剩余风险
 
-- Unity 6 package/cache 状态还未收口。
+- Unity 6 migration 文件尚未决定提交范围。
 - 正式 UI 还没做，目前仍是 debug OnGUI。
 - `TestUnitSpawner` 的 1-4 测试输入后续需要清理或标记 debug-only。
+- Unity 6 obsolete warnings 尚未清理。
 - 移植还没开始，但边界需要持续保持。
 - `ProjectSettings`、`.idea/`、`.claude/`、Unity 生成目录不能随便提交。
 

@@ -1746,3 +1746,42 @@ Unity 要求 .meta 的 guid 字段必须是 32 位十六进制（匹配 `System.
 - ShaderGraph package 错误需要重新导入 Unity 后再判断是否还存在
 - Unity 6 obsolete warnings 本轮不处理
 - 不提交 Library/、Logs/、UserSettings/
+
+### Unity 6 GUID 返修 Codex Review：通过并发布迁移文件收口
+
+操作人：Codex
+
+审查提交：
+
+```text
+6232f7a fix: GameStatusService.cs.meta GUID length 34 -> 32 hex chars
+```
+
+结论：Unity 6 P1 编译阻塞已通过。
+
+已确认：
+
+- `GameStatusService.cs.meta` GUID 已修为 32 位。
+- 扫描 `Assets/Scripts/**/*.meta`，未发现其他非 32 位 GUID。
+- `git show --check HEAD` 无 whitespace 问题。
+- 最新 Editor log 尾部没有 `GameStatusService does not exist`。
+- 最新 Editor log 尾部没有 ShaderGraph `GUID could not be found`。
+- 最新 Editor log 尾部没有 `error CS`。
+- Editor log 已出现实际 gameplay / Victory 日志。
+
+当前未收口：
+
+- Unity 6 自动改出了 Packages / URP / ProjectSettings / asset 文件。
+- 这些文件可能是 Unity 6 迁移必需，但不能盲目全部提交。
+
+新发布任务：Unity 6 迁移文件收口。
+
+任务范围：
+
+- 分类当前未提交文件。
+- 解释哪些 Unity 6 migration 文件必须提交。
+- 明确哪些文件不能提交。
+- 如需提交 ProjectSettings，必须说明原因。
+- 不做新玩法。
+
+GitHub 上传状态：待本次 review/migration-task commit / push。
