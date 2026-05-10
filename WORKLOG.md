@@ -497,6 +497,56 @@ git commit -m "feat: DispatchResult structured data, unified capture logs"
 git push origin main
 ```
 
+### MVP-03.22 扩张预览与可派兵统计批量任务
+
+操作人：Claude
+
+已完成 5 项要求：
+
+**1. 只读可派兵统计**
+`StrategicConnectionService` 中新增 `CountSoldiersNear(Vector3, float)` — 统计某个位置附近空闲 Player 士兵数量
+
+**2. ExpansionPreview / GetExpansionPreviews**
+- `ExpansionPreview` 类：sourcePlotId, targetPlotId, requiredCount, availableCount, hasEnough (computed)
+- `GetExpansionPreviews(MapData, gatherRadius=5)` — 每个 candidate 附带实时可派兵数
+
+**3. Q 快捷键**
+GameEntry 新增 Q 键，打印全部扩张候选预览：
+```
+Crossroads → Village: avail=3, req=1, enough=True
+Crossroads → Farmland: avail=3, req=1, enough=True
+```
+
+**4. 修正过期注释**
+`StrategicExpansionService.cs` 中 `"preview only — does not affect capture logic"` → `"used to gate DispatchToPlot"`
+
+**5. WORKLOG 已更新**
+
+修改文件（3 个）：
+- `Assets/Scripts/Combat/StrategicConnectionService.cs` — ExpansionPreview + CountSoldiersNear + GetExpansionPreviews
+- `Assets/Scripts/Combat/StrategicExpansionService.cs` — 修正注释
+- `Assets/Scripts/GameEntry.cs` — 新增 Q 快捷键
+
+Play Mode 验证：
+1. **P** — plot 需求打印不变
+2. **Q** — 显示每个扩张候选的 available / required / enough
+3. **U** — dispatched N/M 日志，不足 blocked / 足够占领
+4. **O** — 同上，从 frontier plot 派兵
+5. Console 无错误
+
+场景文件和 ProjectSettings：均未修改
+
+手动 git 推送：
+```sh
+cd /Users/jianghao/unity
+git add kingbattle/Assets/Scripts/Combat/StrategicConnectionService.cs \
+        kingbattle/Assets/Scripts/Combat/StrategicExpansionService.cs \
+        kingbattle/Assets/Scripts/GameEntry.cs \
+        WORKLOG.md TASK.md
+git commit -m "feat: expansion previews with live soldier count, Q shortcut"
+git push origin main
+```
+
 修改 2 个文件：
 - `Assets/Scripts/Combat/StrategicConnectionService.cs` — 新增：
   - `ExpansionCandidate` 类（sourcePlotId, targetPlotId）

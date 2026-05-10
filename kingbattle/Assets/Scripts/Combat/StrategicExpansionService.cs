@@ -60,7 +60,7 @@ namespace Combat
             Vector3 sourcePos = mapData.GetPlot(candidate.sourcePlotId).worldPosition;
             sourcePos.z = -0.2f;
 
-            // Query the requirement (preview only — does not affect capture logic)
+            // Query the requirement (used to gate DispatchToPlot)
             var targetPlot = mapData.GetPlot(candidate.targetPlotId);
             int required = PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot);
 

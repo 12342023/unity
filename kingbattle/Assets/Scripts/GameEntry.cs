@@ -236,7 +236,7 @@ public class GameEntry : MonoBehaviour
             Debug.Log($"[GameEntry] Test shortcut O: {result.message}");
         }
 
-        // P = print all plots with their capture requirement (MVP-03.19)
+        // P = print capture requirements per plot (MVP-03.19)
         if (Input.GetKeyDown(KeyCode.P) && mapData != null)
         {
             Debug.Log("[GameEntry] Test shortcut P: capture requirements:");
@@ -244,6 +244,24 @@ public class GameEntry : MonoBehaviour
             {
                 int req = PlotCaptureRequirementService.GetRequiredSoldierCount(plot);
                 Debug.Log($"  {plot.plotId} ({plot.size}, {plot.faction}) → requires {req} soldier(s)");
+            }
+        }
+
+        // Q = print all expansion previews (MVP-03.22)
+        if (Input.GetKeyDown(KeyCode.Q) && mapData != null)
+        {
+            var previews = StrategicConnectionService.GetExpansionPreviews(mapData);
+            if (previews.Count == 0)
+            {
+                Debug.Log("[GameEntry] Test shortcut Q: no expansion previews.");
+            }
+            else
+            {
+                Debug.Log("[GameEntry] Test shortcut Q: expansion previews:");
+                foreach (var p in previews)
+                {
+                    Debug.Log($"  {p.sourcePlotId} → {p.targetPlotId}: avail={p.availableCount}, req={p.requiredCount}, enough={p.hasEnough}");
+                }
             }
         }
     }

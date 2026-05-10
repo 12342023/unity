@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Core;
 using Map;
+using Units;
+using UnityEngine;
 
 namespace Combat
 {
@@ -85,6 +87,61 @@ namespace Combat
                 }
             }
             return candidates;
+        }
+
+        // ── Expansion previews ──────────────────────────────────────
+
+        /// <summary>A live preview of an expansion move, including
+        /// the current available soldier count near the source plot.</summary>
+        public class ExpansionPreview
+        {
+            public string sourcePlotId;
+            public string targetPlotId;
+            public int requiredCount;
+            public int availableCount;
+            public bool hasEnough => availableCount >= requiredCount;
+        }
+
+        /// <summary>Count non-dead Player soldiers within
+        /// <paramref name="gatherRadius"/> of the given world position.</summary>
+        private static int CountSoldiersNear(Vector3 worldPos, float gatherRadius)
+        {
+            int count = 0;
+            foreach (var u in GameObject.FindObjectsByType<UnitCombat>(FindObjectsSortMode.None))
+            {
+                if (u.faction != Faction.Player) continue;
+                if (u.GetComponent<HealthComponent>().IsDead) continue;
+                if (Vector3.Distance(u.transform.position, worldPos) <= gatherRadius)
+                    count++;
+            }
+            return count;
+        }
+
+        /// <summary>Returns all expansion previews — each candidate paired
+        /// with its current available soldier count and requirement.</summary>
+        public static List<ExpansionPreview> GetExpansionPreviews(MapData mapData, float gatherRadius = 5f)
+        {
+            var previews = new List<ExpansionPreview>();
+            var candidates = GetExpansionCandidates(mapData);
+            foreach (var c in candidates)
+            {
+                var sourcePlot = mapData.GetPlot(c.sourcePlotId);
+                var targetPlot = mapData.GetPlot(c.targetPlotId);
+                if (sourcePlot == null || targetPlot == null) continue;
+
+                Vector3 sourcePos = new Vector3(sourcePlot.worldPosition.x, sourcePlot.worldPosition.y, -0.2f);
+                int available = CountSoldiersNear(sourcePos, gatherRadius);
+                int required = PlotCaptureRequirementService.GetRequiredSoldierCount(targetPlot);
+
+                previews.Add(new ExpansionPreview
+                {
+                    sourcePlotId = c.sourcePlotId,
+                    targetPlotId = c.targetPlotId,
+                    requiredCount = required,
+                    availableCount = available
+                });
+            }
+            return previews;
         }
     }
 }
