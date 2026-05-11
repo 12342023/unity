@@ -77,6 +77,25 @@ TEMP
 
 这些只能用于 Play 定位，不允许进入正式提交。
 
+## 探针验证结论
+
+Codex 已临时把 Claude worktree 中带探针的 `GameHud.cs` 同步到当前 Unity 主工程进行 Play 验证，验证后已恢复主工程文件，未提交临时改动。
+
+结果：
+
+```text
+绿色 HUD TEXT TEST：可见
+红色 NULL FONT TEST：未看到
+```
+
+结论：
+
+- Canvas + UnityEngine.UI.Text 渲染链路正常。
+- `LegacyRuntime.ttf` 字体正常。
+- 当前问题不是字体问题。
+- 当前问题在 HUD panel/layout 子树。
+- 下一步应删除探针，修 HUD panel 内 Text 的 RectTransform/LayoutGroup/层级，不要再排查字体。
+
 ## 给 Claude 的返修任务
 
 ```text
@@ -84,13 +103,10 @@ TEMP
 
 MVP-05.1 仍暂不通过。面板可见，但 Text 内容不可见。
 
-任务 1：做 Text 可见性探针
-- 在 GameHudCanvas 下临时创建固定 RectTransform 的白色 Text，显示 HUD TEXT TEST。
-- Play 验证它是否可见。
-- 如果可见，说明 Canvas/font 没问题，修 HUD panel/layout 子树。
-- 如果不可见，优先修 Canvas/Text/font 渲染链路。
-- 最终提交不要保留测试文字。
-- Claude 当前 WIP 已经加了探针；请继续 Play 验证，并在正式提交前删除全部探针代码。
+任务 1：删除探针并记录结论
+- 删除 TestProbe / TestProbe2 / HUD TEXT TEST / NULL FONT TEST / TEMP 注释。
+- 在 WORKLOG.md 记录：绿色 HUD TEXT TEST 可见，红色 NULL FONT TEST 未看到。
+- 结论：LegacyRuntime.ttf 可用，问题在 HUD panel/layout 子树。
 
 任务 2：修复正式 HUD Text
 - 显式设置 Text RectTransform 尺寸。
@@ -98,6 +114,7 @@ MVP-05.1 仍暂不通过。面板可见，但 Text 内容不可见。
 - 确保 Objective、stats、candidate rows、Dispatch 按钮肉眼可读。
 - 避免同一个对象重复添加 LayoutElement。
 - 不要只继续改 CanvasScaler 或继续加字体。
+- 可以先用固定 anchoredPosition/sizeDelta 的简单 HUD layout 恢复可读性，不要求继续保留当前 VerticalLayoutGroup 方案。
 
 任务 3：保持 UI / gameplay 边界
 - 不改玩法 service。

@@ -14,7 +14,7 @@
 - MVP-05.0 最小正式 UI 已通过二次返修。
 - Canvas/uGUI HUD runtime 初始化问题已修复。
 - MVP-05.1 正在三次返修：脚本无错误，HUD 面板可见，但 Text 内容仍不可见。
-- Claude 当前停在未提交 WIP：`GameHud.cs` 已加 Text 探针，但尚未 Play 验证、尚未删除测试探针、尚未提交。
+- Claude 当前停在未提交 WIP：`GameHud.cs` 已加 Text 探针，Codex 已完成 Play 验证，尚未删除测试探针、尚未修正式 HUD、尚未提交。
 
 ## 当前正式任务：MVP-05.1 Text 渲染定位与修复
 
@@ -26,12 +26,13 @@
 
 任务：
 
-- 临时创建固定位置 `HUD TEXT TEST` 探针，定位 Canvas/font 还是 panel/layout 问题。
-- 当前 WIP 已有 `TestProbe` / `NULL FONT TEST`，下一步是 Play 验证并删除探针，不是继续添加探针。
+- 删除 `TestProbe` / `NULL FONT TEST` 探针。
+- 记录探针结论：绿色 `HUD TEXT TEST` 可见，红色 `NULL FONT TEST` 未看到，问题在 HUD panel/layout 子树。
 - 检查 `CreateText(...)` / `CreateLinkedText(...)` 的 RectTransform 与 LayoutElement。
 - 给主要 Text 和 candidate row 设置合理高度。
 - 避免同一对象重复添加 `LayoutElement`。
 - 确保 Objective、stats、candidate rows、Dispatch 按钮可读。
+- 可先用固定 anchoredPosition/sizeDelta 的简单 HUD layout 恢复可读性。
 - 保留已做的 LastAction / selection / enemy timer 短文案。
 - 保持 candidate rows 触发式刷新，不回到每帧 Destroy/Recreate。
 - 保持 UI 只读状态并调用 command service。

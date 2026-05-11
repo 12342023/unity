@@ -2823,3 +2823,48 @@ GitHub 上传状态：
 review-docs commit: docs: record stalled text probe task
 push: 已上传到 origin/main
 ```
+
+### MVP-05.1 Text 探针 Play 验证结论
+
+操作人：Codex
+
+验证方式：
+
+- 临时将 Claude worktree 中带探针的 `GameHud.cs` 同步到当前 Unity 主工程。
+- 进入 Unity Play Mode 观察画面。
+- 验证后已恢复主工程 `GameHud.cs`，未提交临时探针改动。
+
+结果：
+
+```text
+绿色 HUD TEXT TEST：可见
+红色 NULL FONT TEST：未看到
+```
+
+结论：
+
+- `GameHudCanvas` + `UnityEngine.UI.Text` 渲染链路正常。
+- `uiFont = LegacyRuntime.ttf` 正常可渲染。
+- 当前问题不是字体问题，也不是 Canvas 整体渲染问题。
+- 问题集中在 HUD panel/layout 子树。
+
+继续给 Claude 的任务：
+
+- 删除 `TestProbe` / `TestProbe2` / `HUD TEXT TEST` / `NULL FONT TEST` / `TEMP`。
+- 不要继续排查字体。
+- 修 HUD panel 内 Text 的 RectTransform / LayoutGroup / 层级。
+- 可先用固定 anchoredPosition/sizeDelta 的简单 HUD layout 恢复可读性。
+- 提交前执行：
+
+```bash
+rg "TestProbe|HUD TEXT TEST|NULL FONT TEST|TEMP" kingbattle/Assets/Scripts/UI/GameHud.cs
+```
+
+必须无输出。
+
+GitHub 上传状态：
+
+```text
+review-docs commit: docs: record HUD text probe result
+push: 已上传到 origin/main
+```

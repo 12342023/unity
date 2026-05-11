@@ -67,7 +67,23 @@ NULL FONT TEST
 - 最终提交前必须删除 `TestProbe` / `TestProbe2` / `HUD TEXT TEST` / `NULL FONT TEST`。
 - 如果继续沿用当前 WIP，提交前必须再次 `rg "TestProbe|HUD TEXT TEST|NULL FONT TEST|TEMP" kingbattle/Assets/Scripts/UI/GameHud.cs`，结果必须为空。
 
-## 阻塞问题 A：HUD Text 仍不可见
+## 探针验证结论
+
+Codex 已把 Claude worktree 中带探针的 `GameHud.cs` 临时同步到当前 Unity 主工程，只用于一次 Play 验证，验证后已恢复主工程文件，未提交临时改动。
+
+Play 结果：
+
+- 画面中央可见绿色 `HUD TEXT TEST`。
+- 画面中央偏下未看到红色 `NULL FONT TEST`。
+
+结论：
+
+- `GameHudCanvas` + `UnityEngine.UI.Text` 渲染链路正常。
+- `uiFont = LegacyRuntime.ttf` 正常，绿色探针能显示。
+- 当前问题不是字体问题，也不是 Canvas 整体渲染问题。
+- 问题集中在 HUD panel / layout 子树：panel 内 Text 的 RectTransform、LayoutGroup、层级或约束方式。
+
+## 阻塞问题 A：HUD panel 子树内 Text 仍不可见
 
 Play Mode 观察：
 
@@ -75,25 +91,18 @@ Play Mode 观察：
 - 面板内 Objective、Enemy Attack、stats、Expansion Targets、candidate rows、Dispatch 文案仍不可见。
 - 这说明仅补 `LayoutElement.preferredHeight` 仍未修复 Text 渲染/布局链路。
 
-要求下一轮不要继续盲调数值，必须先做最小可见性定位：
+下一轮修复方向：
 
-1. 在 `GameHudCanvas` 下临时创建一个固定位置的 `Text` 探针：
-   - 文案：`HUD TEXT TEST`
-   - 白色。
-   - 字号 24 或更大。
-   - `RectTransform` 固定在左上，例如 `anchoredPosition = (16, -16)`，`sizeDelta = (360, 40)`。
-2. Play 验证：
-   - 如果探针可见，说明字体/Canvas 没问题，问题在 HUD panel 的 layout/child Text 尺寸或层级。
-   - 如果探针也不可见，说明字体/Canvas/Text 渲染链路有问题，需要优先修这个。
-3. 定位后删除或隐藏探针，不要把测试文字作为正式 UI 留下。
-
-建议修复方向：
-
+- 立即删除 `TestProbe` / `TestProbe2` / `HUD TEXT TEST` / `NULL FONT TEST`。
+- 不要继续排查字体。
+- 不要再添加新的探针。
+- 聚焦 HUD panel 子树。
 - 对所有 Text GameObject 显式配置 `RectTransform.sizeDelta`，不要只依赖 layout preferred height。
 - 对 panel 内 Text 设置 `LayoutElement.minHeight` 和 `preferredHeight`。
 - Candidate row 的 `HorizontalLayoutGroup.childForceExpandWidth` 可以保持 false，但每个子 Text/Button 必须有明确宽高。
 - 避免对同一个 GameObject 多次 `AddComponent<LayoutElement>()`；helper 可返回已有 LayoutElement 或提供参数设置宽高。
 - 可先把 HUD 背景 alpha 临时调高、Text 改纯白，确保对比度。
+- 可考虑先让 HUD panel 退回一个更确定的布局：不用 `VerticalLayoutGroup` 管全部 Text，而是给关键 Text 固定 anchoredPosition/sizeDelta，先保证正式 HUD 可读，再逐步恢复 layout。
 
 ## Git push 规则
 
@@ -125,13 +134,13 @@ git push origin HEAD:claude/ecstatic-tu-0afd0f
 
 只做小返修，不要重写整个 UI，不要改玩法 service。
 
-任务 1：做 Text 可见性探针
+任务 1：删除探针并记录结论
 
-- 在 `GameHudCanvas` 下临时创建固定 RectTransform 的白色 `Text`，显示 `HUD TEXT TEST`。
-- Play 验证它是否可见。
-- 用验证结果判断是 Canvas/Text 渲染问题，还是 HUD panel/layout 问题。
-- 最终提交不要保留测试文字。
-- 当前 Claude WIP 已经加了探针；下一步不是继续加探针，而是运行 Play、记录结论，然后删除探针。
+- 删除 `TestProbe` / `TestProbe2` / `HUD TEXT TEST` / `NULL FONT TEST` / `TEMP` 注释。
+- 在 `WORKLOG.md` 记录探针结论：
+  - 绿色 `HUD TEXT TEST` 可见。
+  - 红色 `NULL FONT TEST` 未看到。
+  - `LegacyRuntime.ttf` 可用，问题在 HUD panel/layout 子树。
 
 任务 2：修复正式 HUD Text 显示
 
@@ -140,6 +149,7 @@ git push origin HEAD:claude/ecstatic-tu-0afd0f
 - 确保 Objective、stats、candidate rows、Dispatch 按钮肉眼可读。
 - 避免同一个对象重复添加 `LayoutElement`。
 - 不要只继续改 CanvasScaler 或继续加字体。
+- 可以用固定 anchoredPosition/sizeDelta 的简单 HUD layout 先恢复可读性；不要求继续保留当前 VerticalLayoutGroup 方案。
 
 任务 3：保持已完成边界
 
