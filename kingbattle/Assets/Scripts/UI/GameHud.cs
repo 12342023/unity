@@ -294,6 +294,9 @@ public class GameHud : MonoBehaviour
             noneText.text = "  (none)";
             noneText.alignment = TextAnchor.UpperLeft;
 
+            var noneLe = noneGo.AddComponent<LayoutElement>();
+            noneLe.minHeight = 20;
+
             // Track it for cleanup
             candidateRows.Add(new CandidateRowUI { root = noneGo });
             return;
@@ -306,6 +309,9 @@ public class GameHud : MonoBehaviour
 
             var rowGo = new GameObject($"Candidate_{i}");
             rowGo.transform.SetParent(candidateListParent, false);
+
+            var rowLe = rowGo.AddComponent<LayoutElement>();
+            rowLe.minHeight = 28;
 
             var hlg = rowGo.AddComponent<HorizontalLayoutGroup>();
             hlg.spacing = 4;
@@ -438,6 +444,9 @@ public class GameHud : MonoBehaviour
         text.alignment = alignment;
         text.horizontalOverflow = HorizontalWrapMode.Wrap;
         text.verticalOverflow = VerticalWrapMode.Overflow;
+
+        var le = go.AddComponent<LayoutElement>();
+        le.preferredHeight = fontSize + 6;
         return text;
     }
 
@@ -453,6 +462,9 @@ public class GameHud : MonoBehaviour
         text.color = Color.white;
         text.text = content;
         text.alignment = alignment;
+
+        var le = go.AddComponent<LayoutElement>();
+        le.preferredHeight = fontSize + 8;
         return text;
     }
 
@@ -465,6 +477,9 @@ public class GameHud : MonoBehaviour
         sepText.fontSize = 8;
         sepText.color = new Color(0.5f, 0.5f, 0.5f);
         sepText.text = "─";
+
+        var sepLe = sep.AddComponent<LayoutElement>();
+        sepLe.minHeight = 6;
     }
 
     private void CreateRestartButton(GameObject parent)

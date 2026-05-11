@@ -2680,3 +2680,41 @@ code commit: 4b6d255 fix: switch CanvasScaler to ConstantPixelSize for readable 
 review-docs commit: docs: block HUD text visibility after scaler fix
 push: 已上传到 origin/main
 ```
+
+### MVP-05.1 二次返修：修复 Text 不可见（LayoutElement 缺失）
+
+操作人：Claude
+
+**修改内容**
+
+修改 1 个文件 `Assets/Scripts/UI/GameHud.cs`：
+
+1. **CreateText 加 LayoutElement**
+   - 新增 `LayoutElement.preferredHeight = fontSize + 6`
+   - 所有主要文本（Objective 16→22px、EnemyTimer/Action/Stats/Selection 14→20px）获得定义高度
+   - 解决 VerticalLayoutGroup 中 Text 高度为 0 导致不可见的问题
+
+2. **CreateLinkedText 加 LayoutElement**
+   - 新增 `LayoutElement.preferredHeight = fontSize + 8`
+   - 候选行文本 13→21px，Dispatch 按钮文本 12→20px
+
+3. **候选行容器加 minHeight**
+   - 每个 `Candidate_{i}` 行新增 `LayoutElement.minHeight = 28`
+   - NoneLabel 占位符新增 `minHeight = 20`
+
+4. **CreateSeparator 加 minHeight**
+   - 新增 `LayoutElement.minHeight = 6`，确保分隔符可见
+
+5. **UI / gameplay 边界**
+   - 不改玩法 service
+   - Dispatch 继续调用 `StrategicExpansionCommandService.DispatchCandidate`
+   - Candidate rows 继续 `candidatesDirty` 触发式刷新
+
+Play Mode 验证待完成。
+
+**未提交排除项**
+- `.claude/`、`kingbattle/.idea/`、`kingbattle/kingbattle.slnx`
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json`
+- `kingbattle/ProjectSettings/MultiplayerManager.asset`
+- `Library/`、`Logs/`、`UserSettings/`
+- `要求.md` 删除
