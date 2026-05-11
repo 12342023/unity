@@ -2428,3 +2428,59 @@ push: 已上传到 origin/main
 场景文件和 ProjectSettings：均未修改
 
 Play Mode 验证待完成：由 Codex 在 Unity Play Mode 中确认 Console 无 error、HUD 正常显示、所有交互回归通过（任务 4）。
+
+### MVP-05.0 二次返修 Review 通过
+
+操作人：Codex
+
+审查提交：
+
+```text
+d85d121 fix: Unity 6 LegacyRuntime.ttf, first-frame RefreshData, Update NRE guard
+```
+
+Review 结论：
+
+```text
+MVP-05.0 二次返修通过，可以进入 MVP-05.1。
+```
+
+已确认：
+
+- `GameHud.Initialize(...)` 已使用 `LegacyRuntime.ttf`。
+- `CreateCanvas()` 后立即 `RefreshData()`。
+- `GameHud.Update()` 已有 `hudPanelRoot` / `endPanelRoot` null guard。
+- Play Mode 成功进入，Console 出现 `[GameHud] uGUI HUD initialized.`。
+- Editor log 最近 500 行无 `error CS`、`ArgumentException`、`NullReferenceException`。
+- 游戏循环继续运行，Barracks spawn、EnemyPressureController、单位移动日志正常。
+- UI 派兵仍走 `StrategicExpansionCommandService.DispatchCandidate(...)`。
+- 未发现 UI 直接修改 map/building/unit 数据。
+
+残余说明：
+
+- Computer Use 对 Unity 坐标点击不稳定，本轮未完整自动化证明 HUD `Dispatch` 按钮点击路径；代码路径已确认仍调用同一 command service。
+- 下一轮进入 MVP-05.1，优先打磨 HUD 可读性、candidate rows 展示、短反馈文案。
+
+本次文档更新：
+
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+未提交排除项保持不变：
+
+- `要求.md` 删除
+- `.claude/`
+- `kingbattle/.idea/`
+- `kingbattle/ProjectSettings/MultiplayerManager.asset`
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json`
+- `kingbattle/kingbattle.slnx`
+
+GitHub 上传状态：
+
+```text
+code-fix commit: d85d121 fix: Unity 6 LegacyRuntime.ttf, first-frame RefreshData, Update NRE guard
+review-docs commit: docs: approve formal UI runtime fix
+push: 已上传到 origin/main
+```
