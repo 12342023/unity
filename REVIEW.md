@@ -53,6 +53,30 @@ Fix:
 - Candidate rows 没回到每帧 Destroy/Recreate。
 - Claude 这次已推送到正确 remote：`origin/claude/ecstatic-tu-0afd0f = e9f19b5`。
 
+## 当前 WIP 状态
+
+Claude worktree 当前有未提交改动：
+
+```text
+/Users/jianghao/unity/.claude/worktrees/ecstatic-tu-0afd0f
+
+M WORKLOG.md
+M kingbattle/Assets/Scripts/UI/GameHud.cs
+?? .claude/
+```
+
+未提交 `GameHud.cs` 中已经出现测试探针：
+
+```text
+TestProbe
+HUD TEXT TEST
+TestProbe2
+NULL FONT TEST
+TEMP
+```
+
+这些只能用于 Play 定位，不允许进入正式提交。
+
 ## 给 Claude 的返修任务
 
 ```text
@@ -66,6 +90,7 @@ MVP-05.1 仍暂不通过。面板可见，但 Text 内容不可见。
 - 如果可见，说明 Canvas/font 没问题，修 HUD panel/layout 子树。
 - 如果不可见，优先修 Canvas/Text/font 渲染链路。
 - 最终提交不要保留测试文字。
+- Claude 当前 WIP 已经加了探针；请继续 Play 验证，并在正式提交前删除全部探针代码。
 
 任务 2：修复正式 HUD Text
 - 显式设置 Text RectTransform 尺寸。
@@ -89,6 +114,7 @@ MVP-05.1 仍暂不通过。面板可见，但 Text 内容不可见。
 - push 前执行 pwd、git status -sb、git remote -v。
 - origin 必须是 https://12342023@github.com/12342023/unity.git。
 - 使用 git push origin HEAD:claude/ecstatic-tu-0afd0f。
+- push 前执行 rg "TestProbe|HUD TEXT TEST|NULL FONT TEST|TEMP" kingbattle/Assets/Scripts/UI/GameHud.cs，必须无输出。
 
 禁止：
 - 不重写整个 UI。

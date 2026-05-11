@@ -32,6 +32,41 @@ Play Mode 无脚本错误，HUD 面板显示，但 Text 仍不可见。
 - UI 派兵仍走 `StrategicExpansionCommandService.DispatchCandidate(...)`。
 - Claude 这次 remote 正确，`origin/claude/ecstatic-tu-0afd0f` 已同步到 `e9f19b5`。
 
+## 当前执行状态：Claude 停在未提交 WIP
+
+Codex 检查到 Claude worktree：
+
+```text
+/Users/jianghao/unity/.claude/worktrees/ecstatic-tu-0afd0f
+```
+
+当前有未提交改动：
+
+```text
+M WORKLOG.md
+M kingbattle/Assets/Scripts/UI/GameHud.cs
+?? .claude/
+```
+
+其中 `GameHud.cs` 已临时加入：
+
+```text
+TestProbe
+HUD TEXT TEST
+TestProbe2
+NULL FONT TEST
+```
+
+这说明 Claude 已开始做 Text 可见性探针，但尚未完成验证和正式修复。
+
+重要要求：
+
+- 不要直接提交当前 WIP。
+- 必须先 Play 验证探针是否可见。
+- 根据探针结果修正式 HUD Text。
+- 最终提交前必须删除 `TestProbe` / `TestProbe2` / `HUD TEXT TEST` / `NULL FONT TEST`。
+- 如果继续沿用当前 WIP，提交前必须再次 `rg "TestProbe|HUD TEXT TEST|NULL FONT TEST|TEMP" kingbattle/Assets/Scripts/UI/GameHud.cs`，结果必须为空。
+
 ## 阻塞问题 A：HUD Text 仍不可见
 
 Play Mode 观察：
@@ -96,6 +131,7 @@ git push origin HEAD:claude/ecstatic-tu-0afd0f
 - Play 验证它是否可见。
 - 用验证结果判断是 Canvas/Text 渲染问题，还是 HUD panel/layout 问题。
 - 最终提交不要保留测试文字。
+- 当前 Claude WIP 已经加了探针；下一步不是继续加探针，而是运行 Play、记录结论，然后删除探针。
 
 任务 2：修复正式 HUD Text 显示
 
@@ -129,6 +165,13 @@ git push origin HEAD:claude/ecstatic-tu-0afd0f
 - push 前执行 `pwd`、`git status -sb`、`git remote -v`。
 - 确认 `origin` 是 `https://12342023@github.com/12342023/unity.git`。
 - 使用 `git push origin HEAD:claude/ecstatic-tu-0afd0f`。
+- push 前执行：
+
+```bash
+rg "TestProbe|HUD TEXT TEST|NULL FONT TEST|TEMP" kingbattle/Assets/Scripts/UI/GameHud.cs
+```
+
+该命令必须无输出。
 
 ## 禁止范围
 

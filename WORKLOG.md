@@ -2772,3 +2772,54 @@ code commit: e9f19b5 fix: add LayoutElement preferredHeight to CreateText/Create
 review-docs commit: docs: block HUD text after layout element fix
 push: 已上传到 origin/main
 ```
+
+### MVP-05.1 执行状态：Claude 停在 Text 探针 WIP
+
+操作人：Codex
+
+当前检查结果：
+
+```text
+worktree: /Users/jianghao/unity/.claude/worktrees/ecstatic-tu-0afd0f
+status:
+  M WORKLOG.md
+  M kingbattle/Assets/Scripts/UI/GameHud.cs
+  ?? .claude/
+```
+
+`GameHud.cs` 当前未提交 WIP 已包含：
+
+```text
+TestProbe
+HUD TEXT TEST
+TestProbe2
+NULL FONT TEST
+TEMP
+```
+
+判断：
+
+- Claude 已开始执行 Text 可见性探针任务。
+- 但尚未 Play 验证探针结果。
+- 尚未删除测试探针。
+- 尚未形成可提交代码。
+
+继续给 Claude 的任务：
+
+- 使用当前 WIP 进入 Play，确认 `HUD TEXT TEST` / `NULL FONT TEST` 是否可见。
+- 根据结果修正式 HUD Text。
+- 最终提交前删除全部探针与 `TEMP` 注释。
+- 提交前执行：
+
+```bash
+rg "TestProbe|HUD TEXT TEST|NULL FONT TEST|TEMP" kingbattle/Assets/Scripts/UI/GameHud.cs
+```
+
+必须无输出。
+
+GitHub 上传状态：
+
+```text
+review-docs commit: docs: record stalled text probe task
+push: 已上传到 origin/main
+```
