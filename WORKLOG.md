@@ -2626,3 +2626,57 @@ Play Mode 验证待完成。
 - `kingbattle/ProjectSettings/MultiplayerManager.asset`
 - `Library/`、`Logs/`、`UserSettings/`
 - `要求.md` 删除
+
+### MVP-05.1 Review：HUD 面板变大但 Text 仍不可见
+
+操作人：Codex
+
+审查提交：
+
+```text
+4b6d255 fix: switch CanvasScaler to ConstantPixelSize for readable text at any resolution
+```
+
+Review 结论：
+
+```text
+MVP-05.1 仍暂不通过，需要二次返修 Text 布局/渲染。
+```
+
+已确认：
+
+- `CanvasScaler` 已改成 `ConstantPixelSize` + `scaleFactor = 1`。
+- Play Mode 可进入，Console 出现 `[GameHud] uGUI HUD initialized.`。
+- 最近 Editor log 无 `error CS`、`ArgumentException`、`NullReferenceException`。
+- HUD 面板比上一轮更大。
+- Claude 这次 remote 正确，`origin/claude/ecstatic-tu-0afd0f` 已同步到 `4b6d255`。
+
+阻塞问题：
+
+- 面板内 Objective、Enemy Attack、stats、Expansion Targets、candidate rows、Dispatch 文案仍不可见/不可读。
+- 当前不再只是 scaler 问题，需检查 uGUI `Text` 子物体的 RectTransform / LayoutElement / preferred height / 渲染层级。
+
+给 Claude 的返修要求：
+
+- 不要继续只改 CanvasScaler 或只加字体。
+- 给 `CreateText(...)` / `CreateLinkedText(...)` 生成的 Text 补明确 layout 尺寸。
+- 给 candidate row 自身补 `LayoutElement.minHeight`。
+- 确保 Text 是高对比白色，且显示在 panel Image 之上。
+- Play 后必须能读到 Objective、stats、candidate rows、Dispatch。
+- 保持 UI / gameplay service 边界和 candidate rows 触发式刷新。
+- push 前继续执行 `pwd`、`git status -sb`、`git remote -v`。
+
+本次文档更新：
+
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+GitHub 上传状态：
+
+```text
+code commit: 4b6d255 fix: switch CanvasScaler to ConstantPixelSize for readable text at any resolution
+review-docs commit: docs: block HUD text visibility after scaler fix
+push: 已上传到 origin/main
+```

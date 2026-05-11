@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-MVP-05.1 返修：修复 HUD 在当前 Unity Game view 下不可读的问题。
+MVP-05.1 二次返修：HUD 面板变大后文字仍不可见，需要修复 uGUI Text 布局/渲染。
 
 Codex 当前仍作为 Tech Lead 和 Reviewer 工作，不直接大规模开发业务代码。Claude 是主要开发者。
 
@@ -11,78 +11,63 @@ Codex 当前仍作为 Tech Lead 和 Reviewer 工作，不直接大规模开发�
 Claude 最新提交：
 
 ```text
-4c51488 feat: HUD readability polish — bigger fonts, compact layout, player-friendly status text
+4b6d255 fix: switch CanvasScaler to ConstantPixelSize for readable text at any resolution
 ```
 
 Codex Review 结论：
 
 ```text
-MVP-05.1 暂不通过。
-Unity Play Mode 无脚本错误，但 HUD 在当前 Game view 下仍不可读，只看到左上角小深色块。
+MVP-05.1 仍暂不通过。
+ConstantPixelSize 已让 HUD 面板变大，但文字仍不可见/不可读。
 ```
 
 ## 已确认做对的部分
 
-- 提交范围较小，只改 `GameHud.cs` 和 `WORKLOG.md`。
-- 未修改 `ProjectSettings`、场景文件、玩法 service。
+- 本次只改 `GameHud.cs` 和 `WORKLOG.md`。
+- `CanvasScaler` 已从 `ScaleWithScreenSize + 1920x1080` 改成 `ConstantPixelSize + scaleFactor 1`。
+- Play Mode 可进入。
+- Console 出现 `[GameHud] uGUI HUD initialized.`。
+- 最近 Editor log 无 `error CS`、`ArgumentException`、`NullReferenceException`。
 - Candidate rows 仍使用 `candidatesDirty` 触发式刷新，没有回到每帧 Destroy/Recreate。
 - UI 派兵仍走 `StrategicExpansionCommandService.DispatchCandidate(...)`。
-- `LastActionResult` 只在 HUD 显示层截断，没有改 command service 语义。
-- Claude 分支已由 Codex 推送成功：
+- Claude 这次 remote 正确，`origin/claude/ecstatic-tu-0afd0f` 已同步到 `4b6d255`。
 
-```text
-git push origin claude/ecstatic-tu-0afd0f
-d85d121..4c51488  claude/ecstatic-tu-0afd0f -> claude/ecstatic-tu-0afd0f
-```
-
-## 阻塞问题 A：HUD 视觉仍不可读
+## 阻塞问题 A：Text 未显示
 
 Play Mode 观察：
 
-- Console 出现 `[GameHud] uGUI HUD initialized.`。
-- 最近 Editor log 无 `error CS`、`ArgumentException`、`NullReferenceException`。
-- 但 Game view 左上角 HUD 只呈现为一个很小的深色块，文字不可读。
+- 左上 HUD 面板已经比上一轮更大。
+- 但面板内 Objective、Enemy Attack、stats、Expansion Targets、candidate rows、Dispatch 文案仍不可见/不可读。
+- 当前视觉结果仍不能算“正式 UI 可读”。
 
-疑似原因：
+疑似方向：
 
-- `CanvasScaler` 仍使用 `ScaleWithScreenSize` + `referenceResolution = 1920x1080`。
-- 当前 Unity Game view 实际显示区域较小，400px 面板和 14/16 字体被按比例缩小，导致“增大字体”没有真正改善可读性。
+- 这已经不只是 CanvasScaler 缩放问题。
+- 需要检查 `Text` 子物体是否有合理 `RectTransform` 尺寸。
+- 需要检查 `VerticalLayoutGroup` 与 Text preferred/min height 的配合。
+- 需要检查 panel `Image` 与 child `Text` 的渲染层级。
+- 需要确认字体 `LegacyRuntime.ttf` 在当前 Text 组件中实际渲染。
 
 要求最小返修：
 
-- 优先修 `CanvasScaler` 的缩放策略，而不是继续只加字体。
-- 建议二选一：
-  - 改为更适合当前 16:9 小游戏 Game view 的 `referenceResolution = 960x540` 或 `800x450`。
-  - 或改为 `CanvasScaler.ScaleMode.ConstantPixelSize` 并设置合理 `scaleFactor`，确保当前 Editor Game view 下文字可读。
-- 保持 HUD 面板不遮挡地图核心操作区过多。
-- Play 后必须肉眼可读：
+- 不要重写整个 UI。
+- 不要改玩法 service。
+- 在 `CreateText(...)` / `CreateLinkedText(...)` / candidate row 创建处补齐必要的 uGUI layout 信息。
+- 建议：
+  - 给 Text GameObject 增加 `LayoutElement`，设置合理 `minHeight` / `preferredHeight`。
+  - Candidate row 自身设置 `LayoutElement.minHeight`。
+  - Dispatch button 设置足够 `minWidth` / `minHeight`。
+  - 必要时显式设置 Text `rectTransform.sizeDelta`。
+  - 让文本颜色临时保持高对比白色，不要降低透明度。
+- Play 后必须能肉眼读到：
   - Objective。
   - Enemy Attack。
   - Units / Bldgs stats。
   - Expansion Targets。
-  - Candidate row 与 Dispatch 按钮。
+  - Candidate row。
+  - Dispatch 按钮。
 
-## Git push 问题修正
-
-Claude 报错：
-
-```text
-git push origin claude/ecstatic-tu-0afd0f
-error: src refspec claude/ecstatic-tu-0afd0f does not match any
-error: failed to push some refs to 'https://github.com:hahaaaw/-.git'
-```
-
-Codex 已检查：
-
-- `/Users/jianghao/unity` 的 `origin` 正确：
-
-```text
-https://12342023@github.com/12342023/unity.git
-```
-
-- `/Users/jianghao/unity/.claude/worktrees/ecstatic-tu-0afd0f` 的 `origin` 也正确。
-- 全局 `.gitconfig` 没有旧的 `hahaaaw/-.git`。
-- 因此旧 URL 大概率来自 Claude 执行命令时所在的错误目录 / 错误仓库。
+## Git push 规则
 
 Claude 后续每次 push 前必须执行：
 
@@ -95,9 +80,6 @@ git remote -v
 必须确认：
 
 ```text
-pwd = /Users/jianghao/unity
-或 pwd = /Users/jianghao/unity/.claude/worktrees/<当前分支>
-
 origin = https://12342023@github.com/12342023/unity.git
 ```
 
@@ -115,24 +97,27 @@ git push origin HEAD:claude/ecstatic-tu-0afd0f
 
 只做小返修，不要重写整个 UI，不要改玩法 service。
 
-任务 1：修复 HUD 缩放导致不可读
+任务 1：修复 Text 可见性
 
-- 调整 `CanvasScaler` 缩放策略。
-- 目标是在当前 Unity Game view 下，HUD 文字肉眼可读。
-- 不要只继续加大字体。
-- 不要引入 scene prefab。
+- 检查 `CreateText(...)` 和 `CreateLinkedText(...)` 生成的 Text 是否有正确 RectTransform / LayoutElement。
+- 给主要文本加合理高度，例如 18-24 px。
+- 给 candidate row 加合理高度，例如 24-28 px。
+- 确保白色文字在半透明黑底上可见。
+- 不要只继续改 CanvasScaler 或继续加字体。
 
-任务 2：保持 MVP-05.1 已做的小改进
+任务 2：保持已完成边界
 
+- 保留 `ConstantPixelSize` 或同等可读缩放策略。
 - 保留较短的 HUD feedback 文案。
 - 保留 `ready` / `need more` 或更清晰短文案。
 - 保持 candidate rows 触发式刷新。
+- HUD Dispatch 继续调用 command service。
 
 任务 3：Play 验证和 WORKLOG
 
 - Console 无 `error CS`。
 - Play 后无 `ArgumentException` / `NullReferenceException`。
-- HUD 文字清晰可读，不只是一个深色块。
+- HUD 面板内文字清晰可见。
 - Candidate rows 与 `Dispatch` 按钮可见。
 - HUD Dispatch、地图点击派兵、`O` 快捷键继续同路径。
 - `K/L/E/N` 正常。
@@ -159,7 +144,7 @@ git push origin HEAD:claude/ecstatic-tu-0afd0f
 ## 验收标准
 
 - Console 无编译错误和 HUD runtime exception。
-- 当前 Unity Game view 下 HUD 文字肉眼可读。
+- 当前 Unity Game view 下 HUD 面板内文字肉眼可读。
 - Candidate rows 不每帧 Destroy/Recreate。
 - UI 不越过 command service 直接改业务状态。
 - Claude 不再 push 到旧 remote。

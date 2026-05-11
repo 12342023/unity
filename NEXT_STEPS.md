@@ -13,19 +13,20 @@
 - MVP-04.7 已通过。
 - MVP-05.0 最小正式 UI 已通过二次返修。
 - Canvas/uGUI HUD runtime 初始化问题已修复。
-- MVP-05.1 正在返修：脚本无错误，但 HUD 在当前 Unity Game view 下仍不可读。
+- MVP-05.1 正在二次返修：脚本无错误，HUD 面板已变大，但 Text 内容仍不可见/不可读。
 
-## 当前正式任务：MVP-05.1 UI 缩放返修
+## 当前正式任务：MVP-05.1 Text 可见性返修
 
 目标：
 
 ```text
-修复 CanvasScaler 缩放导致的 HUD 不可读问题，让正式 HUD 在当前 Unity Game view 下肉眼可读。
+修复 uGUI Text 布局/渲染问题，让正式 HUD 面板内文字在当前 Unity Game view 下肉眼可读。
 ```
 
 任务：
 
-- 调整 CanvasScaler reference resolution 或改用 ConstantPixelSize。
+- 检查 `CreateText(...)` / `CreateLinkedText(...)` 的 RectTransform 与 LayoutElement。
+- 给主要 Text 和 candidate row 设置合理高度。
 - 确保 Objective、stats、candidate rows、Dispatch 按钮可读。
 - 保留已做的 LastAction / selection / enemy timer 短文案。
 - 保持 candidate rows 触发式刷新，不回到每帧 Destroy/Recreate。
@@ -60,7 +61,7 @@
 - Play 后无 `ArgumentException` / `NullReferenceException`。
 - Play 初始显示 Canvas/uGUI HUD。
 - 不再出现旧 OnGUI debug 框。
-- HUD 文本在当前 Game view 下清晰可读，不只是左上角小深色块。
+- HUD 面板内文字在当前 Game view 下清晰可读。
 - 鼠标点击 Player-owned source 后高亮为蓝色，valid target 高亮为黄色。
 - 鼠标点击黄色 target 后派兵。
 - 点击空白区域清空选择。
@@ -74,7 +75,7 @@
 
 ## 交付前剩余风险
 
-- UI 缩放策略仍需返修。
+- UI Text 可见性仍需返修。
 - Claude 偶发在错误目录 / 旧 remote push，需要每次 push 前检查 `git remote -v`。
 - Unity Connect 网络/auth 错误属于外部服务问题，暂不阻塞 gameplay。
 - 移植还没开始，但边界需要持续保持。
