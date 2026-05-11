@@ -2336,3 +2336,68 @@ Canvas (Screen Space Overlay, CanvasScaler 1920x1080)
 修改文件：仅 `Assets/Scripts/UI/GameHud.cs`
 
 场景文件和 ProjectSettings：均未修改
+
+### MVP-05.0 二次 Review：Play Mode runtime blocker
+
+操作人：Codex
+
+审查提交：
+
+```text
+bafdbca fix: CS0815, per-frame candidate rebuild, Dispatch button label
+```
+
+Review 结论：
+
+```text
+MVP-05.0 暂不通过，需要二次返修。
+```
+
+已确认：
+
+- `CS0815` 已修复，Editor log 未再出现 `error CS`。
+- Candidate rows 已不再每帧 Destroy/Recreate。
+- Dispatch 按钮已显示 `Dispatch`。
+
+Play Mode 新阻塞：
+
+```text
+ArgumentException: Arial.ttf is no longer a valid built in font. Please use LegacyRuntime.ttf
+  at GameHud.Initialize (...) (at Assets/Scripts/UI/GameHud.cs:54)
+
+NullReferenceException: Object reference not set to an instance of an object
+  at GameHud.Update () (at Assets/Scripts/UI/GameHud.cs:172)
+```
+
+给 Claude 的二次返修要求：
+
+- `GameHud` 不要再使用 `Resources.GetBuiltinResource<Font>("Arial.ttf")`。
+- 改用 Unity 6 可用的 `LegacyRuntime.ttf`。
+- 字体修复后确认 `CreateCanvas()` 正常完成，HUD 正常显示。
+- 可加轻量 `hudPanelRoot` / `endPanelRoot` null guard，但不能只靠 guard 掩盖 HUD 未创建问题。
+- HUD 初始化完成后调用一次 `RefreshData()`，避免首帧 candidate list 短暂显示 `(none)`。
+- 完整 Play 验证：无 `error CS`、无 `ArgumentException` / `NullReferenceException`、HUD Dispatch、地图点击派兵、`O/K/L/E/N`、Victory/Defeat、Restart 都正常。
+
+本次文档更新：
+
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+未提交排除项保持不变：
+
+- `要求.md` 删除
+- `.claude/`
+- `kingbattle/.idea/`
+- `kingbattle/ProjectSettings/MultiplayerManager.asset`
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json`
+- `kingbattle/kingbattle.slnx`
+
+GitHub 上传状态：
+
+```text
+code-fix commit: bafdbca fix: CS0815, per-frame candidate rebuild, Dispatch button label
+review-docs commit: docs: block formal UI Unity 6 runtime error
+push: 已上传到 origin/main
+```

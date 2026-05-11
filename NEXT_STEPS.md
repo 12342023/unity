@@ -11,22 +11,24 @@
 当前状态：
 
 - MVP-04.7 已通过。
-- MVP-05.0 已开始，但当前 `GameHud.cs` 编译失败。
-- 必须先修复 MVP-05.0 编译错误，再继续 UI polish。
+- MVP-05.0 最小正式 UI 已进入返修阶段。
+- `CS0815` 编译错误已修复。
+- Play Mode 发现新的 P1：`GameHud` 使用 Unity 6 已失效 builtin font，HUD 初始化失败。
 
-## 当前正式任务：MVP-05.0 UI 返修
+## 当前正式任务：MVP-05.0 二次返修
 
 目标：
 
 ```text
-修复 GameHud.cs 编译错误，收敛 candidate rows 刷新方式，并修正按钮文案。
+让 Canvas/uGUI HUD 在 Unity 6 Play Mode 正常初始化和显示，并完成完整交互回归。
 ```
 
 任务：
 
-- 修复 `CreateSeparator` 返回 `void` 却赋值给 `var` 的 `CS0815`。
-- 避免 candidate rows 每帧 Destroy/Recreate。
-- `Dsp` 改为 `Dispatch`。
+- `GameHud` builtin font 从 `Arial.ttf` 改为 `LegacyRuntime.ttf`。
+- 修复 / 防御 HUD 初始化失败后的 `NullReferenceException`。
+- HUD 初始化完成后首帧刷新 candidate previews。
+- 保持 candidate rows 触发式刷新，不回到每帧 Destroy/Recreate。
 - 更新 `WORKLOG.md`。
 
 ## 返修后建议顺序
@@ -53,7 +55,8 @@
 
 ## Play Mode 回归清单
 
-- Unity Console 无 P1 编译错误。
+- Unity Console 无 `error CS`。
+- Play 后无 `ArgumentException` / `NullReferenceException`。
 - Play 初始显示 Canvas/uGUI HUD。
 - 不再出现旧 OnGUI debug 框。
 - 鼠标点击 Player-owned source 后高亮为蓝色，valid target 高亮为黄色。
@@ -69,8 +72,8 @@
 
 ## 交付前剩余风险
 
-- 正式 UI 正在实现中，尚未通过编译。
+- 正式 UI 尚未通过 Play Mode runtime 验证。
+- Unity Connect 网络/auth 错误属于外部服务问题，暂不阻塞 gameplay，但不要混同为脚本错误。
 - UI 视觉仍需至少一轮调参。
-- Unity Connect 401 属于外部服务/auth，暂不阻塞 gameplay。
 - 移植还没开始，但边界需要持续保持。
 - `ProjectSettings`、`.idea/`、`.claude/`、Unity 生成目录不能随便提交。
