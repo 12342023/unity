@@ -13,20 +13,22 @@
 - MVP-04.7 已通过。
 - MVP-05.0 最小正式 UI 已通过二次返修。
 - Canvas/uGUI HUD runtime 初始化问题已修复。
-- MVP-05.1 正在二次返修：脚本无错误，HUD 面板已变大，但 Text 内容仍不可见/不可读。
+- MVP-05.1 正在三次返修：脚本无错误，HUD 面板可见，但 Text 内容仍不可见。
 
-## 当前正式任务：MVP-05.1 Text 可见性返修
+## 当前正式任务：MVP-05.1 Text 渲染定位与修复
 
 目标：
 
 ```text
-修复 uGUI Text 布局/渲染问题，让正式 HUD 面板内文字在当前 Unity Game view 下肉眼可读。
+先用固定 RectTransform 的 Text 探针定位 Canvas/Text 渲染链路，再修正式 HUD 面板内文字显示。
 ```
 
 任务：
 
+- 临时创建固定位置 `HUD TEXT TEST` 探针，定位 Canvas/font 还是 panel/layout 问题。
 - 检查 `CreateText(...)` / `CreateLinkedText(...)` 的 RectTransform 与 LayoutElement。
 - 给主要 Text 和 candidate row 设置合理高度。
+- 避免同一对象重复添加 `LayoutElement`。
 - 确保 Objective、stats、candidate rows、Dispatch 按钮可读。
 - 保留已做的 LastAction / selection / enemy timer 短文案。
 - 保持 candidate rows 触发式刷新，不回到每帧 Destroy/Recreate。

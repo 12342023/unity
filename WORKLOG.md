@@ -2718,3 +2718,57 @@ Play Mode 验证待完成。
 - `kingbattle/ProjectSettings/MultiplayerManager.asset`
 - `Library/`、`Logs/`、`UserSettings/`
 - `要求.md` 删除
+
+### MVP-05.1 Review：LayoutElement 后 Text 仍不可见
+
+操作人：Codex
+
+审查提交：
+
+```text
+e9f19b5 fix: add LayoutElement preferredHeight to CreateText/CreateLinkedText for visible Text
+```
+
+Review 结论：
+
+```text
+MVP-05.1 仍暂不通过，需要三次返修。
+```
+
+已确认：
+
+- Play Mode 可进入，Console 出现 `[GameHud] uGUI HUD initialized.`。
+- 最近 Editor log 无 `error CS`、`ArgumentException`、`NullReferenceException`。
+- 最近 Editor log 未发现 LayoutElement duplicate / AddComponent 异常。
+- HUD 面板可见。
+- Claude 这次 remote 正确，`origin/claude/ecstatic-tu-0afd0f` 已同步到 `e9f19b5`。
+
+阻塞问题：
+
+- 面板内 Objective、Enemy Attack、stats、Expansion Targets、candidate rows、Dispatch 文案仍不可见。
+- 单纯补 `LayoutElement.preferredHeight` 没有修复 Text 可见性。
+
+给 Claude 的返修要求：
+
+- 下一轮先做最小 Text 可见性探针：在 `GameHudCanvas` 下临时创建固定 RectTransform 白色 Text，显示 `HUD TEXT TEST`。
+- 如果探针可见，说明 Canvas/font 没问题，修 HUD panel/layout 子树。
+- 如果探针不可见，优先修 Canvas/Text/font 渲染链路。
+- 最终提交不要保留测试文字。
+- 修正式 HUD 时显式设置 Text RectTransform 尺寸和 LayoutElement。
+- 避免同一个对象重复添加 `LayoutElement`。
+- Play 后必须能读到 Objective、stats、candidate rows、Dispatch。
+
+本次文档更新：
+
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+GitHub 上传状态：
+
+```text
+code commit: e9f19b5 fix: add LayoutElement preferredHeight to CreateText/CreateLinkedText for visible Text
+review-docs commit: docs: block HUD text after layout element fix
+push: 已上传到 origin/main
+```
