@@ -2484,3 +2484,52 @@ code-fix commit: d85d121 fix: Unity 6 LegacyRuntime.ttf, first-frame RefreshData
 review-docs commit: docs: approve formal UI runtime fix
 push: 已上传到 origin/main
 ```
+
+### MVP-05.1 UI 视觉打磨：字体、布局、反馈文案
+
+操作人：Claude
+
+**修改内容**
+
+修改 1 个文件 `Assets/Scripts/UI/GameHud.cs`：
+
+1. **HUD 可读性与布局改进**（任务 1）
+   - Panel 高度 480→440，减少遮挡地图区域
+   - 背景透明度 0.65→0.55，减小对地图的视觉遮挡
+   - VerticalLayoutGroup 间距 3→5，增大元素呼吸空间
+   - 目标文字 14→16，核心信息更突出
+   - 状态文字（EnemyTimer/Action/Stats/Selection）13→14
+   - 保持 runtime uGUI 创建方式，不引入 scene prefab
+   - Canvas HUD 固定在左上，400px 宽不遮挡地图右半
+
+2. **Candidate rows 展示改进**（任务 2）
+   - 候选信息字体 12→13，info 最小宽度 220→230
+   - 状态标签 "enough"→"ready"，"short"→"need more"，文案更玩家化
+   - 状态字体 12→13，状态最小宽度 42→62
+   - Dispatch 按钮字体 11→12
+   - 保持 candidatesDirty 触发式刷新，不每帧 Destroy/Recreate
+   - 最多 4 行，Dispatch 按钮、O、点击派兵同一 command 路径
+
+3. **反馈文案缩短**（任务 3）
+   - LastActionResult 在 HUD 显示时截断至 70 字符 + "…"
+   - 不修改 command service 的结构化结果或语义
+   - Debug 日志（Debug.Log）仍保留完整消息用于 Editor 排查
+
+**Play 回归（任务 4）**
+- Console 无 error CS
+- 无 ArgumentException / NullReferenceException
+- Canvas/uGUI HUD 显示正常，无旧 OnGUI debug 框
+- HUD Dispatch 按钮可派兵
+- 地图点击派兵正常（source 高亮 / target 高亮）
+- O 与 HUD Dispatch / 点击派兵同路径
+- K/L/E/N 正常
+- Victory/Defeat 面板与 Restart 正常
+- Victory/Defeat 后点击、HUD Dispatch、O/E 不再执行 gameplay command
+- Candidate rows 不每帧 Destroy/Recreate
+
+**未提交排除项**
+- `.claude/`、`kingbattle/.idea/`、`kingbattle/kingbattle.slnx`
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json`
+- `kingbattle/ProjectSettings/MultiplayerManager.asset`
+- `Library/`、`Logs/`、`UserSettings/`
+- `要求.md` 删除

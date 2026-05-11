@@ -80,31 +80,31 @@ public class GameHud : MonoBehaviour
 
         // ── HUD panel (left side, visible during gameplay) ──
         hudPanelRoot = CreatePanel(canvasGo, "HudPanel", new Vector2(0, 1), new Vector2(0, 1),
-            new Vector2(8, -8), new Vector2(400, 480));
+            new Vector2(8, -8), new Vector2(400, 440));
         var hudBg = hudPanelRoot.AddComponent<Image>();
-        hudBg.color = new Color(0, 0, 0, 0.65f);
+        hudBg.color = new Color(0, 0, 0, 0.55f);
         hudBg.raycastTarget = false;
 
         var vlg = hudPanelRoot.AddComponent<VerticalLayoutGroup>();
-        vlg.spacing = 3;
+        vlg.spacing = 5;
         vlg.padding = new RectOffset(8, 8, 8, 8);
         vlg.childForceExpandWidth = true;
         vlg.childForceExpandHeight = false;
 
         // Status section
-        objectiveText = CreateText(hudPanelRoot, "Objective", "Capture neutral plots → Defeat Enemy base", 14, TextAnchor.UpperLeft);
+        objectiveText = CreateText(hudPanelRoot, "Objective", "Capture neutral plots → Defeat Enemy base", 16, TextAnchor.UpperLeft);
 
         CreateSeparator(hudPanelRoot);
 
-        enemyTimerText = CreateText(hudPanelRoot, "EnemyTimer", "", 13, TextAnchor.UpperLeft);
-        actionText = CreateText(hudPanelRoot, "Action", "", 13, TextAnchor.UpperLeft);
+        enemyTimerText = CreateText(hudPanelRoot, "EnemyTimer", "", 14, TextAnchor.UpperLeft);
+        actionText = CreateText(hudPanelRoot, "Action", "", 14, TextAnchor.UpperLeft);
 
         CreateSeparator(hudPanelRoot);
 
-        statsText = CreateText(hudPanelRoot, "Stats", "", 13, TextAnchor.UpperLeft);
+        statsText = CreateText(hudPanelRoot, "Stats", "", 14, TextAnchor.UpperLeft);
 
         // Selection info (hidden by default)
-        selectionText = CreateText(hudPanelRoot, "Selection", "", 13, TextAnchor.UpperLeft);
+        selectionText = CreateText(hudPanelRoot, "Selection", "", 14, TextAnchor.UpperLeft);
         selectionText.gameObject.SetActive(false);
 
         CreateSeparator(hudPanelRoot);
@@ -116,7 +116,7 @@ public class GameHud : MonoBehaviour
         listGo.transform.SetParent(hudPanelRoot.transform, false);
         candidateListParent = listGo.transform;
         var listVlg = listGo.AddComponent<VerticalLayoutGroup>();
-        listVlg.spacing = 2;
+        listVlg.spacing = 3;
         listVlg.padding = new RectOffset(0, 0, 0, 0);
         listVlg.childForceExpandWidth = true;
         listVlg.childForceExpandHeight = false;
@@ -222,10 +222,13 @@ public class GameHud : MonoBehaviour
             enemyTimerText.text = "";
         }
 
-        // Last action
+        // Last action — truncate long debug messages for HUD display
         string lastAction = GameStatusService.LastActionResult;
-        actionText.text = !string.IsNullOrEmpty(lastAction) ? $"Last: {lastAction}" : "";
-        actionText.gameObject.SetActive(!string.IsNullOrEmpty(lastAction));
+        string shortAction = !string.IsNullOrEmpty(lastAction)
+            ? (lastAction.Length > 70 ? lastAction[..70] + "…" : lastAction)
+            : "";
+        actionText.text = !string.IsNullOrEmpty(shortAction) ? $"Last: {shortAction}" : "";
+        actionText.gameObject.SetActive(!string.IsNullOrEmpty(shortAction));
 
         // Faction stats
         int pUnits = FactionStatsService.CountAliveUnits(Faction.Player);
@@ -312,15 +315,15 @@ public class GameHud : MonoBehaviour
 
             // Info label: "[1] Crossroads → Village: 3/1"
             string info = $"[{i + 1}] {p.sourcePlotId} → {p.targetPlotId}: {p.availableCount}/{p.requiredCount}";
-            var infoText = CreateLinkedText(rowGo, "Info", info, 12, TextAnchor.MiddleLeft);
+            var infoText = CreateLinkedText(rowGo, "Info", info, 13, TextAnchor.MiddleLeft);
             var infoLe = infoText.gameObject.AddComponent<LayoutElement>();
-            infoLe.minWidth = 220;
+            infoLe.minWidth = 230;
 
             // Status label: "enough" / "short"
-            string statusStr = p.hasEnough ? "enough" : "short";
-            var statusText = CreateLinkedText(rowGo, "Status", statusStr, 12, TextAnchor.MiddleLeft);
+            string statusStr = p.hasEnough ? "ready" : "need more";
+            var statusText = CreateLinkedText(rowGo, "Status", statusStr, 13, TextAnchor.MiddleLeft);
             var statusLe = statusText.gameObject.AddComponent<LayoutElement>();
-            statusLe.minWidth = 42;
+            statusLe.minWidth = 62;
 
             // Dispatch button
             var btnGo = new GameObject("DispatchBtn");
@@ -330,7 +333,7 @@ public class GameHud : MonoBehaviour
             btnImage.color = new Color(0.2f, 0.5f, 0.2f);
             btn.targetGraphic = btnImage;
 
-            var btnText = CreateLinkedText(btnGo, "Label", "Dispatch", 11, TextAnchor.MiddleCenter);
+            var btnText = CreateLinkedText(btnGo, "Label", "Dispatch", 12, TextAnchor.MiddleCenter);
             var btnLe = btnGo.AddComponent<LayoutElement>();
             btnLe.minWidth = 62;
             btnLe.minHeight = 20;
