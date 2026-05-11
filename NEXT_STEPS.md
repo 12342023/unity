@@ -13,23 +13,24 @@
 - MVP-04.7 已通过。
 - MVP-05.0 最小正式 UI 已通过二次返修。
 - Canvas/uGUI HUD runtime 初始化问题已修复。
-- 当前进入 MVP-05.1：UI 视觉与反馈打磨。
+- MVP-05.1 正在返修：脚本无错误，但 HUD 在当前 Unity Game view 下仍不可读。
 
-## 当前正式任务：MVP-05.1 UI 视觉与反馈打磨
+## 当前正式任务：MVP-05.1 UI 缩放返修
 
 目标：
 
 ```text
-让正式 HUD 在 Play Mode 下清晰可读、反馈明确，并继续保持 UI / gameplay service 边界。
+修复 CanvasScaler 缩放导致的 HUD 不可读问题，让正式 HUD 在当前 Unity Game view 下肉眼可读。
 ```
 
 任务：
 
-- 调整 HUD panel 尺寸、字体、间距和透明度。
-- 优化 candidate rows 的可读性。
-- 优化 LastAction / selection / enemy timer 的短文案。
+- 调整 CanvasScaler reference resolution 或改用 ConstantPixelSize。
+- 确保 Objective、stats、candidate rows、Dispatch 按钮可读。
+- 保留已做的 LastAction / selection / enemy timer 短文案。
 - 保持 candidate rows 触发式刷新，不回到每帧 Destroy/Recreate。
 - 保持 UI 只读状态并调用 command service。
+- Claude push 前必须检查 `pwd`、`git status -sb`、`git remote -v`，避免旧 remote。
 - 更新 `WORKLOG.md`。
 
 ## 后续建议顺序
@@ -59,7 +60,7 @@
 - Play 后无 `ArgumentException` / `NullReferenceException`。
 - Play 初始显示 Canvas/uGUI HUD。
 - 不再出现旧 OnGUI debug 框。
-- HUD 文本在当前 Game view 下清晰可读。
+- HUD 文本在当前 Game view 下清晰可读，不只是左上角小深色块。
 - 鼠标点击 Player-owned source 后高亮为蓝色，valid target 高亮为黄色。
 - 鼠标点击黄色 target 后派兵。
 - 点击空白区域清空选择。
@@ -73,7 +74,8 @@
 
 ## 交付前剩余风险
 
-- UI 视觉仍需一轮正式打磨。
+- UI 缩放策略仍需返修。
+- Claude 偶发在错误目录 / 旧 remote push，需要每次 push 前检查 `git remote -v`。
 - Unity Connect 网络/auth 错误属于外部服务问题，暂不阻塞 gameplay。
 - 移植还没开始，但边界需要持续保持。
 - `ProjectSettings`、`.idea/`、`.claude/`、Unity 生成目录不能随便提交。

@@ -2533,3 +2533,69 @@ push: 已上传到 origin/main
 - `kingbattle/ProjectSettings/MultiplayerManager.asset`
 - `Library/`、`Logs/`、`UserSettings/`
 - `要求.md` 删除
+
+### MVP-05.1 Review：HUD 仍不可读，Git push remote 已校正
+
+操作人：Codex
+
+审查提交：
+
+```text
+4c51488 feat: HUD readability polish — bigger fonts, compact layout, player-friendly status text
+```
+
+Review 结论：
+
+```text
+MVP-05.1 暂不通过，需要返修 CanvasScaler 缩放。
+```
+
+已确认：
+
+- Claude 分支本次已由 Codex 成功推送到正确仓库：
+
+```text
+git push origin claude/ecstatic-tu-0afd0f
+d85d121..4c51488  claude/ecstatic-tu-0afd0f -> claude/ecstatic-tu-0afd0f
+```
+
+- `/Users/jianghao/unity` 和 `/Users/jianghao/unity/.claude/worktrees/ecstatic-tu-0afd0f` 的 `origin` 都是：
+
+```text
+https://12342023@github.com/12342023/unity.git
+```
+
+- 全局 `.gitconfig` 未发现 `hahaaaw/-.git`。
+- Play Mode 可进入，Console 出现 `[GameHud] uGUI HUD initialized.`。
+- 最近 Editor log 无 `error CS`、`ArgumentException`、`NullReferenceException`。
+
+阻塞问题：
+
+- HUD 在当前 Unity Game view 下仍只像左上角一个小深色块，文字不可读。
+- 疑似 `CanvasScaler` 仍使用 `ScaleWithScreenSize` + `1920x1080` reference resolution，当前 Game view 下实际缩放太小。
+
+给 Claude 的返修要求：
+
+- 不要只继续加大字体。
+- 调整 `CanvasScaler`：改 `referenceResolution` 到 `960x540` / `800x450`，或改 `ConstantPixelSize`。
+- Play 后必须肉眼可读 Objective、stats、candidate rows、Dispatch 按钮。
+- 保持 UI / gameplay service 边界和 candidate rows 触发式刷新。
+- push 前必须执行 `pwd`、`git status -sb`、`git remote -v`。
+- origin 必须是 `https://12342023@github.com/12342023/unity.git`。
+- 推荐 push：`git push origin HEAD:claude/ecstatic-tu-0afd0f`。
+- 如果看到 `hahaaaw/-.git`，立即停止。
+
+本次文档更新：
+
+- `TASK.md`
+- `REVIEW.md`
+- `NEXT_STEPS.md`
+- `WORKLOG.md`
+
+GitHub 上传状态：
+
+```text
+code commit: 4c51488 feat: HUD readability polish — bigger fonts, compact layout, player-friendly status text
+review-docs commit: docs: block HUD scaler readability and fix push workflow
+push: 已上传到 origin/main
+```

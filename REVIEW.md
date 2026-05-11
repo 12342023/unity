@@ -5,77 +5,131 @@
 Codex 已审查 Claude 最新提交：
 
 ```text
-d85d121 fix: Unity 6 LegacyRuntime.ttf, first-frame RefreshData, Update NRE guard
+4c51488 feat: HUD readability polish — bigger fonts, compact layout, player-friendly status text
 ```
 
-结论：**MVP-05.0 二次返修通过。**
+结论：**MVP-05.1 暂不通过，需要返修。**
 
 ## CODEX PROJECT REVIEW
 
-Gate: **PASS**
+Gate: **FAIL**
 
 Findings:
 
 ```text
-无阻塞问题。
+[P1] HUD 在当前 Unity Game view 下仍不可读，只显示为左上角小深色块。
+[P2] Claude push 时使用了错误仓库 remote / cwd，仍出现旧账号仓库 hahaaaw/-.git。
 ```
 
-已验证：
+### [P1] HUD 缩放策略导致可读性目标未达成
 
-- `GameHud.Initialize(...)` 已从 `Arial.ttf` 改为 `LegacyRuntime.ttf`。
-- `CreateCanvas()` 后立即 `RefreshData()`，首帧 candidate previews 可刷新。
-- `GameHud.Update()` 已加入 root null guard。
-- Play Mode 进入成功，Console 出现 `[GameHud] uGUI HUD initialized.`。
-- Editor log 最近 500 行无 `error CS`、`ArgumentException`、`NullReferenceException`。
-- 游戏循环继续运行，Barracks spawn、EnemyPressureController、单位移动日志正常。
-- UI 派兵仍走 `StrategicExpansionCommandService.DispatchCandidate(...)`。
-- 鼠标点击派兵入口 `PlayerInputController` 在 match ended 后直接 return。
-- `StrategicExpansionCommandService` 在 match ended 后拒绝 dispatch。
-- `EnemyAttackCommandService` 在 match ended 后拒绝 enemy attack。
-- 未发现 UI 直接修改 `MapData` / `PlotData.faction` / building health / unit state。
+File: `kingbattle/Assets/Scripts/UI/GameHud.cs`
 
-残余风险：
+Play Mode 观察：
 
-- Computer Use 对 Unity 坐标点击不稳定，本轮未完整自动化证明 HUD `Dispatch` 按钮点击路径；代码路径已确认仍调用同一 command service。
-- 当前 HUD 视觉仍偏紧凑，下一轮应优先做可读性和布局打磨。
-- Unity Connect 网络/auth 错误属于外部服务问题，不计入 gameplay blocker。
+- `[GameHud] uGUI HUD initialized.` 正常出现。
+- 最近 Editor log 无 `error CS`、`ArgumentException`、`NullReferenceException`。
+- 但 HUD 在当前 Game view 下只像左上角一个很小的深色块，文字不可读。
 
-## 给 Claude 的下一轮任务
+原因判断：
+
+- Claude 增大了字体和间距，但 `CanvasScaler` 仍是：
+
+```csharp
+scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+scaler.referenceResolution = new Vector2(1920, 1080);
+```
+
+- 当前 Editor Game view 较小，UI 被 1920x1080 reference resolution 缩得过小。
+- 所以“字体 14 -> 16”在实际屏幕上仍不可读。
+
+Fix:
+
+- 优先调整 `CanvasScaler` 缩放策略。
+- 建议改为 `referenceResolution = 960x540` / `800x450`，或使用 `ConstantPixelSize`。
+- 验收必须看当前 Unity Game view：Objective、stats、candidate rows、Dispatch 按钮都能读。
+
+### [P2] Claude push 目录 / remote 错误
+
+Claude 报错：
+
+```text
+error: src refspec claude/ecstatic-tu-0afd0f does not match any
+error: failed to push some refs to 'https://github.com:hahaaaw/-.git'
+```
+
+Codex 已检查：
+
+- `/Users/jianghao/unity` remote 正确。
+- `/Users/jianghao/unity/.claude/worktrees/ecstatic-tu-0afd0f` remote 正确。
+- 全局 `.gitconfig` 没有 `hahaaaw/-.git`。
+- Codex 已成功推送 Claude 分支到正确仓库：
+
+```text
+git push origin claude/ecstatic-tu-0afd0f
+d85d121..4c51488  claude/ecstatic-tu-0afd0f -> claude/ecstatic-tu-0afd0f
+```
+
+判断：
+
+- Claude 很可能在错误目录 / 错误 Git 仓库里执行了 push。
+
+Fix:
+
+- Claude 每次 push 前必须执行：
+
+```bash
+pwd
+git status -sb
+git remote -v
+```
+
+- 看到 `hahaaaw/-.git` 必须停止。
+- 推荐命令：
+
+```bash
+git push origin HEAD:claude/ecstatic-tu-0afd0f
+```
+
+## 已确认做对的部分
+
+- 代码修改范围小。
+- 没有改 ProjectSettings / scene / gameplay service。
+- UI 仍只读状态并调用 command service。
+- Candidate rows 没回到每帧 Destroy/Recreate。
+- `LastActionResult` 只在 HUD 显示层截断。
+
+## 给 Claude 的返修任务
 
 ```text
 请先阅读 AGENTS.md、TASK.md、REVIEW.md、NEXT_STEPS.md、WORKLOG.md。
 
-MVP-05.0 二次返修已通过。进入 MVP-05.1：正式 UI 视觉与交互反馈打磨。
+MVP-05.1 暂不通过。脚本无错误，但 HUD 在当前 Unity Game view 下不可读。
 
-任务 1：改善 HUD 可读性与布局
-- 调整 Canvas/HUD panel 尺寸、字体、间距，让左上 HUD 文字清晰可读。
-- 保持 runtime uGUI 创建方式，不引入 scene prefab。
-- 不要遮挡地图核心操作区过多。
+任务 1：修复 CanvasScaler 缩放
+- 不要只继续加大字体。
+- 调整 referenceResolution 到 960x540 / 800x450，或改用 ConstantPixelSize。
+- Play 后必须看得到 Objective、stats、candidate rows、Dispatch 按钮文字。
 
-任务 2：改善 candidate rows 展示
-- Candidate row 最多显示 4 条即可。
-- 保持 Dispatch 文案。
-- source -> target available/required 要清晰可读。
-- enough/short 可以改成更玩家化短文案。
-- Candidate rows 仍不能每帧 Destroy/Recreate。
+任务 2：保持 UI / gameplay 边界
+- 不改玩法 service。
+- HUD Dispatch 继续调用 StrategicExpansionCommandService.DispatchCandidate。
+- Candidate rows 继续触发式刷新。
 
-任务 3：改善反馈文案
-- HUD 层可以短化 LastActionResult。
-- 不改 command service 的结构化结果语义。
-- 鼠标点击选择、HUD Dispatch、O 快捷键继续走 StrategicExpansionCommandService。
-
-任务 4：完整 Play 验证并更新 WORKLOG
+任务 3：Play 验证
 - Console 无 error CS。
-- Play 后无 ArgumentException / NullReferenceException。
-- Canvas/uGUI HUD 显示清晰，不显示旧 OnGUI debug 框。
-- HUD Dispatch、地图点击派兵、O 快捷键都正常。
-- K/L/E/N 正常。
-- Victory/Defeat 面板与 Restart 正常。
-- Victory/Defeat 后点击、HUD Dispatch、O/E 不再执行 gameplay command。
+- 无 ArgumentException / NullReferenceException。
+- HUD 不再只是左上角深色小块，文字清晰可读。
+- HUD Dispatch、地图点击派兵、O、K/L/E/N、Victory/Defeat、Restart 继续正常。
+
+任务 4：修正 push 流程
+- push 前执行 pwd、git status -sb、git remote -v。
+- origin 必须是 https://12342023@github.com/12342023/unity.git。
+- 使用 git push origin HEAD:claude/ecstatic-tu-0afd0f。
+- 如果看到 hahaaaw/-.git，立即停止。
 
 禁止：
 - 不重写整个 UI。
-- 不改战斗/占领/派兵 service 行为。
 - 不改 ProjectSettings。
 - 不提交 .claude、.idea、kingbattle.slnx、Library、Logs、UserSettings、要求.md 删除。
 
