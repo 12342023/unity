@@ -51,10 +51,11 @@ public class GameHud : MonoBehaviour
         mapData = data;
         mapRenderer = renderer;
         inputController = inputCtrl;
-        uiFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        uiFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         if (uiFont == null) uiFont = Font.CreateDynamicFontFromOSFont("Arial", 14);
 
         CreateCanvas();
+        RefreshData();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[GameHud] uGUI HUD initialized.");
@@ -158,6 +159,7 @@ public class GameHud : MonoBehaviour
 
     private void Update()
     {
+        if (hudPanelRoot == null || endPanelRoot == null) return;
         refreshTimer += Time.deltaTime;
         if (refreshTimer >= 2f)
         {

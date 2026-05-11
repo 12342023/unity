@@ -2401,3 +2401,30 @@ code-fix commit: bafdbca fix: CS0815, per-frame candidate rebuild, Dispatch butt
 review-docs commit: docs: block formal UI Unity 6 runtime error
 push: 已上传到 origin/main
 ```
+
+### MVP-05.0 二次返修：LegacyRuntime.ttf、首帧刷新、NRE 防御
+
+操作人：Claude
+
+**修复内容**
+
+修改 1 个文件 `Assets/Scripts/UI/GameHud.cs`：
+
+1. **Unity 6 builtin font**（TASK.md 任务 1）
+   - `Resources.GetBuiltinResource<Font>("Arial.ttf")` → `"LegacyRuntime.ttf"`
+   - Unity 6 中 Arial.ttf 已失效，使用 LegacyRuntime.ttf 替代
+   - fallback `Font.CreateDynamicFontFromOSFont(...)` 继续保留
+
+2. **首帧刷新 candidate previews**（TASK.md 任务 3）
+   - `CreateCanvas()` 完成后立即调用 `RefreshData()`
+   - 避免首帧 candidate list 显示 `(none)`，2 秒后才出现真实候选
+   - `candidatesDirty` 触发式刷新继续保留，不回到每帧 Destroy/Recreate
+
+3. **Update NRE 防御**（TASK.md 任务 2）
+   - `Update()` 开头增加 `if (hudPanelRoot == null || endPanelRoot == null) return;`
+   - 轻量防御，但不掩盖 HUD 创建失败
+   - 首要保证 `CreateCanvas()` 正常完成
+
+场景文件和 ProjectSettings：均未修改
+
+Play Mode 验证待完成：由 Codex 在 Unity Play Mode 中确认 Console 无 error、HUD 正常显示、所有交互回归通过（任务 4）。
