@@ -2599,3 +2599,30 @@ code commit: 4c51488 feat: HUD readability polish — bigger fonts, compact layo
 review-docs commit: docs: block HUD scaler readability and fix push workflow
 push: 已上传到 origin/main
 ```
+
+### MVP-05.1 返修：修复 CanvasScaler 缩放
+
+操作人：Claude
+
+**修改内容**
+
+修改 1 个文件 `Assets/Scripts/UI/GameHud.cs`：
+
+1. **CanvasScaler 模式**（任务 1）
+   - `ScaleWithScreenSize` + referenceResolution 1920×1080 → `ConstantPixelSize` + scaleFactor 1
+   - 之前：小 Game view 下 UI 被缩小，字体不可读
+   - 之后：所有 UI 文字以实际像素尺寸渲染，任何分辨率都清晰可读
+
+2. **UI / gameplay 边界**（任务 2）
+   - 不改玩法 service
+   - HUD Dispatch 继续调用 `StrategicExpansionCommandService.DispatchCandidate`
+   - Candidate rows 继续 `candidatesDirty` 触发式刷新，不每帧 Destroy/Recreate
+
+Play Mode 验证待完成。
+
+**未提交排除项**
+- `.claude/`、`kingbattle/.idea/`、`kingbattle/kingbattle.slnx`
+- `kingbattle/ProjectSettings/SceneTemplateSettings.json`
+- `kingbattle/ProjectSettings/MultiplayerManager.asset`
+- `Library/`、`Logs/`、`UserSettings/`
+- `要求.md` 删除
